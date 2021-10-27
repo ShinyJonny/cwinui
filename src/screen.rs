@@ -19,8 +19,8 @@ impl Screen {
             self.buffer.push(vec![0; cols])
         }
 
-        let (s_y, s_x) = self.supported_max_size();
-        if (s_y < rows || s_x < cols)
+        let (sup_y, sup_x) = self.supported_max_size();
+        if (sup_y < rows || sup_x < cols)
         {
             self.display_error(format!("window too small. min size: {}x{}", cols, rows).as_str());
             std::thread::sleep(std::time::Duration::from_millis(5000));
