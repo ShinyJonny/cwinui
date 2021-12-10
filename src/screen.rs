@@ -7,7 +7,7 @@ pub struct Screen {
     buffer: Vec<Vec<char>>,
     height: u32,
     width: u32,
-    widgets: Vec<WidgetHandle>
+    widgets: Vec<WidgetHandle>,
 }
 
 impl Screen {
@@ -26,6 +26,14 @@ impl Screen {
     pub fn draw(&mut self)
     {
         self.widgets.sort();
+
+        for row in self.buffer.iter_mut()
+        {
+            for c in row
+            {
+                *c = ' ';
+            }
+        }
 
         for i in 0..self.widgets.len()
         {
@@ -130,9 +138,8 @@ impl Screen {
     }
 }
 
-
 pub struct WidgetHandle {
-    w: Rc<RefCell<Widget>>
+    w: Rc<RefCell<Widget>>,
 }
 
 impl WidgetHandle {
@@ -176,6 +183,49 @@ impl WidgetHandle {
     {
         self.w.borrow_mut().z_index = z_index;
     }
+
+    pub fn print(&mut self, mut y: u32, mut x: u32, line: &str)
+    {
+        let mut w = self.w.borrow_mut();
+
+        let mut width = w.width;
+        let mut height = w.height;
+
+        if w.has_border {
+            y += 1;
+            x += 1;
+            width -= 1;
+            height -= 1;
+        }
+
+        if width < 1 || height < 1 {
+            return;
+        }
+
+        if x >= width || y >= height {
+            return;
+        }
+
+        for (i, c) in line.chars().enumerate()
+        {
+            if x as usize + i >= width as usize {
+                break;
+            }
+
+            w.buffer[y as usize][x as usize + i] = c;
+        }
+    }
+
+    pub fn clear(&mut self)
+    {
+        for row in self.w.borrow_mut().buffer.iter_mut()
+        {
+            for c in row
+            {
+                *c = '\0';
+            }
+        }
+    }
 }
 
 impl Deref for WidgetHandle {
@@ -194,16 +244,15 @@ impl Clone for WidgetHandle {
     }
 }
 
-
 pub struct Widget {
     buffer: Vec<Vec<char>>,
     start_y: u32,
     start_x: u32,
-    width: u32,
-    height: u32,
+    pub width: u32,
+    pub height: u32,
     z_index: u32,
     has_border: bool,
-    border_style: (char, char, char, char, char, char)
+    border_style: (char, char, char, char, char, char),
 }
 
 // Widgets are sorted based on their z_index.
