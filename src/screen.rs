@@ -3,8 +3,14 @@ use std::ops::Deref;
 use std::cell::RefCell;
 use std::rc::Rc;
 
+macro_rules! pos {
+    ( $width:expr, $y:expr, $x:expr ) => {
+        $y * $width + $x
+    }
+}
+
 pub struct Screen {
-    buffer: Vec<Vec<char>>,
+    buffer: Vec<char>,
     height: usize,
     width: usize,
     widgets: Vec<Widget>,
@@ -14,7 +20,7 @@ impl Screen {
     pub fn new(rows: usize, cols: usize) -> Self
     {
         Self {
-            buffer: vec![vec![' '; cols]; rows],
+            buffer: vec![' '; cols * rows],
             height: rows,
             width: cols,
             widgets: Vec::new(),
@@ -27,10 +33,8 @@ impl Screen {
     {
         self.widgets.sort();
 
-        for row in self.buffer.iter_mut() {
-            for c in row {
-                *c = ' ';
-            }
+        for c in self.buffer.iter_mut() {
+            *c = ' ';
         }
 
         for i in 0..self.widgets.len() {
@@ -44,9 +48,9 @@ impl Screen {
 
     pub fn refresh(&self)
     {
-        for row in &self.buffer {
-            for c in row {
-                print!("{}", c);
+        for y in 0..self.height {
+            for x in 0..self.width {
+                print!("{}", self.buffer[pos![self.width, y, x]]);
             }
             println!();
         }
@@ -69,29 +73,31 @@ impl Screen {
         let start_x = w.start_x as usize;
         let border_chars = w.border_style;
 
+        let sw = self.width;
+
         if border_chars.0 != '\0' {
             for i in 0..(width - 1) {
-                self.buffer[start_y][start_x + i] = border_chars.0;
-                self.buffer[start_y + height - 1][start_x + i] = border_chars.0;
+                self.buffer[pos![sw, start_y, start_x + i]] = border_chars.0;
+                self.buffer[pos![sw, start_y + height - 1, start_x + i]] = border_chars.0;
             }
         }
         if border_chars.1 != '\0' {
             for i in 0..(height - 1) {
-                self.buffer[start_y + i][start_x] = border_chars.1;
-                self.buffer[start_y + i][start_x + width - 1] = border_chars.1;
+                self.buffer[pos![sw, start_y + i, start_x]] = border_chars.1;
+                self.buffer[pos![sw, start_y + i, start_x + width - 1]] = border_chars.1;
             }
         }
         if border_chars.2 != '\0' {
-            self.buffer[start_y][start_x] = border_chars.2;
+            self.buffer[pos![sw, start_y, start_x]] = border_chars.2;
         }
         if border_chars.3 != '\0' {
-            self.buffer[start_y][start_x + width - 1] = border_chars.3;
+            self.buffer[pos![sw, start_y, start_x + width - 1]] = border_chars.3;
         }
         if border_chars.4 != '\0' {
-            self.buffer[start_y + height - 1][start_x + width - 1] = border_chars.4;
+            self.buffer[pos![sw, start_y + height - 1, start_x + width - 1]] = border_chars.4;
         }
         if border_chars.5 != '\0' {
-            self.buffer[start_y + height - 1][start_x] = border_chars.5;
+            self.buffer[pos![sw, start_y + height - 1, start_x]] = border_chars.5;
         }
     }
 
@@ -115,15 +121,18 @@ impl Screen {
             start_y += 1;
         }
 
+        let ww = w.width;
+        let sw = self.width;
+
         for y in 0..height {
             for x in 0..width {
-                let c = w.buffer[y][x];
+                let c = w.buffer[pos![ww, y, x]];
 
                 if c == '\0' {
                     continue;
                 }
 
-                self.buffer[start_y + y][start_x + x] = c;
+                self.buffer[pos![sw, start_y + y, start_x + x]] = c;
             }
         }
     }
@@ -139,7 +148,7 @@ impl Widget {
         Self {
             w: Rc::new(RefCell::new(
                 InnerWidget {
-                    buffer: vec![vec!['\0'; width]; height],
+                    buffer: vec!['\0'; width * height],
                     start_y,
                     start_x,
                     height,
@@ -197,21 +206,21 @@ impl Widget {
             return;
         }
 
+        let ww = w.width;
+
         for (i, c) in line.chars().enumerate() {
             if x as usize + i >= width as usize {
                 break;
             }
 
-            w.buffer[y as usize][x as usize + i] = c;
+            w.buffer[pos![ww, y as usize, x as usize + i]] = c;
         }
     }
 
     pub fn clear(&mut self)
     {
-        for row in self.w.borrow_mut().buffer.iter_mut() {
-            for c in row {
-                *c = '\0';
-            }
+        for c in self.w.borrow_mut().buffer.iter_mut() {
+            *c = '\0';
         }
     }
 }
@@ -233,7 +242,7 @@ impl Clone for Widget {
 }
 
 pub struct InnerWidget {
-    buffer: Vec<Vec<char>>,
+    buffer: Vec<char>,
     start_y: u32,
     start_x: u32,
     pub width: usize,
@@ -268,7 +277,6 @@ impl PartialEq for Widget {
 }
 
 impl Eq for Widget {}
-
 
 #[cfg(test)]
 mod tests {
