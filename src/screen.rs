@@ -55,14 +55,13 @@ impl Screen {
 
         for i in 0..self.widgets.len() {
             if self.widgets[i].borrow().has_border {
-                self.draw_border(self.widgets[i].share());
+                self.draw_widget_border(self.widgets[i].share());
             }
             self.draw_widget(self.widgets[i].share());
         }
         self.draw_widget(self.overlay.share());
     }
 
-    // TODO: cursor movement (restoration) and figure out edge cases.
     pub fn refresh(&mut self)
     {
         for y in 0..self.height - 1 {
@@ -87,7 +86,7 @@ impl Screen {
         w
     }
 
-    fn draw_border(&mut self, w: Widget)
+    fn draw_widget_border(&mut self, w: Widget)
     {
         let w = w.borrow();
 
@@ -125,7 +124,6 @@ impl Screen {
         }
     }
 
-    // FIXME: Passing overlay as index -1 is just lazy.
     fn draw_widget(&mut self, w: Widget)
     {
         let w = w.borrow();
