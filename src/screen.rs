@@ -16,6 +16,9 @@ pub struct Screen {
     buffer: Vec<char>,
     height: usize,
     width: usize,
+    cursor_y: u32,
+    cursor_x: u32,
+    cursor_hidden: bool,
     widgets: Vec<Widget>,
     overlay: Widget,
     stdout: RawTerminal<Stdout>,
@@ -32,6 +35,9 @@ impl Screen {
             buffer: vec![' '; cols * rows],
             height: rows,
             width: cols,
+            cursor_y: 0,
+            cursor_x: 0,
+            cursor_hidden: true,
             widgets: Vec::new(),
             overlay: Widget::new(0, 0, rows, cols),
             stdin: stdin(),
@@ -70,6 +76,49 @@ impl Screen {
         }
         write!(self.stdout, "\r{}", termion::cursor::Up(self.height as u16 - 1)).unwrap();
 
+        if !self.cursor_hidden {
+            // It has to be checked for zero values, as supplying 0 to the termion's cursor
+            // movement functions will result in the cursor being moved by one position.
+            if self.cursor_y != 0 {
+                write!(
+                    self.stdout,
+                    "{}",
+                    termion::cursor::Down(self.cursor_y as u16),
+                ).unwrap();
+            }
+            if self.cursor_x != 0 {
+                write!(
+                    self.stdout,
+                    "{}",
+                    termion::cursor::Right(self.cursor_x as u16),
+                ).unwrap();
+            }
+
+            write!(
+                self.stdout,
+                "{}{}{}{}",
+                termion::style::Invert,
+                self.buffer[pos![self.width, self.cursor_y as usize, self.cursor_x as usize]],
+                termion::style::NoInvert,
+                termion::cursor::Left(1),
+            ).unwrap();
+
+            if self.cursor_x != 0 {
+                write!(
+                    self.stdout,
+                    "{}",
+                    termion::cursor::Left(self.cursor_x as u16),
+                ).unwrap();
+            }
+            if self.cursor_y != 0 {
+                write!(
+                    self.stdout,
+                    "{}",
+                    termion::cursor::Up(self.cursor_y as u16),
+                ).unwrap();
+            }
+        }
+
         self.stdout.flush().unwrap();
     }
 
@@ -78,6 +127,26 @@ impl Screen {
         let w = Widget::new(start_y, start_x, height, width);
         self.widgets.push(w.share());
         w
+    }
+
+    pub fn show_cursor(&mut self)
+    {
+        self.cursor_hidden = false;
+    }
+
+    pub fn hide_cursor(&mut self)
+    {
+        self.cursor_hidden = true;
+    }
+
+    pub fn move_cursor(&mut self, y: u32, x: u32)
+    {
+        if y as usize >= self.height || x as usize >= self.width {
+            return;
+        }
+
+        self.cursor_y = y;
+        self.cursor_x = x;
     }
 
     fn draw_widget_border(&mut self, w: Widget)
