@@ -23,10 +23,10 @@ pub struct Screen {
 }
 
 impl Screen {
-    pub fn new(rows: usize, cols: usize) -> Self
+    pub fn init(rows: usize, cols: usize) -> Self
     {
-        let stdout = stdout().into_raw_mode().unwrap();
-        stdout.suspend_raw_mode().unwrap();
+        let mut stdout = stdout().into_raw_mode().unwrap();
+        write!(stdout, "{}", termion::cursor::Hide).unwrap();
 
         Self {
             buffer: vec![' '; cols * rows],
@@ -37,12 +37,6 @@ impl Screen {
             stdin: stdin(),
             stdout,
         }
-    }
-
-    pub fn init(&mut self)
-    {
-        self.stdout.activate_raw_mode().unwrap();
-        write!(self.stdout, "{}", termion::cursor::Hide).unwrap();
     }
 
     pub fn draw(&mut self)
@@ -57,9 +51,9 @@ impl Screen {
             if self.widgets[i].borrow().has_border {
                 self.draw_widget_border(self.widgets[i].share());
             }
-            self.draw_widget(self.widgets[i].share());
+            self.draw_widget_content(self.widgets[i].share());
         }
-        self.draw_widget(self.overlay.share());
+        self.draw_widget_content(self.overlay.share());
     }
 
     pub fn refresh(&mut self)
@@ -124,7 +118,7 @@ impl Screen {
         }
     }
 
-    fn draw_widget(&mut self, w: Widget)
+    fn draw_widget_content(&mut self, w: Widget)
     {
         let w = w.borrow();
 
