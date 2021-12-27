@@ -1,4 +1,4 @@
-use std::io::{stdin, stdout, Write, Stdin, Stdout};
+use std::io::{stdout, Stdout, Write};
 use crate::widget::Widget;
 
 extern crate termion;
@@ -16,13 +16,12 @@ pub struct Screen {
     buffer: Vec<char>,
     height: usize,
     width: usize,
-    cursor_y: u32,
-    cursor_x: u32,
+    pub cursor_y: u32,
+    pub cursor_x: u32,
     cursor_hidden: bool,
     widgets: Vec<Widget>,
-    overlay: Widget,
+    pub overlay: Widget,
     stdout: RawTerminal<Stdout>,
-    stdin: Stdin,
 }
 
 impl Screen {
@@ -40,7 +39,6 @@ impl Screen {
             cursor_hidden: true,
             widgets: Vec::new(),
             overlay: Widget::new(0, 0, rows, cols),
-            stdin: stdin(),
             stdout,
         }
     }
@@ -147,6 +145,19 @@ impl Screen {
 
         self.cursor_y = y;
         self.cursor_x = x;
+    }
+
+    pub fn advance_cursor(&mut self, steps: i32)
+    {
+        if steps < 0 {
+            if (-steps) as u32 > self.cursor_x {
+                return;
+            }
+        } else if steps as u32 + self.cursor_x >= self.width as u32 {
+            return;
+        }
+
+        self.cursor_x = (self.cursor_x as i32 + steps) as u32;
     }
 
     fn draw_widget_border(&mut self, w: Widget)
