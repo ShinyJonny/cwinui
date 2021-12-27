@@ -7,13 +7,17 @@ extern crate termion;
 use termion::raw::IntoRawMode;
 use termion::raw::RawTerminal;
 
+pub struct Cursor {
+    pub y: u32,
+    pub x: u32,
+    pub hidden: bool,
+}
+
 pub struct Screen {
     buffer: Vec<char>,
     height: usize,
     width: usize,
-    pub cursor_y: u32,
-    pub cursor_x: u32,
-    cursor_hidden: bool,
+    pub cursor: Cursor,
     widgets: Vec<Widget>,
     pub overlay: Widget,
     stdout: RawTerminal<Stdout>,
@@ -29,9 +33,7 @@ impl Screen {
             buffer: vec![' '; cols * rows],
             height: rows,
             width: cols,
-            cursor_y: 0,
-            cursor_x: 0,
-            cursor_hidden: true,
+            cursor: Cursor {y: 0, x: 0, hidden: true},
             widgets: Vec::new(),
             overlay: Widget::new(0, 0, rows, cols),
             stdout,
@@ -69,21 +71,21 @@ impl Screen {
         }
         write!(self.stdout, "\r{}", termion::cursor::Up(self.height as u16 - 1)).unwrap();
 
-        if !self.cursor_hidden {
+        if !self.cursor.hidden {
             // It has to be checked for zero values, as supplying 0 to the termion's cursor
             // movement functions will result in the cursor being moved by one position.
-            if self.cursor_y != 0 {
+            if self.cursor.y != 0 {
                 write!(
                     self.stdout,
                     "{}",
-                    termion::cursor::Down(self.cursor_y as u16),
+                    termion::cursor::Down(self.cursor.y as u16),
                 ).unwrap();
             }
-            if self.cursor_x != 0 {
+            if self.cursor.x != 0 {
                 write!(
                     self.stdout,
                     "{}",
-                    termion::cursor::Right(self.cursor_x as u16),
+                    termion::cursor::Right(self.cursor.x as u16),
                 ).unwrap();
             }
 
@@ -91,23 +93,23 @@ impl Screen {
                 self.stdout,
                 "{}{}{}{}",
                 termion::style::Invert,
-                self.buffer[pos![self.width, self.cursor_y as usize, self.cursor_x as usize]],
+                self.buffer[pos![self.width, self.cursor.y as usize, self.cursor.x as usize]],
                 termion::style::NoInvert,
                 termion::cursor::Left(1),
             ).unwrap();
 
-            if self.cursor_x != 0 {
+            if self.cursor.x != 0 {
                 write!(
                     self.stdout,
                     "{}",
-                    termion::cursor::Left(self.cursor_x as u16),
+                    termion::cursor::Left(self.cursor.x as u16),
                 ).unwrap();
             }
-            if self.cursor_y != 0 {
+            if self.cursor.y != 0 {
                 write!(
                     self.stdout,
                     "{}",
-                    termion::cursor::Up(self.cursor_y as u16),
+                    termion::cursor::Up(self.cursor.y as u16),
                 ).unwrap();
             }
         }
@@ -124,12 +126,12 @@ impl Screen {
 
     pub fn show_cursor(&mut self)
     {
-        self.cursor_hidden = false;
+        self.cursor.hidden = false;
     }
 
     pub fn hide_cursor(&mut self)
     {
-        self.cursor_hidden = true;
+        self.cursor.hidden = true;
     }
 
     pub fn move_cursor(&mut self, y: u32, x: u32)
@@ -138,21 +140,21 @@ impl Screen {
             return;
         }
 
-        self.cursor_y = y;
-        self.cursor_x = x;
+        self.cursor.y = y;
+        self.cursor.x = x;
     }
 
     pub fn advance_cursor(&mut self, steps: i32)
     {
         if steps < 0 {
-            if (-steps) as u32 > self.cursor_x {
+            if (-steps) as u32 > self.cursor.x {
                 return;
             }
-        } else if steps as u32 + self.cursor_x >= self.width as u32 {
+        } else if steps as u32 + self.cursor.x >= self.width as u32 {
             return;
         }
 
-        self.cursor_x = (self.cursor_x as i32 + steps) as u32;
+        self.cursor.x = (self.cursor.x as i32 + steps) as u32;
     }
 
     fn draw_widget_border(&mut self, w: Widget)
@@ -168,13 +170,13 @@ impl Screen {
         let sw = self.width;
 
         if border_chars.0 != '\0' {
-            for i in 0..(width - 1) {
+            for i in 0..width {
                 self.buffer[pos![sw, start_y, start_x + i]] = border_chars.0;
                 self.buffer[pos![sw, start_y + height - 1, start_x + i]] = border_chars.0;
             }
         }
         if border_chars.1 != '\0' {
-            for i in 0..(height - 1) {
+            for i in 0..height {
                 self.buffer[pos![sw, start_y + i, start_x]] = border_chars.1;
                 self.buffer[pos![sw, start_y + i, start_x + width - 1]] = border_chars.1;
             }
