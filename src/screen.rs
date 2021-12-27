@@ -1,16 +1,11 @@
 use std::io::{stdout, Stdout, Write};
 use crate::widget::Widget;
+use crate::pos;
 
 extern crate termion;
 
 use termion::raw::IntoRawMode;
 use termion::raw::RawTerminal;
-
-macro_rules! pos {
-    ( $width:expr, $y:expr, $x:expr ) => {
-        $y * $width + $x
-    }
-}
 
 pub struct Screen {
     buffer: Vec<char>,
