@@ -1,4 +1,4 @@
-use std::io::{stdout, Stdout, Write};
+use std::io::{Stdout, Write,};
 use crate::widget::Widget;
 use crate::pos;
 
@@ -6,27 +6,31 @@ extern crate termion;
 
 use termion::raw::IntoRawMode;
 use termion::raw::RawTerminal;
+use termion::event::{Event, Key};
+use termion::input::TermRead;
 
-pub struct Cursor {
-    pub y: u32,
-    pub x: u32,
-    pub hidden: bool,
+const PROMPT_BLANK_CHAR: char = '_';
+
+struct Cursor {
+    y: u32,
+    x: u32,
+    hidden: bool,
 }
 
 pub struct Screen {
     buffer: Vec<char>,
     height: usize,
     width: usize,
-    pub cursor: Cursor,
+    cursor: Cursor,
     widgets: Vec<Widget>,
-    pub overlay: Widget,
+    overlay: Widget,
     stdout: RawTerminal<Stdout>,
 }
 
 impl Screen {
     pub fn init(rows: usize, cols: usize) -> Self
     {
-        let mut stdout = stdout().into_raw_mode().unwrap();
+        let mut stdout = std::io::stdout().into_raw_mode().unwrap();
         write!(stdout, "{}", termion::cursor::Hide).unwrap();
 
         Self {
@@ -155,6 +159,53 @@ impl Screen {
         }
 
         self.cursor.x = (self.cursor.x as i32 + steps) as u32;
+    }
+
+    pub fn input_field(&mut self, y: u32, x: u32, length: usize) -> String
+    {
+        let mut input = String::new();
+
+        for i in 0..length {
+            self.overlay.putc(y, x + i as u32, PROMPT_BLANK_CHAR);
+        }
+
+        self.move_cursor(y, x);
+        self.show_cursor();
+        self.draw();
+        self.refresh();
+
+        for e in std::io::stdin().lock().events() {
+            match e.unwrap() {
+                Event::Key(Key::Char('\n')) => break,
+                Event::Key(Key::Char(c)) => {
+                    if c.is_alphanumeric() || c.is_ascii_punctuation() || c == ' ' {
+                        if input.len() < length - 1 {
+                            self.overlay.putc(self.cursor.y, self.cursor.x, c);
+                            self.advance_cursor(1);
+                            input.push(c);
+                        }
+                    }
+                }
+                Event::Key(Key::Backspace) => {
+                    if !input.is_empty() {
+                        if self.cursor.x != x {
+                            self.overlay.putc(self.cursor.y, self.cursor.x - 1, PROMPT_BLANK_CHAR);
+                            self.advance_cursor(-1);
+                        }
+                        input.pop();
+                    }
+                },
+                _ => ()
+            }
+            self.draw();
+            self.refresh();
+        }
+
+        self.hide_cursor();
+        self.overlay.clear();
+        self.draw();
+
+        input
     }
 
     fn draw_widget_border(&mut self, w: Widget)
