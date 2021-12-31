@@ -1,15 +1,15 @@
 use std::io::{Stdout, Write,};
 use crate::widget::Widget;
+use crate::widget::InnerWidget;
 use crate::pos;
 
 extern crate termion;
 
 use termion::raw::IntoRawMode;
 use termion::raw::RawTerminal;
-use termion::event::{Event, Key};
-use termion::input::TermRead;
 
 const PROMPT_BLANK_CHAR: char = '_';
+const INPUT_CAPACITY: usize = 1024;
 
 struct Cursor {
     y: u32,
@@ -22,8 +22,8 @@ pub struct Screen {
     height: usize,
     width: usize,
     cursor: Cursor,
-    widgets: Vec<Widget>,
-    overlay: Widget,
+    widgets: Vec<InnerWidget>,
+    overlay: InnerWidget,
     stdout: RawTerminal<Stdout>,
 }
 
@@ -39,7 +39,7 @@ impl Screen {
             width: cols,
             cursor: Cursor {y: 0, x: 0, hidden: true},
             widgets: Vec::new(),
-            overlay: Widget::new(0, 0, rows, cols),
+            overlay: InnerWidget::new(0, 0, rows, cols),
             stdout,
         }
     }
@@ -53,12 +53,12 @@ impl Screen {
         }
 
         for i in 0..self.widgets.len() {
-            if self.widgets[i].borrow().has_border {
-                self.draw_widget_border(self.widgets[i].share());
+            let hidden = self.widgets[i].borrow().hidden;
+            if !hidden {
+                self.draw_widget(self.widgets[i].share());
             }
-            self.draw_widget_content(self.widgets[i].share());
         }
-        self.draw_widget_content(self.overlay.share());
+        self.draw_widget(self.overlay.share());
     }
 
     pub fn refresh(&mut self)
@@ -121,11 +121,10 @@ impl Screen {
         self.stdout.flush().unwrap();
     }
 
-    pub fn add_widget(&mut self, start_y: u32, start_x: u32, height: usize, width: usize) -> Widget
+    pub fn add_widget<T>(&mut self, w: &T)
+        where T: Widget
     {
-        let w = Widget::new(start_y, start_x, height, width);
-        self.widgets.push(w.share());
-        w
+        self.widgets.push(w.share_inner());
     }
 
     pub fn show_cursor(&mut self)
@@ -161,116 +160,72 @@ impl Screen {
         self.cursor.x = (self.cursor.x as i32 + steps) as u32;
     }
 
-    pub fn input_field(&mut self, y: u32, x: u32, length: usize) -> String
-    {
-        let mut input = String::new();
+//    pub fn input_field(&mut self, y: u32, x: u32, length: usize) -> String
+//    {
+//        let mut input = String::with_capacity(INPUT_CAPACITY);
+//
+//        for i in 0..length {
+//            self.overlay.putc(y, x + i as u32, PROMPT_BLANK_CHAR);
+//        }
+//
+//        self.move_cursor(y, x);
+//        self.show_cursor();
+//        self.draw();
+//        self.refresh();
+//
+//        for e in std::io::stdin().lock().events() {
+//            match e.unwrap() {
+//                Event::Key(Key::Char('\n')) => break,
+//                Event::Key(Key::Char(c)) => {
+//                    if c.is_alphanumeric() || c.is_ascii_punctuation() || c == ' ' {
+//                        if input.len() < length - 1 {
+//                            input.push(c);
+//                            self.overlay.putc(self.cursor.y, self.cursor.x, c);
+//                            self.advance_cursor(1);
+//                        } else {
+//                            input.push(c);
+//                            self.overlay.print(y, x, &input[input.len() - (length - 1)..]);
+//                        }
+//                    }
+//                }
+//                Event::Key(Key::Backspace) => {
+//                    if !input.is_empty() {
+//                        if input.len() <= length - 1 {
+//                            input.pop();
+//                            self.overlay.putc(self.cursor.y, self.cursor.x - 1, PROMPT_BLANK_CHAR);
+//                            self.advance_cursor(-1);
+//                        } else {
+//                            input.pop();
+//                            self.overlay.print(y, x, &input[input.len() - (length - 1)..]);
+//                        }
+//                    }
+//                },
+//                _ => ()
+//            }
+//            self.draw();
+//            self.refresh();
+//        }
+//
+//        self.hide_cursor();
+//        self.overlay.clear();
+//        self.draw();
+//
+//        input
+//    }
 
-        for i in 0..length {
-            self.overlay.putc(y, x + i as u32, PROMPT_BLANK_CHAR);
-        }
-
-        self.move_cursor(y, x);
-        self.show_cursor();
-        self.draw();
-        self.refresh();
-
-        for e in std::io::stdin().lock().events() {
-            match e.unwrap() {
-                Event::Key(Key::Char('\n')) => break,
-                Event::Key(Key::Char(c)) => {
-                    if c.is_alphanumeric() || c.is_ascii_punctuation() || c == ' ' {
-                        if input.len() < length - 1 {
-                            self.overlay.putc(self.cursor.y, self.cursor.x, c);
-                            self.advance_cursor(1);
-                            input.push(c);
-                        }
-                    }
-                }
-                Event::Key(Key::Backspace) => {
-                    if !input.is_empty() {
-                        if self.cursor.x != x {
-                            self.overlay.putc(self.cursor.y, self.cursor.x - 1, PROMPT_BLANK_CHAR);
-                            self.advance_cursor(-1);
-                        }
-                        input.pop();
-                    }
-                },
-                _ => ()
-            }
-            self.draw();
-            self.refresh();
-        }
-
-        self.hide_cursor();
-        self.overlay.clear();
-        self.draw();
-
-        input
-    }
-
-    fn draw_widget_border(&mut self, w: Widget)
+    // FIXME: panics on widgets that are out of bounds.
+    fn draw_widget(&mut self, w: InnerWidget)
     {
         let w = w.borrow();
 
-        let width = w.width as usize;
-        let height = w.height as usize;
-        let start_y = w.start_y as usize;
         let start_x = w.start_x as usize;
-        let border_chars = w.border_style;
-
-        let sw = self.width;
-
-        if border_chars.0 != '\0' {
-            for i in 0..width {
-                self.buffer[pos![sw, start_y, start_x + i]] = border_chars.0;
-                self.buffer[pos![sw, start_y + height - 1, start_x + i]] = border_chars.0;
-            }
-        }
-        if border_chars.1 != '\0' {
-            for i in 0..height {
-                self.buffer[pos![sw, start_y + i, start_x]] = border_chars.1;
-                self.buffer[pos![sw, start_y + i, start_x + width - 1]] = border_chars.1;
-            }
-        }
-        if border_chars.2 != '\0' {
-            self.buffer[pos![sw, start_y, start_x]] = border_chars.2;
-        }
-        if border_chars.3 != '\0' {
-            self.buffer[pos![sw, start_y, start_x + width - 1]] = border_chars.3;
-        }
-        if border_chars.4 != '\0' {
-            self.buffer[pos![sw, start_y + height - 1, start_x + width - 1]] = border_chars.4;
-        }
-        if border_chars.5 != '\0' {
-            self.buffer[pos![sw, start_y + height - 1, start_x]] = border_chars.5;
-        }
-    }
-
-    fn draw_widget_content(&mut self, w: Widget)
-    {
-        let w = w.borrow();
-
-        let mut width = w.width;
-        let mut height = w.height;
-        let mut start_x = w.start_x as usize;
-        let mut start_y = w.start_y as usize;
-
-        if w.has_border {
-            if width <= 2 || height <= 2 {
-                return;
-            }
-
-            width -= 2;
-            height -= 2;
-            start_x += 1;
-            start_y += 1;
-        }
+        let start_y = w.start_y as usize;
 
         let ww = w.width;
         let sw = self.width;
 
-        for y in 0..height {
-            for x in 0..width {
+        for y in 0..w.height {
+            for x in 0..w.width {
                 let c = w.buffer[pos![ww, y, x]];
 
                 if c == '\0' {
