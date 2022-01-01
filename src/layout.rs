@@ -43,8 +43,6 @@ pub trait Aligned {
 
 pub fn align(
     a: Align,
-    follower_y: u32,
-    follower_x: u32,
     follower_height: usize,
     follower_width: usize,
     anchor_y: u32,

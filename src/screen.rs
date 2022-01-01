@@ -1,4 +1,4 @@
-use std::io::{Stdout, Write,};
+use std::io::{Stdout, Write};
 use crate::widget::Widget;
 use crate::widget::InnerWidget;
 use crate::pos;
@@ -8,10 +8,7 @@ extern crate termion;
 use termion::raw::IntoRawMode;
 use termion::raw::RawTerminal;
 
-const PROMPT_BLANK_CHAR: char = '_';
-const INPUT_CAPACITY: usize = 1024;
-
-struct Cursor {
+pub struct Cursor {
     y: u32,
     x: u32,
     hidden: bool,
@@ -23,7 +20,6 @@ pub struct Screen {
     width: usize,
     cursor: Cursor,
     widgets: Vec<InnerWidget>,
-    overlay: InnerWidget,
     stdout: RawTerminal<Stdout>,
 }
 
@@ -39,14 +35,15 @@ impl Screen {
             width: cols,
             cursor: Cursor {y: 0, x: 0, hidden: true},
             widgets: Vec::new(),
-            overlay: InnerWidget::new(0, 0, rows, cols),
             stdout,
         }
     }
 
     pub fn draw(&mut self)
     {
-        self.widgets.sort();
+        self.widgets.sort_by(|a, b| {
+            a.borrow().z_index.cmp(&b.borrow().z_index)
+        });
 
         for c in &mut self.buffer {
             *c = ' ';
@@ -58,7 +55,6 @@ impl Screen {
                 self.draw_widget(self.widgets[i].share());
             }
         }
-        self.draw_widget(self.overlay.share());
     }
 
     pub fn refresh(&mut self)
@@ -160,60 +156,6 @@ impl Screen {
         self.cursor.x = (self.cursor.x as i32 + steps) as u32;
     }
 
-//    pub fn input_field(&mut self, y: u32, x: u32, length: usize) -> String
-//    {
-//        let mut input = String::with_capacity(INPUT_CAPACITY);
-//
-//        for i in 0..length {
-//            self.overlay.putc(y, x + i as u32, PROMPT_BLANK_CHAR);
-//        }
-//
-//        self.move_cursor(y, x);
-//        self.show_cursor();
-//        self.draw();
-//        self.refresh();
-//
-//        for e in std::io::stdin().lock().events() {
-//            match e.unwrap() {
-//                Event::Key(Key::Char('\n')) => break,
-//                Event::Key(Key::Char(c)) => {
-//                    if c.is_alphanumeric() || c.is_ascii_punctuation() || c == ' ' {
-//                        if input.len() < length - 1 {
-//                            input.push(c);
-//                            self.overlay.putc(self.cursor.y, self.cursor.x, c);
-//                            self.advance_cursor(1);
-//                        } else {
-//                            input.push(c);
-//                            self.overlay.print(y, x, &input[input.len() - (length - 1)..]);
-//                        }
-//                    }
-//                }
-//                Event::Key(Key::Backspace) => {
-//                    if !input.is_empty() {
-//                        if input.len() <= length - 1 {
-//                            input.pop();
-//                            self.overlay.putc(self.cursor.y, self.cursor.x - 1, PROMPT_BLANK_CHAR);
-//                            self.advance_cursor(-1);
-//                        } else {
-//                            input.pop();
-//                            self.overlay.print(y, x, &input[input.len() - (length - 1)..]);
-//                        }
-//                    }
-//                },
-//                _ => ()
-//            }
-//            self.draw();
-//            self.refresh();
-//        }
-//
-//        self.hide_cursor();
-//        self.overlay.clear();
-//        self.draw();
-//
-//        input
-//    }
-
-    // FIXME: panics on widgets that are out of bounds.
     fn draw_widget(&mut self, w: InnerWidget)
     {
         let w = w.borrow();
@@ -221,11 +163,20 @@ impl Screen {
         let start_x = w.start_x as usize;
         let start_y = w.start_y as usize;
 
+        let mut y_iterations = w.height;
+        let mut x_iterations = w.width;
+        if start_y + w.height > self.height {
+            y_iterations = self.height - start_y;
+        }
+        if start_x + w.width > self.width {
+            x_iterations = self.width - start_x;
+        }
+
         let ww = w.width;
         let sw = self.width;
 
-        for y in 0..w.height {
-            for x in 0..w.width {
+        for y in 0..y_iterations {
+            for x in 0..x_iterations {
                 let c = w.buffer[pos![ww, y, x]];
 
                 if c == '\0' {

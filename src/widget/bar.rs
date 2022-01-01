@@ -140,14 +140,12 @@ impl Aligned for HorizBar {
         let (ay, ax) = anchor.outer_start_yx();
         let aheight = anchor.outer_height();
         let awidth = anchor.outer_width();
-        let sy = inner.start_y;
-        let sx = inner.start_x;
         let sheight = inner.height;
         let swidth = inner.width;
 
         let (new_y, new_x) = layout::align(
             a,
-            sy, sx, sheight, swidth,
+            sheight, swidth,
             ay, ax, aheight, awidth
         );
 
@@ -294,14 +292,12 @@ impl Aligned for VertBar {
         let (ay, ax) = anchor.outer_start_yx();
         let aheight = anchor.outer_height();
         let awidth = anchor.outer_width();
-        let sy = inner.start_y;
-        let sx = inner.start_x;
         let sheight = inner.height;
         let swidth = inner.width;
 
         let (new_y, new_x) = layout::align(
             a,
-            sy, sx, sheight, swidth,
+            sheight, swidth,
             ay, ax, aheight, awidth
         );
 
