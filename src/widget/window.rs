@@ -63,23 +63,20 @@ impl Window {
 
     pub fn toggle_border(&mut self) -> Result<(), ()>
     {
-        {
-            let inner = self.inner.borrow_mut();
-
-            if inner.width < 2 || inner.height < 2 {
-                return Err(());
-            }
-
-            if self.has_border {
-                self.has_border = false;
-            } else {
-                self.has_border = true;
-            }
+        let inner = self.inner.borrow_mut();
+        if !self.has_border && (inner.width < 2 || inner.height < 2) {
+            return Err(());
         }
+        drop(inner);
+
         if self.has_border {
-            self.draw_border();
+            self.has_border = false;
+            self.clear_border();
+            self.shift_content_out();
         } else {
-            self.shift_content();
+            self.has_border = true;
+            self.shift_content_in();
+            self.draw_border();
         }
 
         Ok(())
@@ -87,6 +84,12 @@ impl Window {
 
     pub fn putc(&mut self, mut y: u32, mut x: u32, c: char)
     {
+        let ch = self.content_height();
+        let cw = self.content_width();
+        if y >= ch as u32 || x >= cw as u32 {
+            return;
+        }
+
         if self.has_border {
             y += 1;
             x += 1;
@@ -94,9 +97,24 @@ impl Window {
         self.inner.putc(y, x, c);
     }
 
-    pub fn print(&mut self, y: u32, x: u32, line: &str)
+    pub fn print(&mut self, mut y: u32, mut x: u32, line: &str)
     {
-        self.inner.print(y, x, line);
+        let ch = self.content_height();
+        let cw = self.content_width();
+        if y >= ch as u32 || x >= cw as u32 {
+            return;
+        }
+
+        let mut print_len = line.len();
+        if (cw - x as usize) < print_len {
+            print_len = cw - x as usize;
+        }
+
+        if self.has_border {
+            y += 1;
+            x += 1;
+        }
+        self.inner.print(y, x, &line[..print_len]);
     }
 
     pub fn printj(&mut self, j: Justify, line: &str)
@@ -187,47 +205,90 @@ impl Window {
     {
         let mut inner = self.inner.borrow_mut();
 
-        let start_y = inner.start_y as usize;
-        let start_x = inner.start_x as usize;
-        let height = inner.height;
-        let width = inner.width;
+        let mut height = inner.height;
+        let mut width = inner.width;
 
-        let sw = inner.width;
+        if height < 1 {
+            height = 1;
+        }
+        if width < 1 {
+            width = 1;
+        }
+
+        let w = inner.width;
 
         if self.border_style.0 != '\0' {
             for i in 0..inner.width {
-                inner.buffer[pos![sw, start_y, start_x + i]] = self.border_style.0;
-                inner.buffer[pos![sw, start_y + height - 1, start_x + i]] = self.border_style.0;
+                inner.buffer[pos![w, 0, 0 + i]] = self.border_style.0;
+                inner.buffer[pos![w, 0 + height - 1, 0 + i]] = self.border_style.0;
             }
         }
         if self.border_style.1 != '\0' {
             for i in 0..inner.height {
-                inner.buffer[pos![sw, start_y + i, start_x]] = self.border_style.1;
-                inner.buffer[pos![sw, start_y + i, start_x + width - 1]] = self.border_style.1;
+                inner.buffer[pos![w, 0 + i, 0]] = self.border_style.1;
+                inner.buffer[pos![w, 0 + i, 0 + width - 1]] = self.border_style.1;
             }
         }
         if self.border_style.2 != '\0' {
-            inner.buffer[pos![sw, start_y, start_x]] = self.border_style.2;
+            inner.buffer[pos![w, 0, 0]] = self.border_style.2;
         }
         if self.border_style.3 != '\0' {
-            inner.buffer[pos![sw, start_y, start_x + width - 1]] = self.border_style.3;
+            inner.buffer[pos![w, 0, 0 + width - 1]] = self.border_style.3;
         }
         if self.border_style.4 != '\0' {
-            inner.buffer[pos![sw, start_y + height - 1, start_x + width - 1]] = self.border_style.4;
+            inner.buffer[pos![w, 0 + height - 1, 0 + width - 1]] = self.border_style.4;
         }
         if self.border_style.5 != '\0' {
-            inner.buffer[pos![sw, start_y + height - 1, start_x]] = self.border_style.5;
+            inner.buffer[pos![w, 0 + height - 1, 0]] = self.border_style.5;
         }
     }
 
-    fn shift_content(&mut self)
+    fn clear_border(&mut self)
     {
         let mut inner = self.inner.borrow_mut();
-        let ww = inner.width;
+
+        let mut height = inner.height;
+        let mut width = inner.width;
+
+        if height < 1 {
+            height = 1;
+        }
+        if width < 1 {
+            width = 1;
+        }
+
+        let w = inner.width;
+
+        for i in 0..inner.width {
+            inner.buffer[pos![w, 0, 0 + i]] = '\0';
+            inner.buffer[pos![w, 0 + height - 1, 0 + i]] = '\0';
+        }
+        for i in 0..inner.height {
+            inner.buffer[pos![w, 0 + i, 0]] = '\0';
+            inner.buffer[pos![w, 0 + i, 0 + width - 1]] = '\0';
+        }
+    }
+
+    fn shift_content_in(&mut self)
+    {
+        let mut inner = self.inner.borrow_mut();
+        let w = inner.width;
 
         for y in 1..inner.height {
             for x in 1..inner.width {
-                inner.buffer[pos![ww, y, x]] = inner.buffer[pos![ww, y - 1, x - 1]];
+                inner.buffer[pos![w, y, x]] = inner.buffer[pos![w, y - 1, x - 1]];
+            }
+        }
+    }
+
+    fn shift_content_out(&mut self)
+    {
+        let mut inner = self.inner.borrow_mut();
+        let w = inner.width;
+
+        for y in 1..inner.height {
+            for x in 1..inner.width {
+                inner.buffer[pos![w, y - 1, x - 1]] = inner.buffer[pos![w, y, x]];
             }
         }
     }
