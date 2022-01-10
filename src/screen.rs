@@ -60,10 +60,26 @@ impl Screen {
             *c = ' ';
         }
 
+        self.cursor.hidden = true;
+
         for i in 0..self.widgets.len() {
             let hidden = self.widgets[i].borrow().hidden;
             if !hidden {
                 self.draw_widget(self.widgets[i].share());
+
+                // TODO: Doesn't support multiple cursors. The cursor position of the top one with
+                // a shown cursor is used.
+                let w = self.widgets[i].borrow();
+                let w_sy = w.start_y;
+                let w_sx = w.start_x;
+                let w_cy = w.cursor.y;
+                let w_cx = w.cursor.x;
+                let w_chidden = w.cursor.hidden;
+                drop(w);
+                if !w_chidden {
+                    self.move_cursor(w_sy + w_cy, w_sx + w_cx);
+                    self.cursor.hidden = false;
+                }
             }
         }
     }
@@ -159,39 +175,6 @@ impl Screen {
         }
     }
 
-    pub fn show_cursor(&mut self)
-    {
-        self.cursor.hidden = false;
-    }
-
-    pub fn hide_cursor(&mut self)
-    {
-        self.cursor.hidden = true;
-    }
-
-    pub fn move_cursor(&mut self, y: u32, x: u32)
-    {
-        if y as usize >= self.height || x as usize >= self.width {
-            return;
-        }
-
-        self.cursor.y = y;
-        self.cursor.x = x;
-    }
-
-    pub fn advance_cursor(&mut self, steps: i32)
-    {
-        if steps < 0 {
-            if (-steps) as u32 > self.cursor.x {
-                return;
-            }
-        } else if steps as u32 + self.cursor.x >= self.width as u32 {
-            return;
-        }
-
-        self.cursor.x = (self.cursor.x as i32 + steps) as u32;
-    }
-
     fn draw_widget(&mut self, w: InnerWidget)
     {
         let w = w.borrow();
@@ -222,6 +205,30 @@ impl Screen {
                 self.buffer[pos![sw, start_y + y, start_x + x]] = c;
             }
         }
+    }
+
+    fn move_cursor(&mut self, y: u32, x: u32)
+    {
+        if y as usize >= self.height || x as usize >= self.width {
+            return;
+        }
+
+        self.cursor.y = y;
+        self.cursor.x = x;
+    }
+
+    // NOTE: might be deprecated
+    fn advance_cursor(&mut self, steps: i32)
+    {
+        if steps < 0 {
+            if (-steps) as u32 > self.cursor.x {
+                return;
+            }
+        } else if steps as u32 + self.cursor.x >= self.width as u32 {
+            return;
+        }
+
+        self.cursor.x = (self.cursor.x as i32 + steps) as u32;
     }
 }
 

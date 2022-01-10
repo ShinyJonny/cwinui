@@ -20,6 +20,7 @@ impl Prompt {
     pub fn new(y: u32, x: u32, length: usize) -> Self
     {
         let mut inner = InnerWidget::new(y, x, 1, length);
+        inner.show_cursor();
         for i in 0..length {
             inner.putc(0, i as u32, BLANK_CHAR);
         }
@@ -53,7 +54,7 @@ impl InteractiveWidget for Prompt {
                     if self.output.len() + 1 < self.length {
                         self.output.push(c);
                         self.inner.putc(0, self.cursor_pos, c);
-                        // TODO: cusor advancement
+                        self.inner.advance_cursor(1);
                         self.cursor_pos += 1;
                     } else {
                         self.output.push(c);
@@ -66,7 +67,7 @@ impl InteractiveWidget for Prompt {
                     if self.output.len() + 1 <= self.length {
                         self.output.pop();
                         self.inner.putc(0, self.cursor_pos - 1, BLANK_CHAR);
-                        // TODO: cursor advancement
+                        self.inner.advance_cursor(-1);
                         self.cursor_pos -= 1;
                     } else {
                         self.output.pop();
