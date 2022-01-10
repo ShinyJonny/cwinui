@@ -1,13 +1,7 @@
 use std::ops::Deref;
 use std::cell::RefCell;
 use std::rc::Rc;
-
-pub trait Widget {
-    fn share_inner(&self) -> InnerWidget;
-    fn set_zindex(&mut self, index: u32);
-    fn hide(&mut self);
-    fn show(&mut self);
-}
+use crate::pos;
 
 pub struct InnerWidgetBody {
     pub buffer: Vec<char>,
@@ -19,15 +13,13 @@ pub struct InnerWidgetBody {
     pub hidden: bool,
 }
 
-pub struct InnerWidget {
-    w: Rc<RefCell<InnerWidgetBody>>,
-}
+pub struct InnerWidget(Rc<RefCell<InnerWidgetBody>>);
 
 impl InnerWidget {
     pub fn new(start_y: u32, start_x: u32, height: usize, width: usize) -> Self
     {
-        Self {
-            w: Rc::new(RefCell::new(
+        Self (
+            Rc::new(RefCell::new(
                 InnerWidgetBody {
                     buffer: vec!['\0'; width * height],
                     start_y,
@@ -38,12 +30,42 @@ impl InnerWidget {
                     hidden: true,
                 }
             ))
-        }
+        )
     }
 
     pub fn share(&self) -> Self
     {
-        InnerWidget { w: self.w.clone() }
+        InnerWidget(Rc::clone(&self))
+    }
+
+    pub fn print(&mut self, y: u32, x: u32, line: &str)
+    {
+        let mut body = self.borrow_mut();
+
+        if x as usize >= body.width || y as usize >= body.height {
+            return;
+        }
+
+        let w = body.width;
+
+        for (i, c) in line.chars().enumerate() {
+            if x as usize + i >= body.width as usize {
+                break;
+            }
+            body.buffer[pos![w, y as usize, x as usize + i]] = c;
+        }
+    }
+
+    pub fn putc(&mut self, y: u32, x: u32, c: char)
+    {
+        let mut body = self.borrow_mut();
+
+        if x as usize >= body.width || y as usize >= body.height {
+            return;
+        }
+
+        let w = body.width;
+        body.buffer[pos![w, y as usize, x as usize]] = c;
     }
 
     pub fn clear(&mut self)
@@ -59,6 +81,6 @@ impl Deref for InnerWidget {
 
     fn deref(&self) -> &Self::Target
     {
-        &self.w
+        &self.0
     }
 }

@@ -47,20 +47,6 @@ impl Widget for HorizBar {
     {
         self.inner.share()
     }
-    fn set_zindex(&mut self, index: u32)
-    {
-        self.inner.borrow_mut().z_index = index;
-    }
-
-    fn hide(&mut self)
-    {
-        self.inner.borrow_mut().hidden = true;
-    }
-
-    fn show(&mut self)
-    {
-        self.inner.borrow_mut().hidden = false;
-    }
 }
 
 impl Aligned for HorizBar {
@@ -198,20 +184,6 @@ impl Widget for VertBar {
     fn share_inner(&self) -> InnerWidget
     {
         self.inner.share()
-    }
-    fn set_zindex(&mut self, index: u32)
-    {
-        self.inner.borrow_mut().z_index = index;
-    }
-
-    fn hide(&mut self)
-    {
-        self.inner.borrow_mut().hidden = true;
-    }
-
-    fn show(&mut self)
-    {
-        self.inner.borrow_mut().hidden = false;
     }
 }
 

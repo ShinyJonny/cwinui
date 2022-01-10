@@ -1,41 +1,52 @@
 use std::io::{Stdout, Write};
+use std::time::Instant;
+use std::rc::Rc;
+use std::ops::Deref;
 use crate::widget::Widget;
 use crate::widget::InnerWidget;
 use crate::pos;
 
 extern crate termion;
+use termion::raw::{RawTerminal, IntoRawMode};
+use termion::input::MouseTerminal;
 
-use termion::raw::IntoRawMode;
-use termion::raw::RawTerminal;
-
-pub struct Cursor {
+struct Cursor {
     y: u32,
     x: u32,
     hidden: bool,
 }
 
 pub struct Screen {
-    buffer: Vec<char>,
-    height: usize,
-    width: usize,
+    pub height: usize,
+    pub width: usize,
+    pub dtime: f64,
     cursor: Cursor,
+    buffer: Vec<char>,
+    stdout: RawTerminal<MouseTerminal<Stdout>>,
     widgets: Vec<InnerWidget>,
-    stdout: RawTerminal<Stdout>,
+    last_refresh: Instant,
 }
 
 impl Screen {
     pub fn init(rows: usize, cols: usize) -> Self
     {
-        let mut stdout = std::io::stdout().into_raw_mode().unwrap();
+        let (x, y) = termion::terminal_size().unwrap();
+        if rows > y as usize || cols > x as usize {
+            panic!("terminal too small, needs to be at least: {}x{}", cols, rows);
+        }
+
+        let mut stdout = MouseTerminal::from(std::io::stdout()).into_raw_mode().unwrap();
         write!(stdout, "{}", termion::cursor::Hide).unwrap();
 
         Self {
-            buffer: vec![' '; cols * rows],
             height: rows,
             width: cols,
-            cursor: Cursor {y: 0, x: 0, hidden: true},
-            widgets: Vec::new(),
+            dtime: 0f64,
+            buffer: vec![' '; cols * rows],
             stdout,
+            widgets: Vec::new(),
+            cursor: Cursor { y: 0, x: 0, hidden: true },
+            last_refresh: Instant::now(),
         }
     }
 
@@ -74,6 +85,8 @@ impl Screen {
         if !self.cursor.hidden {
             // It has to be checked for zero values, as supplying 0 to the termion's cursor
             // movement functions will result in the cursor being moved by one position.
+
+            // y movement
             if self.cursor.y != 0 {
                 write!(
                     self.stdout,
@@ -81,6 +94,7 @@ impl Screen {
                     termion::cursor::Down(self.cursor.y as u16),
                 ).unwrap();
             }
+            // x movement
             if self.cursor.x != 0 {
                 write!(
                     self.stdout,
@@ -88,7 +102,7 @@ impl Screen {
                     termion::cursor::Right(self.cursor.x as u16),
                 ).unwrap();
             }
-
+            // char printing
             write!(
                 self.stdout,
                 "{}{}{}{}",
@@ -97,7 +111,7 @@ impl Screen {
                 termion::style::NoInvert,
                 termion::cursor::Left(1),
             ).unwrap();
-
+            // move x back
             if self.cursor.x != 0 {
                 write!(
                     self.stdout,
@@ -105,6 +119,7 @@ impl Screen {
                     termion::cursor::Left(self.cursor.x as u16),
                 ).unwrap();
             }
+            // move y back
             if self.cursor.y != 0 {
                 write!(
                     self.stdout,
@@ -115,12 +130,33 @@ impl Screen {
         }
 
         self.stdout.flush().unwrap();
+
+        let new_time = Instant::now();
+        let diff = new_time.duration_since(self.last_refresh);
+        self.last_refresh = new_time;
+        self.dtime = diff.as_secs_f64();
     }
 
     pub fn add_widget<T>(&mut self, w: &T)
         where T: Widget
     {
         self.widgets.push(w.share_inner());
+    }
+
+    pub fn rm_widget<T: Widget>(&mut self, w: &T)
+    {
+        let w = w.share_inner();
+
+        for i in 0..self.widgets.len() {
+            let same_widgets = std::ptr::eq(
+                Rc::deref(InnerWidget::deref(&w)),
+                Rc::deref(InnerWidget::deref(&self.widgets[i]))
+            );
+            if same_widgets {
+                self.widgets.remove(i);
+                break;
+            }
+        }
     }
 
     pub fn show_cursor(&mut self)

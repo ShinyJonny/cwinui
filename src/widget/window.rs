@@ -85,71 +85,21 @@ impl Window {
         Ok(())
     }
 
-    pub fn print(&mut self, y: u32, x: u32, line: &str)
-    {
-        let mut inner = self.inner.borrow_mut();
-
-        let mut width = inner.width;
-        let mut height = inner.height;
-
-        if self.has_border {
-            if width < 2 || height < 2 {
-                return;
-            }
-
-            width -= 2;
-            height -= 2;
-        } else {
-            if width < 1 || height < 1 {
-                return;
-            }
-        }
-
-        if x as usize >= width || y as usize >= height {
-            return;
-        }
-
-        let ww = inner.width;
-
-        for (i, c) in line.chars().enumerate() {
-            if x as usize + i >= width as usize {
-                break;
-            }
-            inner.buffer[pos![ww, y as usize, x as usize + i]] = c;
-        }
-    }
-
     pub fn putc(&mut self, mut y: u32, mut x: u32, c: char)
     {
-        let mut inner = self.inner.borrow_mut();
-
-        let mut width = inner.width;
-        let mut height = inner.height;
-
         if self.has_border {
-            if width < 2 || height < 2 {
-                return;
-            }
-
             y += 1;
             x += 1;
-            width -= 2;
-            height -= 2;
-        } else {
-            if width < 1 || height < 1 {
-                return;
-            }
         }
-
-        if x as usize >= width || y as usize >= height {
-            return;
-        }
-
-        let ww = inner.width;
-        inner.buffer[pos![ww, y as usize, x as usize]] = c;
+        self.inner.putc(y, x, c);
     }
 
-    pub fn print_just(&mut self, j: Justify, line: &str)
+    pub fn print(&mut self, y: u32, x: u32, line: &str)
+    {
+        self.inner.print(y, x, line);
+    }
+
+    pub fn printj(&mut self, j: Justify, line: &str)
     {
         match j {
             Justify::Left(row) => self.print(row, 0, line),
@@ -187,17 +137,17 @@ impl Window {
                 }
                 self.print(y as u32, col, line)
             },
-            Justify::TopLeft => self.print_just(Justify::Left(0), line),
-            Justify::TopCentre => self.print_just(Justify::HCentre(0), line),
-            Justify::TopRight => self.print_just(Justify::Right(0), line),
-            Justify::CentreLeft => self.print_just(Justify::VCentre(0), line),
+            Justify::TopLeft => self.printj(Justify::Left(0), line),
+            Justify::TopCentre => self.printj(Justify::HCentre(0), line),
+            Justify::TopRight => self.printj(Justify::Right(0), line),
+            Justify::CentreLeft => self.printj(Justify::VCentre(0), line),
             Justify::Centre => {
                 let mut y = self.inner_height();
                 if y > 0 {
                     y -= 1;
                 }
                 y /= 2;
-                self.print_just(Justify::HCentre(y as u32), line)
+                self.printj(Justify::HCentre(y as u32), line)
             },
             Justify::CentreRight => {
                 let mut y = self.inner_height();
@@ -205,22 +155,22 @@ impl Window {
                     y -= 1;
                 }
                 y /= 2;
-                self.print_just(Justify::Right(y as u32), line)
+                self.printj(Justify::Right(y as u32), line)
             },
-            Justify::BottomLeft => self.print_just(Justify::Bottom(0), line),
+            Justify::BottomLeft => self.printj(Justify::Bottom(0), line),
             Justify::BottomCentre => {
                 let mut y = self.inner_height();
                 if y > 0 {
                     y -= 1;
                 }
-                self.print_just(Justify::HCentre(y as u32), line)
+                self.printj(Justify::HCentre(y as u32), line)
             },
             Justify::BottomRight => {
                 let mut y = self.inner_height();
                 if y > 0 {
                     y -= 1;
                 }
-                self.print_just(Justify::Right(y as u32), line)
+                self.printj(Justify::Right(y as u32), line)
             },
         }
     }
@@ -287,21 +237,6 @@ impl Widget for Window {
     fn share_inner(&self) -> InnerWidget
     {
         self.inner.share()
-    }
-
-    fn set_zindex(&mut self, index: u32)
-    {
-        self.inner.borrow_mut().z_index = index;
-    }
-
-    fn hide(&mut self)
-    {
-        self.inner.borrow_mut().hidden = true;
-    }
-
-    fn show(&mut self)
-    {
-        self.inner.borrow_mut().hidden = false;
     }
 }
 
