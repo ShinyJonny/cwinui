@@ -1,6 +1,7 @@
 use crate::widget::{InnerWidget, Widget};
 use crate::layout::{self, Aligned, Justify, Align};
 use crate::pos;
+use crate::misc::SliceInChars;
 
 pub struct Window {
     inner: InnerWidget,
@@ -105,8 +106,8 @@ impl Window {
             return;
         }
 
-        let mut print_len = line.len();
-        if (cw - x as usize) < print_len {
+        let mut print_len = line.chars().count();
+        if x as usize + print_len > cw {
             print_len = cw - x as usize;
         }
 
@@ -114,28 +115,30 @@ impl Window {
             y += 1;
             x += 1;
         }
-        self.inner.print(y, x, &line[..print_len]);
+        self.inner.print(y, x, line.slice_in_chars(0, print_len));
     }
 
     pub fn printj(&mut self, j: Justify, line: &str)
     {
+        let char_count = line.chars().count();
+
         match j {
             Justify::Left(row) => self.print(row, 0, line),
             Justify::HCentre(row) => {
                 let x: usize;
-                if line.len() >= self.inner_width() {
+                if char_count >= self.inner_width() {
                     x = 0;
                 } else {
-                    x = (self.inner_width() - line.len()) / 2;
+                    x = (self.inner_width() - char_count) / 2;
                 }
                 self.print(row, x as u32, line);
             },
             Justify::Right(row) => {
                 let x: usize;
-                if line.len() >= self.inner_width() {
+                if char_count >= self.inner_width() {
                     x = 0;
                 } else {
-                    x = self.inner_width() - line.len();
+                    x = self.inner_width() - char_count;
                 }
                 self.print(row, x as u32, line);
             },
@@ -190,6 +193,18 @@ impl Window {
                 }
                 self.printj(Justify::Right(y as u32), line)
             },
+        }
+    }
+
+    pub fn clearln(&mut self, y: usize)
+    {
+        let cw = self.content_width();
+        if y >= cw {
+            return;
+        }
+
+        for x in 0..cw {
+            self.putc(y as u32, x as u32, '\0');
         }
     }
 
@@ -404,5 +419,26 @@ impl Aligned for Window {
 
         inner.start_y = new_y;
         inner.start_x = new_x;
+    }
+
+    fn adjust_pos(&mut self, y: i32, x: i32)
+    {
+        let mut inner = self.inner.borrow_mut();
+        let new_y = inner.start_y as i32 + y;
+        let new_x = inner.start_x as i32 + x;
+
+        if new_y < 0 || new_x < 0 {
+            panic!("position adjustment is out of bounds");
+        }
+
+        inner.start_y = new_y as u32;
+        inner.start_x = new_x as u32;
+    }
+
+    fn change_pos(&mut self, y: u32, x: u32)
+    {
+        let mut inner = self.inner.borrow_mut();
+        inner.start_y = y;
+        inner.start_x = x;
     }
 }

@@ -1,5 +1,5 @@
 use crate::widget::{InnerWidget, Widget, InteractiveWidget, OutputWidget};
-use crate::misc::PoisonError;
+use crate::misc::{PoisonError, SliceInChars};
 use crate::layout::{self, Aligned, Align};
 
 extern crate termion;
@@ -52,27 +52,35 @@ impl InteractiveWidget for Prompt {
             },
             Event::Key(Key::Char(c)) => {
                 if c.is_alphanumeric() || c.is_ascii_punctuation() || c == ' ' {
-                    if self.output.len() + 1 < self.length {
+                    let output_len = self.output.chars().count();
+
+                    if output_len + 1 < self.length {
                         self.output.push(c);
                         self.inner.putc(0, self.cursor_pos, c);
                         self.inner.advance_cursor(1);
                         self.cursor_pos += 1;
                     } else {
                         self.output.push(c);
-                        self.inner.print(0, 0, &self.output[self.output.len() + 1 - self.length..]);
+                        let output_len = output_len + 1;
+
+                        self.inner.print(0, 0, self.output.as_str().slice_in_chars(output_len + 1 - self.length, output_len));
                     }
                 }
             },
             Event::Key(Key::Backspace) => {
                 if !self.output.is_empty() {
-                    if self.output.len() + 1 <= self.length {
+                    let output_len = self.output.chars().count();
+
+                    if output_len + 1 <= self.length {
                         self.output.pop();
                         self.inner.putc(0, self.cursor_pos - 1, BLANK_CHAR);
                         self.inner.advance_cursor(-1);
                         self.cursor_pos -= 1;
                     } else {
                         self.output.pop();
-                        self.inner.print(0, 0, &self.output[self.output.len() + 1 - self.length..]);
+                        let output_len = output_len - 1;
+
+                        self.inner.print(0, 0, self.output.as_str().slice_in_chars(output_len + 1 - self.length, output_len));
                     }
                 }
             },
@@ -206,5 +214,26 @@ impl Aligned for Prompt {
 
         inner.start_y = new_y;
         inner.start_x = new_x;
+    }
+
+    fn adjust_pos(&mut self, y: i32, x: i32)
+    {
+        let mut inner = self.inner.borrow_mut();
+        let new_y = inner.start_y as i32 + y;
+        let new_x = inner.start_x as i32 + x;
+
+        if new_y < 0 || new_x < 0 {
+            panic!("position adjustment is out of bounds");
+        }
+
+        inner.start_y = new_y as u32;
+        inner.start_x = new_x as u32;
+    }
+
+    fn change_pos(&mut self, y: u32, x: u32)
+    {
+        let mut inner = self.inner.borrow_mut();
+        inner.start_y = y;
+        inner.start_x = x;
     }
 }

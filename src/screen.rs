@@ -235,7 +235,7 @@ impl Screen {
 impl Drop for Screen {
     fn drop(&mut self)
     {
-        for _ in 0..self.height {
+        for _row in 0..self.height {
             write!(self.stdout, "\n").unwrap();
         }
         write!(self.stdout, "{}", termion::cursor::Show).unwrap();

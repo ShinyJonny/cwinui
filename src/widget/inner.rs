@@ -48,19 +48,24 @@ impl InnerWidget {
 
     pub fn print(&mut self, y: u32, x: u32, line: &str)
     {
+        let y = y as usize;
+        let x = x as usize;
+
         let mut body = self.borrow_mut();
 
-        if x as usize >= body.width || y as usize >= body.height {
+        if x >= body.width || y >= body.height {
             return;
         }
 
-        let w = body.width;
+        let mut print_len = line.chars().count();
+        if x + print_len > body.width {
+            print_len = body.width - x;
+        }
 
-        for (i, c) in line.chars().enumerate() {
-            if x as usize + i >= body.width as usize {
-                break;
-            }
-            body.buffer[pos![w, y as usize, x as usize + i]] = c;
+        let w = body.width;
+        let mut chars = line.chars();
+        for i in 0..print_len {
+            body.buffer[pos![w, y, x + i]] = chars.next().unwrap();
         }
     }
 

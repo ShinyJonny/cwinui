@@ -39,6 +39,8 @@ pub trait Aligned {
     fn align_centres<T: Aligned>(&mut self, anchor: &T);
     fn align_to_inner<T: Aligned>(&mut self, anchor: &T, a: Align);
     fn align_to_outer<T: Aligned>(&mut self, anchor: &T, a: Align);
+    fn adjust_pos(&mut self, y: i32, x: i32);
+    fn change_pos(&mut self, y: u32, x: u32);
 }
 
 pub fn align(

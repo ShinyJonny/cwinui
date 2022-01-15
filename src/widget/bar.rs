@@ -138,6 +138,27 @@ impl Aligned for HorizBar {
         inner.start_y = new_y;
         inner.start_x = new_x;
     }
+
+    fn adjust_pos(&mut self, y: i32, x: i32)
+    {
+        let mut inner = self.inner.borrow_mut();
+        let new_y = inner.start_y as i32 + y;
+        let new_x = inner.start_x as i32 + x;
+
+        if new_y < 0 || new_x < 0 {
+            panic!("position adjustment is out of bounds");
+        }
+
+        inner.start_y = new_y as u32;
+        inner.start_x = new_x as u32;
+    }
+
+    fn change_pos(&mut self, y: u32, x: u32)
+    {
+        let mut inner = self.inner.borrow_mut();
+        inner.start_y = y;
+        inner.start_x = x;
+    }
 }
 
 pub struct VertBar {
@@ -275,5 +296,26 @@ impl Aligned for VertBar {
 
         inner.start_y = new_y;
         inner.start_x = new_x;
+    }
+
+    fn adjust_pos(&mut self, y: i32, x: i32)
+    {
+        let mut inner = self.inner.borrow_mut();
+        let new_y = inner.start_y as i32 + y;
+        let new_x = inner.start_x as i32 + x;
+
+        if new_y < 0 || new_x < 0 {
+            panic!("position adjustment is out of bounds");
+        }
+
+        inner.start_y = new_y as u32;
+        inner.start_x = new_x as u32;
+    }
+
+    fn change_pos(&mut self, y: u32, x: u32)
+    {
+        let mut inner = self.inner.borrow_mut();
+        inner.start_y = y;
+        inner.start_x = x;
     }
 }
