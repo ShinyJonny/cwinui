@@ -28,21 +28,6 @@ pub enum Align {
     BottomRight,
 }
 
-pub trait Aligned {
-    fn inner_width(&self) -> usize;
-    fn inner_height(&self) -> usize;
-    fn inner_start_yx(&self) -> (u32, u32);
-    fn outer_width(&self) -> usize;
-    fn outer_height(&self) -> usize;
-    fn outer_start_yx(&self) -> (u32, u32);
-    fn centre(&self) -> (u32, u32);
-    fn align_centres<T: Aligned>(&mut self, anchor: &T);
-    fn align_to_inner<T: Aligned>(&mut self, anchor: &T, a: Align);
-    fn align_to_outer<T: Aligned>(&mut self, anchor: &T, a: Align);
-    fn adjust_pos(&mut self, y: i32, x: i32);
-    fn change_pos(&mut self, y: u32, x: u32);
-}
-
 pub fn align(
     a: Align,
     follower_height: usize,
@@ -152,4 +137,39 @@ pub fn align(
     }
 
     (y, x)
+}
+
+pub trait Aligned {
+    fn inner_width(&self) -> usize;
+    fn inner_height(&self) -> usize;
+    fn inner_start_yx(&self) -> (u32, u32);
+    fn outer_width(&self) -> usize;
+    fn outer_height(&self) -> usize;
+    fn outer_start_yx(&self) -> (u32, u32);
+    fn centre(&self) -> (u32, u32);
+    fn align_centres<T: Aligned>(&mut self, anchor: &T);
+    fn align_to_inner<T: Aligned>(&mut self, anchor: &T, a: Align);
+    fn align_to_outer<T: Aligned>(&mut self, anchor: &T, a: Align);
+    fn adjust_pos(&mut self, y: i32, x: i32);
+    fn change_pos(&mut self, y: u32, x: u32);
+}
+
+#[macro_export]
+macro_rules! sub_impl_aligned {
+    ($data_type:ty, $sub_impl:ident) => {
+        impl Aligned for $data_type {
+            fn inner_width(&self) -> usize { self.$sub_impl.inner_width() }
+            fn inner_height(&self) -> usize { self.$sub_impl.inner_height() }
+            fn inner_start_yx(&self) -> (u32, u32) { self.$sub_impl.inner_start_yx() }
+            fn outer_width(&self) -> usize { self.$sub_impl.outer_width() }
+            fn outer_height(&self) -> usize { self.$sub_impl.outer_height() }
+            fn outer_start_yx(&self) -> (u32, u32) { self.$sub_impl.outer_start_yx() }
+            fn centre(&self) -> (u32, u32) { self.$sub_impl.centre() }
+            fn align_centres<T: Aligned>(&mut self, anchor: &T) { self.$sub_impl.align_centres(anchor); }
+            fn align_to_inner<T: Aligned>(&mut self, anchor: &T, a: Align) { self.$sub_impl.align_to_inner(anchor, a); }
+            fn align_to_outer<T: Aligned>(&mut self, anchor: &T, a: Align) { self.$sub_impl.align_to_outer(anchor, a); }
+            fn adjust_pos(&mut self, y: i32, x: i32) { self.$sub_impl.adjust_pos(y, x); }
+            fn change_pos(&mut self, y: u32, x: u32) { self.$sub_impl.change_pos(y, x); }
+        }
+    }
 }
