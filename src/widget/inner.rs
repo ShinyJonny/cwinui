@@ -48,6 +48,11 @@ impl InnerWidget {
         InnerWidget(Rc::clone(&self))
     }
 
+    pub fn add_subwidget(&mut self, sub: InnerWidget)
+    {
+        self.borrow_mut().subwidgets.push(sub);
+    }
+
     pub fn print(&mut self, y: u32, x: u32, line: &str)
     {
         let y = y as usize;
