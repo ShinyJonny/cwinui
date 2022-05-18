@@ -24,13 +24,10 @@ impl<T> PoisonError<T> {
 
 pub trait SliceInChars {
     fn slice_in_chars(&self, start: usize, end: usize) -> &str;
-}
-
-pub trait MutSliceInChars {
     fn slice_in_chars_mut(&mut self, start: usize, end: usize) -> &mut str;
 }
 
-impl SliceInChars for &str {
+impl SliceInChars for str {
     fn slice_in_chars(&self, start: usize, end: usize) -> &str
     {
         let mut chars = self.chars();
@@ -48,9 +45,7 @@ impl SliceInChars for &str {
 
         &self[start_bytes..end_bytes]
     }
-}
 
-impl MutSliceInChars for &mut str {
     fn slice_in_chars_mut(&mut self, start: usize, end: usize) -> &mut str
     {
         let mut chars = self.chars();

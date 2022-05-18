@@ -1,10 +1,13 @@
-use crate::widget::{InnerWidget, Widget, InteractiveWidget, OutputWidget};
+use termion::event::{Event, Key};
+
+use crate::widget::{
+    InnerWidget,
+    Widget,
+    InteractiveWidget,
+    OutputWidget,
+};
 use crate::misc::{PoisonError, SliceInChars};
 use crate::layout::{self, Aligned, Align};
-
-extern crate termion;
-
-use termion::event::{Event, Key};
 
 const BLANK_CHAR: char = '_';
 const INPUT_CAPACITY: usize = 1024;

@@ -2,13 +2,12 @@ use std::io::{Stdout, Write};
 use std::time::Instant;
 use std::rc::Rc;
 use std::ops::Deref;
+use termion::raw::{RawTerminal, IntoRawMode};
+use termion::input::MouseTerminal;
+
 use crate::widget::Widget;
 use crate::widget::InnerWidget;
 use crate::pos;
-
-extern crate termion;
-use termion::raw::{RawTerminal, IntoRawMode};
-use termion::input::MouseTerminal;
 
 struct Cursor {
     y: u32,
@@ -47,40 +46,6 @@ impl Screen {
             widgets: Vec::new(),
             cursor: Cursor { y: 0, x: 0, hidden: true },
             last_refresh: Instant::now(),
-        }
-    }
-
-    pub fn draw(&mut self)
-    {
-        self.widgets.sort_by(|a, b| {
-            a.borrow().z_index.cmp(&b.borrow().z_index)
-        });
-
-        for c in &mut self.buffer {
-            *c = ' ';
-        }
-
-        self.cursor.hidden = true;
-
-        for i in 0..self.widgets.len() {
-            let hidden = self.widgets[i].borrow().hidden;
-            if !hidden {
-                self.draw_widget(self.widgets[i].share());
-
-                // TODO: Doesn't support multiple cursors. The cursor position of the top one with
-                // a shown cursor is used.
-                let w = self.widgets[i].borrow();
-                let w_sy = w.start_y;
-                let w_sx = w.start_x;
-                let w_cy = w.cursor.y;
-                let w_cx = w.cursor.x;
-                let w_chidden = w.cursor.hidden;
-                drop(w);
-                if !w_chidden {
-                    self.move_cursor(w_sy + w_cy, w_sx + w_cx);
-                    self.cursor.hidden = false;
-                }
-            }
         }
     }
 
@@ -153,6 +118,23 @@ impl Screen {
         self.dtime = diff.as_secs_f64();
     }
 
+    pub fn draw(&mut self)
+    {
+        for c in &mut self.buffer {
+            *c = ' ';
+        }
+
+        self.cursor.hidden = true;
+
+        self.widgets.sort_by(|a, b| {
+            a.borrow().z_index.cmp(&b.borrow().z_index)
+        });
+
+        for i in 0..self.widgets.len() {
+            self.draw_widget(self.widgets[i].share());
+        }
+    }
+
     pub fn add_widget<T>(&mut self, w: &T)
         where T: Widget
     {
@@ -176,6 +158,37 @@ impl Screen {
     }
 
     fn draw_widget(&mut self, w: InnerWidget)
+    {
+        if w.borrow().hidden {
+            return;
+        }
+
+        self.draw_widget_buffer(w.share());
+
+        // TODO: Doesn't support multiple cursors. The cursor position of the top widget with a
+        // shown cursor is used.
+        let inner = w.borrow();
+        if !inner.cursor.hidden {
+            let start_y = inner.start_y;
+            let start_x = inner.start_x;
+            let cursor_y = inner.cursor.y;
+            let cursor_x = inner.cursor.x;
+
+            self.move_cursor(start_y + cursor_y, start_x + cursor_x);
+            self.cursor.hidden = false;
+        }
+        drop(inner);
+
+        w.borrow_mut().subwidgets.sort_by(|a, b| {
+            a.borrow().z_index.cmp(&b.borrow().z_index)
+        });
+
+        for subw in &w.borrow().subwidgets {
+            self.draw_widget(subw.share())
+        }
+    }
+
+    fn draw_widget_buffer(&mut self, w: InnerWidget)
     {
         let w = w.borrow();
 

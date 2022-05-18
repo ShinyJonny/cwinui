@@ -18,6 +18,7 @@ pub struct InnerWidgetBody {
     pub cursor: Cursor,
     pub z_index: u32,
     pub hidden: bool,
+    pub subwidgets: Vec<InnerWidget>,
 }
 
 pub struct InnerWidget(Rc<RefCell<InnerWidgetBody>>);
@@ -36,6 +37,7 @@ impl InnerWidget {
                     cursor: Cursor { y: 0, x: 0, hidden: true },
                     z_index: 1,
                     hidden: true,
+                    subwidgets: Vec::new(),
                 }
             ))
         )

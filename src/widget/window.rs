@@ -1,5 +1,10 @@
 use crate::widget::{InnerWidget, Widget};
-use crate::layout::{self, Aligned, Justify, Align};
+use crate::layout::{
+    self,
+    Aligned,
+    Justify,
+    Align,
+};
 use crate::pos;
 use crate::misc::SliceInChars;
 
