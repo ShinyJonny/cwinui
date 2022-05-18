@@ -1,17 +1,18 @@
+use termion::event::Event;
+
 mod inner;
 mod window;
 mod bar;
 mod prompt;
+mod menu;
 
 use crate::misc::PoisonError;
-
-extern crate termion;
-use termion::event::Event;
 
 pub use inner::{InnerWidget, InnerWidgetBody};
 pub use window::Window;
 pub use bar::{HorizBar, VertBar};
 pub use prompt::Prompt;
+pub use menu::{Menu, ListStyle};
 
 pub trait Widget {
     fn share_inner(&self) -> InnerWidget;
