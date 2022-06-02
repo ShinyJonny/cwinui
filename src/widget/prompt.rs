@@ -47,6 +47,21 @@ impl Prompt {
         prompt
     }
 
+    pub fn is_active(&self) -> bool
+    {
+        self.inputline.is_active()
+    }
+
+    pub fn set_active(&mut self)
+    {
+        self.inputline.set_active();
+    }
+
+    pub fn set_inactive(&mut self)
+    {
+        self.inputline.set_inactive();
+    }
+
     fn redraw(&mut self)
     {
         self.win.print(0, 0, &self.label);
