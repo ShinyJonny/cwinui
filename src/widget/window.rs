@@ -21,6 +21,7 @@ impl Window {
         Self {
             inner: InnerWidget::new(start_y, start_x, height, width),
             has_border: false,
+            // TODO: add border style for each side.
             border_style: ('\0', '\0', '\0', '\0', '\0', '\0'),
         }
     }

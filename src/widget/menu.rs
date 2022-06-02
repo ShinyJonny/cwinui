@@ -122,12 +122,12 @@ impl InteractiveWidget for Menu {
 }
 
 impl OutputWidget<usize> for Menu {
-    fn try_get_output(&mut self) -> Option<usize>
+    fn try_get_output(&self) -> Option<usize>
     {
         self.output
     }
 
-    fn get_output(self) -> Result<usize, PoisonError<usize>>
+    fn get_output(&self) -> Result<usize, PoisonError<usize>>
     {
         if let Some(o) = self.output {
             Ok(o)

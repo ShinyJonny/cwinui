@@ -89,12 +89,12 @@ impl InteractiveWidget for Prompt {
 }
 
 impl OutputWidget<String> for Prompt {
-    fn try_get_output(&mut self) -> Option<String>
+    fn try_get_output(&self) -> Option<String>
     {
         self.inputline.try_get_output()
     }
 
-    fn get_output(self) -> Result<String, PoisonError<String>>
+    fn get_output(&self) -> Result<String, PoisonError<String>>
     {
         self.inputline.get_output()
     }

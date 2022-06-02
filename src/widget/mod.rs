@@ -42,6 +42,6 @@ pub trait InteractiveWidget : Widget {
 }
 
 pub trait OutputWidget<T> : Widget {
-    fn try_get_output(&mut self) -> Option<T>;
-    fn get_output(self) -> Result<T, PoisonError<T>>;
+    fn try_get_output(&self) -> Option<T>;
+    fn get_output(&self) -> Result<T, PoisonError<T>>;
 }

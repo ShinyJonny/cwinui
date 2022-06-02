@@ -134,22 +134,22 @@ impl InteractiveWidget for InputLine {
 }
 
 impl OutputWidget<String> for InputLine {
-    fn try_get_output(&mut self) -> Option<String>
+    fn try_get_output(&self) -> Option<String>
     {
         if self.output_ready {
-            let mut s = String::with_capacity(INPUT_CAPACITY);
-            std::mem::swap(&mut s, &mut self.output);
-            return Some(s);
+            return Some(self.output.clone());
         }
         None
     }
 
-    fn get_output(self) -> Result<String, PoisonError<String>>
+    fn get_output(&self) -> Result<String, PoisonError<String>>
     {
+        let output = self.output.clone();
+
         if self.output_ready {
-            return Ok(self.output);
+            return Ok(output);
         }
-        Err(PoisonError::new(self.output))
+        Err(PoisonError::new(output))
     }
 }
 
