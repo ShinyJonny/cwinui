@@ -10,7 +10,8 @@ use crate::misc::{PoisonError, SliceInChars};
 use crate::layout::{self, Aligned, Align};
 
 const BLANK_CHAR: char = '_';
-const INPUT_CAPACITY: usize = 1024;
+const INACTIVE_BLANK_CHAR: char = ' ';
+const INPUT_CAPACITY: usize = 2048;
 
 pub struct InputLine {
     inner: InnerWidget,
@@ -18,6 +19,7 @@ pub struct InputLine {
     output_ready: bool,
     output: String,
     cursor_pos: u32,
+    active: bool,
 }
 
 impl InputLine {
@@ -35,7 +37,39 @@ impl InputLine {
             output_ready: false,
             output: String::with_capacity(INPUT_CAPACITY),
             cursor_pos: 0,
+            active: true,
         }
+    }
+
+    pub fn is_active(&self) -> bool
+    {
+        self.active
+    }
+
+    pub fn set_active(&mut self)
+    {
+        self.active = true;
+        self.inner.show_cursor();
+        self.set_blanks(BLANK_CHAR);
+    }
+
+    pub fn set_inactive(&mut self)
+    {
+        self.active = false;
+        self.inner.hide_cursor();
+        self.set_blanks(INACTIVE_BLANK_CHAR);
+    }
+
+    fn set_blanks(&mut self, c: char)
+    {
+        let blank_count = self.length as isize - 1 - self.output.len() as isize;
+        let first_blank = self.output.len() as u32;
+        if blank_count > 0 {
+            for x in first_blank..(first_blank + blank_count as u32) {
+                self.inner.putc(0, x, c)
+            }
+        }
+        self.inner.putc(0, self.length as u32 - 1, c);
     }
 }
 
