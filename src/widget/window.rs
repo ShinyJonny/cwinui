@@ -2,6 +2,7 @@ use crate::widget::{InnerWidget, Widget};
 use crate::layout::{
     self,
     Aligned,
+    Alignable,
     Justify,
     Align,
 };
@@ -370,7 +371,9 @@ impl Aligned for Window {
 
         (centre_y, centre_x)
     }
+}
 
+impl Alignable for Window {
     fn align_centres<T: Aligned>(&mut self, anchor: &T)
     {
         let (acy, acx) = anchor.centre();

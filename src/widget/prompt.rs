@@ -1,7 +1,12 @@
 use termion::event::Event;
 
-use crate::layout::{Aligned, Align};
+use crate::layout::{
+    Aligned,
+    Alignable,
+    Align,
+};
 use crate::sub_impl_aligned;
+use crate::sub_impl_alignable;
 use crate::misc::PoisonError;
 
 use super::{
@@ -95,4 +100,5 @@ impl OutputWidget<String> for Prompt {
     }
 }
 
-sub_impl_aligned!(Prompt, win, [inputline]);
+sub_impl_aligned!(Prompt, win);
+sub_impl_alignable!(Prompt, win, [inputline]);

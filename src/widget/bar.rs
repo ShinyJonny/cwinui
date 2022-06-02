@@ -1,5 +1,10 @@
 use crate::widget::{Widget, InnerWidget};
-use crate::layout::{self, Aligned, Align};
+use crate::layout::{
+    self,
+    Aligned,
+    Alignable,
+    Align,
+};
 use crate::pos;
 
 pub struct HorizBar {
@@ -98,7 +103,9 @@ impl Aligned for HorizBar {
 
         (centre_y, centre_x)
     }
+}
 
+impl Alignable for HorizBar {
     fn align_centres<T: Aligned>(&mut self, anchor: &T)
     {
         let (acy, acx) = anchor.centre();
@@ -257,7 +264,9 @@ impl Aligned for VertBar {
 
         (centre_y, centre_x)
     }
+}
 
+impl Alignable for VertBar {
     fn align_centres<T: Aligned>(&mut self, anchor: &T)
     {
         let (acy, acx) = anchor.centre();

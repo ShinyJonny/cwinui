@@ -7,9 +7,14 @@ use crate::widget::{
 };
 use termion::event::{Event, Key};
 
-use crate::layout::{Aligned, Align};
+use crate::layout::{
+    Aligned,
+    Alignable,
+    Align,
+};
 use crate::misc::PoisonError;
 use crate::sub_impl_aligned;
+use crate::sub_impl_alignable;
 
 pub enum ListStyle {
     Dummy,
@@ -134,3 +139,4 @@ impl OutputWidget<usize> for Menu {
 }
 
 sub_impl_aligned!(Menu, win);
+sub_impl_alignable!(Menu, win);

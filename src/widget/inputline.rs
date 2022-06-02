@@ -7,7 +7,12 @@ use crate::widget::{
     OutputWidget,
 };
 use crate::misc::{PoisonError, SliceInChars};
-use crate::layout::{self, Aligned, Align};
+use crate::layout::{
+    self,
+    Aligned,
+    Alignable,
+    Align,
+};
 
 const BLANK_CHAR: char = '_';
 const INACTIVE_BLANK_CHAR: char = ' ';
@@ -197,7 +202,9 @@ impl Aligned for InputLine {
 
         (centre_y, centre_x)
     }
+}
 
+impl Alignable for InputLine {
     fn align_centres<T: Aligned>(&mut self, anchor: &T)
     {
         let (acy, acx) = anchor.centre();
