@@ -145,6 +145,8 @@ impl Screen {
     {
         let w = w.share_inner();
 
+        // TODO: simplify with `.iter().position(...)`
+
         for i in 0..self.widgets.len() {
             let same_widgets = std::ptr::eq(
                 Rc::deref(InnerWidget::deref(&w)),
