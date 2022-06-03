@@ -145,17 +145,13 @@ impl Screen {
     {
         let w = w.share_inner();
 
-        // TODO: simplify with `.iter().position(...)`
-
-        for i in 0..self.widgets.len() {
-            let same_widgets = std::ptr::eq(
+        if let Some(i) = self.widgets.iter().position(|wid| {
+            std::ptr::eq(
                 Rc::deref(InnerWidget::deref(&w)),
-                Rc::deref(InnerWidget::deref(&self.widgets[i]))
-            );
-            if same_widgets {
-                self.widgets.remove(i);
-                break;
-            }
+                Rc::deref(InnerWidget::deref(wid))
+            )
+        }) {
+            self.widgets.remove(i);
         }
     }
 
@@ -167,7 +163,7 @@ impl Screen {
 
         self.draw_widget_buffer(w.share());
 
-        // TODO: Doesn't support multiple cursors. The cursor position of the top widget with a
+        // NOTE: Doesn't support multiple cursors. The cursor position of the top widget with a
         // shown cursor is used.
         let inner = w.borrow();
         if !inner.cursor.hidden {
@@ -232,20 +228,6 @@ impl Screen {
 
         self.cursor.y = y;
         self.cursor.x = x;
-    }
-
-    // NOTE: might be deprecated
-    fn advance_cursor(&mut self, steps: i32)
-    {
-        if steps < 0 {
-            if (-steps) as u32 > self.cursor.x {
-                return;
-            }
-        } else if steps as u32 + self.cursor.x >= self.width as u32 {
-            return;
-        }
-
-        self.cursor.x = (self.cursor.x as i32 + steps) as u32;
     }
 }
 
