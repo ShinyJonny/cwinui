@@ -192,6 +192,8 @@ impl Screen {
 
     fn draw_widget_buffer(&mut self, w: InnerWidget)
     {
+        // FIXME: check for non-printable and variable-length characters (including whitespace).
+
         let w = w.borrow();
 
         let start_x = w.start_x as usize;

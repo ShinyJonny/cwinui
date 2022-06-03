@@ -64,6 +64,10 @@ impl InnerWidget {
             return;
         }
 
+        // TODO: support printing with newlines (and other non-standard whitespace).
+        // FIXME: check for variable-length characters.
+        // FIXME: check for non-printable characters.
+
         let mut print_len = line.chars().count();
         if x + print_len > body.width {
             print_len = body.width - x;

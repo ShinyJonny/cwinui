@@ -107,6 +107,9 @@ impl Window {
 
     pub fn print(&mut self, mut y: u32, mut x: u32, line: &str)
     {
+        // TODO: support printing with newlines (and other non-standard whitespace).
+        // TODO: check for variable-length characters.
+
         let ch = self.content_height();
         let cw = self.content_width();
         if y >= ch as u32 || x >= cw as u32 {
@@ -127,6 +130,9 @@ impl Window {
 
     pub fn printj(&mut self, j: Justify, line: &str)
     {
+        // TODO: support printing with newlines (and other non-standard whitespace).
+        // FIXME: check for variable-length characters.
+
         let char_count = line.chars().count();
 
         match j {

@@ -14,7 +14,7 @@ use crate::layout::{
     Align,
 };
 
-const BLANK_CHAR: char = '_';
+const BLANK_CHAR: char = ' ';
 const INACTIVE_BLANK_CHAR: char = ' ';
 const INPUT_CAPACITY: usize = 2048;
 
