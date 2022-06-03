@@ -128,7 +128,7 @@ impl Window {
         self.inner.print(y, x, line.slice_in_chars(0, print_len));
     }
 
-    pub fn printj(&mut self, j: Justify, line: &str)
+    pub fn printj(&mut self, line: &str, j: Justify)
     {
         // TODO: support printing with newlines (and other non-standard whitespace).
         // FIXME: check for variable-length characters.
@@ -171,17 +171,17 @@ impl Window {
                 }
                 self.print(y as u32, col, line)
             },
-            Justify::TopLeft => self.printj(Justify::Left(0), line),
-            Justify::TopCentre => self.printj(Justify::HCentre(0), line),
-            Justify::TopRight => self.printj(Justify::Right(0), line),
-            Justify::CentreLeft => self.printj(Justify::VCentre(0), line),
+            Justify::TopLeft => self.printj(line, Justify::Left(0)),
+            Justify::TopCentre => self.printj(line, Justify::HCentre(0)),
+            Justify::TopRight => self.printj(line, Justify::Right(0)),
+            Justify::CentreLeft => self.printj(line, Justify::VCentre(0)),
             Justify::Centre => {
                 let mut y = self.inner_height();
                 if y > 0 {
                     y -= 1;
                 }
                 y /= 2;
-                self.printj(Justify::HCentre(y as u32), line)
+                self.printj(line, Justify::HCentre(y as u32))
             },
             Justify::CentreRight => {
                 let mut y = self.inner_height();
@@ -189,22 +189,22 @@ impl Window {
                     y -= 1;
                 }
                 y /= 2;
-                self.printj(Justify::Right(y as u32), line)
+                self.printj(line, Justify::Right(y as u32))
             },
-            Justify::BottomLeft => self.printj(Justify::Bottom(0), line),
+            Justify::BottomLeft => self.printj(line, Justify::Bottom(0)),
             Justify::BottomCentre => {
                 let mut y = self.inner_height();
                 if y > 0 {
                     y -= 1;
                 }
-                self.printj(Justify::HCentre(y as u32), line)
+                self.printj(line, Justify::HCentre(y as u32))
             },
             Justify::BottomRight => {
                 let mut y = self.inner_height();
                 if y > 0 {
                     y -= 1;
                 }
-                self.printj(Justify::Right(y as u32), line)
+                self.printj(line, Justify::Right(y as u32))
             },
         }
     }
