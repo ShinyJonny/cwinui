@@ -1,7 +1,9 @@
 use std::ops::Deref;
 use std::cell::RefCell;
 use std::rc::Rc;
+
 use crate::pos;
+use crate::style::StyleMarker;
 
 pub struct Cursor {
     pub y: u32,
@@ -11,11 +13,12 @@ pub struct Cursor {
 
 pub struct InnerWidgetBody {
     pub buffer: Vec<char>,
+    pub style_queue: Vec<StyleMarker>,
+    pub cursor: Cursor,
     pub start_y: u32,
     pub start_x: u32,
     pub width: usize,
     pub height: usize,
-    pub cursor: Cursor,
     pub z_index: u32,
     pub hidden: bool,
     pub subwidgets: Vec<InnerWidget>,
@@ -30,6 +33,7 @@ impl InnerWidget {
             Rc::new(RefCell::new(
                 InnerWidgetBody {
                     buffer: vec!['\0'; width * height],
+                    style_queue: Vec::new(),
                     start_y,
                     start_x,
                     height,
