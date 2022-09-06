@@ -1,5 +1,4 @@
 use std::io::{Stdout, Write};
-use std::time::Instant;
 use std::rc::Rc;
 use std::ops::Deref;
 use termion::raw::{RawTerminal, IntoRawMode};
@@ -23,15 +22,18 @@ pub struct Screen {
     buffer: Vec<char>,
     stdout: RawTerminal<MouseTerminal<Stdout>>,
     widgets: Vec<InnerWidget>,
-    last_refresh: Instant,
 }
 
 impl Screen {
     pub fn init(rows: usize, cols: usize) -> Self
     {
-        let (x, y) = termion::terminal_size().unwrap();
-        if rows > y as usize || cols > x as usize {
-            panic!("terminal too small, needs to be at least: {}x{}", cols, rows);
+        let (x, y) = termion::terminal_size()
+            .expect("Failed to detect terminal size.");
+        let y = y as usize;
+        let x = x as usize;
+
+        if rows > y || cols > x {
+            panic!("terminal too small, needs to be at least: {cols}x{rows}");
         }
 
         let mut stdout = MouseTerminal::from(std::io::stdout()).into_raw_mode().unwrap();
@@ -45,7 +47,6 @@ impl Screen {
             stdout,
             widgets: Vec::new(),
             cursor: Cursor { y: 0, x: 0, hidden: true },
-            last_refresh: Instant::now(),
         }
     }
 
@@ -111,11 +112,6 @@ impl Screen {
         }
 
         self.stdout.flush().unwrap();
-
-        let new_time = Instant::now();
-        let diff = new_time.duration_since(self.last_refresh);
-        self.last_refresh = new_time;
-        self.dtime = diff.as_secs_f64();
     }
 
     pub fn draw(&mut self)
