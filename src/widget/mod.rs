@@ -11,7 +11,7 @@ pub use inner::{InnerWidget, InnerWidgetBody};
 pub use window::Window;
 pub use bar::{HorizBar, VertBar};
 pub use inputline::InputLine;
-pub use menu::{Menu, ListStyle};
+pub use menu::Menu;
 pub use prompt::Prompt;
 
 pub trait Widget {

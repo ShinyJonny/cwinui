@@ -16,17 +16,12 @@ use crate::layout::{
 use crate::sub_impl_aligned;
 use crate::sub_impl_alignable;
 
-pub enum ListStyle {
-    Dummy,
-}
-
 pub struct Menu {
     win: Window,
     items: Vec<String>,
     output: Option<usize>,
     active_item: usize,
     scroll: usize,
-    style: ListStyle,
 }
 
 impl Menu {
@@ -36,7 +31,6 @@ impl Menu {
         height: usize,
         width: usize,
         items: &[&str],
-        style: ListStyle
     ) -> Self
     {
         let mut new_items = Vec::with_capacity(items.len());
@@ -50,7 +44,6 @@ impl Menu {
             output: None,
             active_item: 0,
             scroll: 0,
-            style,
         };
         ret.redraw();
 
