@@ -1,27 +1,3 @@
-pub struct PoisonError<T>(T);
-
-impl<T> PoisonError<T> {
-    pub fn new(i: T) -> Self
-    {
-        Self(i)
-    }
-
-    pub fn into_inner(self) -> T
-    {
-        self.0
-    }
-
-    pub fn get_ref(&self) -> &T
-    {
-        &self.0
-    }
-
-    pub fn get_mut(&mut self) -> &mut T
-    {
-        &mut self.0
-    }
-}
-
 pub trait SliceInChars {
     fn slice_in_chars(&self, start: usize, end: usize) -> &str;
     fn slice_in_chars_mut(&mut self, start: usize, end: usize) -> &mut str;

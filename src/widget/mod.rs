@@ -7,8 +7,6 @@ mod inputline;
 mod menu;
 mod prompt;
 
-use crate::misc::PoisonError;
-
 pub use inner::{InnerWidget, InnerWidgetBody};
 pub use window::Window;
 pub use bar::{HorizBar, VertBar};
@@ -44,4 +42,28 @@ pub trait InteractiveWidget : Widget {
 pub trait OutputWidget<T> : Widget {
     fn try_get_output(&self) -> Option<T>;
     fn get_output(&self) -> Result<T, PoisonError<T>>;
+}
+
+pub struct PoisonError<T>(T);
+
+impl<T> PoisonError<T> {
+    pub fn new(i: T) -> Self
+    {
+        Self(i)
+    }
+
+    pub fn into_inner(self) -> T
+    {
+        self.0
+    }
+
+    pub fn get_ref(&self) -> &T
+    {
+        &self.0
+    }
+
+    pub fn get_mut(&mut self) -> &mut T
+    {
+        &mut self.0
+    }
 }

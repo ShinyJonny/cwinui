@@ -1,9 +1,10 @@
-use crate::widget::{
+use super::{
     Widget,
     InteractiveWidget,
     OutputWidget,
     InnerWidget,
     Window,
+    PoisonError,
 };
 use termion::event::{Event, Key};
 
@@ -12,7 +13,6 @@ use crate::layout::{
     Alignable,
     Align,
 };
-use crate::misc::PoisonError;
 use crate::sub_impl_aligned;
 use crate::sub_impl_alignable;
 

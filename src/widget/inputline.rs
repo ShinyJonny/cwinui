@@ -1,12 +1,13 @@
 use termion::event::{Event, Key};
 
-use crate::widget::{
+use super::{
     InnerWidget,
     Widget,
     InteractiveWidget,
     OutputWidget,
+    PoisonError,
 };
-use crate::misc::{PoisonError, SliceInChars};
+use crate::misc::SliceInChars;
 use crate::layout::{
     self,
     Aligned,

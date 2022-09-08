@@ -7,7 +7,6 @@ use crate::layout::{
 };
 use crate::sub_impl_aligned;
 use crate::sub_impl_alignable;
-use crate::misc::PoisonError;
 
 use super::{
     Widget,
@@ -16,6 +15,7 @@ use super::{
     InnerWidget,
     Window,
     InputLine,
+    PoisonError,
 };
 
 pub struct Prompt {

@@ -1,4 +1,4 @@
-use crate::widget::{InnerWidget, Widget};
+use super::{InnerWidget, Widget};
 use crate::layout::{
     self,
     Aligned,
