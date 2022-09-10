@@ -146,12 +146,15 @@ impl Screen {
         let mut saved_fg = styles[0].fg_color;
         let mut saved_bg = styles[0].bg_color;
         let mut saved_ts = styles[0].text_style;
+        // The first char of every line is always set with colors and style.
         render::set_fg_color(&mut self.stdout, saved_fg)
             .expect("failed to set fg color");
         render::set_bg_color(&mut self.stdout, saved_bg)
             .expect("failed to set bg color");
         render::set_text_style(&mut self.stdout, saved_ts)
             .expect("failed to set text style");
+        write!(self.stdout, "{}", chars[0])
+            .expect("failed to write a char to the screen");
 
         for x in 1..self.width {
             let cur_style = &styles[x];
