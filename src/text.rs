@@ -21,6 +21,34 @@ where
     }
 }
 
+
+impl<'s> From<&'s OwnedStyledText> for StyledText<'s>
+{
+    fn from(s: &'s OwnedStyledText) -> Self
+    {
+        Self {
+            content: s.content.as_str(),
+            style: s.style,
+        }
+    }
+}
+
+#[derive(Clone, PartialEq, Eq)]
+pub struct OwnedStyledText {
+    pub content: String,
+    pub style: Style,
+}
+
+impl<'s> From<StyledText<'s>> for OwnedStyledText {
+    fn from(s: StyledText<'s>) -> Self
+    {
+        Self {
+            content: String::from(s.content),
+            style: s.style,
+        }
+    }
+}
+
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct StyledChar {
     pub c: char,
