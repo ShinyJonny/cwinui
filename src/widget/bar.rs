@@ -5,11 +5,11 @@ use crate::layout::{
     Alignable,
     Align,
 };
-use crate::pos;
+use crate::text::StyledChar;
 
 pub struct HorizBar {
     inner: InnerWidget,
-    style: (char, char, char),
+    style: (StyledChar, StyledChar, StyledChar),
 }
 
 impl HorizBar {
@@ -17,14 +17,20 @@ impl HorizBar {
     {
         Self {
             inner: InnerWidget::new(start_y, start_x, 1, width),
-            style: ('\0', '\0', '\0'),
+            style: ('\0'.into(), '\0'.into(), '\0'.into()),
         }
     }
 
     // left corner, bar, right corner.
-    pub fn set_style(&mut self, style: (char, char, char))
+    pub fn set_style<T>(&mut self, style: (T, T, T))
+    where
+        T: Into<StyledChar>
     {
-        self.style = style;
+        self.style = (
+            style.0.into(),
+            style.1.into(),
+            style.2.into()
+        );
         self.redraw();
     }
 
@@ -32,18 +38,16 @@ impl HorizBar {
     {
         let style = self.style;
 
-        let mut inner = self.inner.borrow_mut();
-        let mut last_x = inner.width;
+        let width = self.inner.borrow().width;
+
+        let mut last_x = width as u32;
         if last_x > 0 {
             last_x -= 1;
         }
-        let ww = inner.width;
 
-        inner.buffer[pos![ww, 0, 0]] = style.0;
-        inner.buffer[pos![ww, 0, last_x]] = style.2;
-        for x in 1..last_x {
-            inner.buffer[pos![ww, 0, x]] = style.1;
-        }
+        self.inner.fill(0, 0, style.1, width);
+        self.inner.putc(0, 0, style.0);
+        self.inner.putc(0, last_x, style.2);
     }
 }
 
@@ -170,7 +174,7 @@ impl Alignable for HorizBar {
 
 pub struct VertBar {
     inner: InnerWidget,
-    style: (char, char, char),
+    style: (StyledChar, StyledChar, StyledChar),
 }
 
 impl VertBar {
@@ -178,14 +182,18 @@ impl VertBar {
     {
         Self {
             inner: InnerWidget::new(start_y, start_x, height, 1),
-            style: ('\0', '\0', '\0'),
+            style: ('\0'.into(), '\0'.into(), '\0'.into()),
         }
     }
 
     // top corner, bar, bottom corner.
     pub fn set_style(&mut self, style: (char, char, char))
     {
-        self.style = style;
+        self.style = (
+            style.0.into(),
+            style.1.into(),
+            style.2.into()
+        );
         self.redraw();
     }
 
@@ -193,18 +201,18 @@ impl VertBar {
     {
         let style = self.style;
 
-        let mut inner = self.inner.borrow_mut();
-        let mut last_y = inner.height;
+        let width = self.inner.borrow_mut().width;
+        let mut last_y = width as u32;
         if last_y > 0 {
             last_y -= 1;
         }
-        let ww = inner.width;
 
-        inner.buffer[pos![ww, 0, 0]] = style.0;
-        inner.buffer[pos![ww, last_y, 0]] = style.2;
         for y in 1..last_y {
-            inner.buffer[pos![ww, y, 0]] = style.1;
+            // TODO: implement this using vertical fill.
+            self.inner.putc(y, 0, style.1);
         }
+        self.inner.putc(0, 0, style.0);
+        self.inner.putc(last_y, 0, style.2);
     }
 }
 
