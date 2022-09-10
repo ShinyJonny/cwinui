@@ -10,7 +10,7 @@ pub struct StyledText<'s> {
 
 impl<'s, T> From<&'s T> for StyledText<'s>
 where
-    T: AsRef<str>
+    T: AsRef<str> + ?Sized
 {
     fn from(s: &'s T) -> Self
     {
