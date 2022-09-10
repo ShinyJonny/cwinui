@@ -16,6 +16,16 @@ struct InternalStyle {
     text_style: TextStyle,
 }
 
+impl Default for InternalStyle {
+    fn default() -> Self {
+        InternalStyle {
+            fg_color: Color::Normal,
+            bg_color: Color::Normal,
+            text_style: TextStyle::NORMAL,
+        }
+    }
+}
+
 struct Cursor {
     y: u32,
     x: u32,
@@ -53,14 +63,7 @@ impl Screen {
             width: cols,
             dtime: 0f64,
             buffer: vec![' '; cols * rows],
-            style_buffer: vec![
-                InternalStyle {
-                    fg_color: Color::Normal,
-                    bg_color: Color::Normal,
-                    text_style: TextStyle::NORMAL,
-                };
-                cols * rows
-            ],
+            style_buffer: vec![InternalStyle::default(); cols * rows],
             stdout,
             widgets: Vec::new(),
             cursor: Cursor { y: 0, x: 0, hidden: true },
@@ -184,9 +187,8 @@ impl Screen {
     /// Constructs the internal buffer from all the widgets.
     fn draw(&mut self)
     {
-        for c in &mut self.buffer {
-            *c = ' ';
-        }
+        self.buffer.fill(' ');
+        self.style_buffer.fill(InternalStyle::default());
 
         self.cursor.hidden = true;
 
@@ -304,7 +306,7 @@ mod render {
     use std::io::Write;
     use termion::color::{Bg, Fg};
 
-    use crate::style::{Color, Color16, TextStyle};
+    use crate::style::{Color, TextStyle};
 
     #[inline]
     pub fn move_cursor<W: Write>(writer: &mut W, y: isize, x: isize) -> Result<(), std::io::Error>
@@ -337,26 +339,24 @@ mod render {
     {
         match color {
             Color::Normal => write!(writer, "{}", Fg(termion::color::Reset))?,
-            Color::C16(c16) => match c16 {
-                Color16::Black        => write!(writer, "{}", Fg(termion::color::Black))?,
-                Color16::Red          => write!(writer, "{}", Fg(termion::color::Red))?,
-                Color16::Green        => write!(writer, "{}", Fg(termion::color::Green))?,
-                Color16::Yellow       => write!(writer, "{}", Fg(termion::color::Yellow))?,
-                Color16::Blue         => write!(writer, "{}", Fg(termion::color::Blue))?,
-                Color16::Magenta      => write!(writer, "{}", Fg(termion::color::Magenta))?,
-                Color16::Cyan         => write!(writer, "{}", Fg(termion::color::Cyan))?,
-                Color16::White        => write!(writer, "{}", Fg(termion::color::White))?,
-                Color16::LightBlack   => write!(writer, "{}", Fg(termion::color::LightBlack))?,
-                Color16::LightRed     => write!(writer, "{}", Fg(termion::color::LightRed))?,
-                Color16::LightGreen   => write!(writer, "{}", Fg(termion::color::LightGreen))?,
-                Color16::LightYellow  => write!(writer, "{}", Fg(termion::color::LightYellow))?,
-                Color16::LightBlue    => write!(writer, "{}", Fg(termion::color::LightBlue))?,
-                Color16::LightMagenta => write!(writer, "{}", Fg(termion::color::LightMagenta))?,
-                Color16::LightCyan    => write!(writer, "{}", Fg(termion::color::LightCyan))?,
-                Color16::LightWhite   => write!(writer, "{}", Fg(termion::color::LightCyan))?,
-            },
-            Color::C256(c256)     => write!(writer, "{}", Fg(termion::color::AnsiValue(c256)))?,
-            Color::True(r, g, b) => write!(writer, "{}", Fg(termion::color::Rgb(r, g, b)))?,
+            Color::Black        => write!(writer, "{}", Fg(termion::color::Black))?,
+            Color::Red          => write!(writer, "{}", Fg(termion::color::Red))?,
+            Color::Green        => write!(writer, "{}", Fg(termion::color::Green))?,
+            Color::Yellow       => write!(writer, "{}", Fg(termion::color::Yellow))?,
+            Color::Blue         => write!(writer, "{}", Fg(termion::color::Blue))?,
+            Color::Magenta      => write!(writer, "{}", Fg(termion::color::Magenta))?,
+            Color::Cyan         => write!(writer, "{}", Fg(termion::color::Cyan))?,
+            Color::White        => write!(writer, "{}", Fg(termion::color::White))?,
+            Color::LightBlack   => write!(writer, "{}", Fg(termion::color::LightBlack))?,
+            Color::LightRed     => write!(writer, "{}", Fg(termion::color::LightRed))?,
+            Color::LightGreen   => write!(writer, "{}", Fg(termion::color::LightGreen))?,
+            Color::LightYellow  => write!(writer, "{}", Fg(termion::color::LightYellow))?,
+            Color::LightBlue    => write!(writer, "{}", Fg(termion::color::LightBlue))?,
+            Color::LightMagenta => write!(writer, "{}", Fg(termion::color::LightMagenta))?,
+            Color::LightCyan    => write!(writer, "{}", Fg(termion::color::LightCyan))?,
+            Color::LightWhite   => write!(writer, "{}", Fg(termion::color::LightCyan))?,
+            Color::Ansi(c)     => write!(writer, "{}", Fg(termion::color::AnsiValue(c)))?,
+            Color::Rgb(r, g, b) => write!(writer, "{}", Fg(termion::color::Rgb(r, g, b)))?,
         }
 
         Ok(())
@@ -369,26 +369,24 @@ mod render {
     {
         match color {
             Color::Normal => write!(writer, "{}", Bg(termion::color::Reset))?,
-            Color::C16(c16) => match c16 {
-                Color16::Black        => write!(writer, "{}", Bg(termion::color::Black))?,
-                Color16::Red          => write!(writer, "{}", Bg(termion::color::Red))?,
-                Color16::Green        => write!(writer, "{}", Bg(termion::color::Green))?,
-                Color16::Yellow       => write!(writer, "{}", Bg(termion::color::Yellow))?,
-                Color16::Blue         => write!(writer, "{}", Bg(termion::color::Blue))?,
-                Color16::Magenta      => write!(writer, "{}", Bg(termion::color::Magenta))?,
-                Color16::Cyan         => write!(writer, "{}", Bg(termion::color::Cyan))?,
-                Color16::White        => write!(writer, "{}", Bg(termion::color::White))?,
-                Color16::LightBlack   => write!(writer, "{}", Bg(termion::color::LightBlack))?,
-                Color16::LightRed     => write!(writer, "{}", Bg(termion::color::LightRed))?,
-                Color16::LightGreen   => write!(writer, "{}", Bg(termion::color::LightGreen))?,
-                Color16::LightYellow  => write!(writer, "{}", Bg(termion::color::LightYellow))?,
-                Color16::LightBlue    => write!(writer, "{}", Bg(termion::color::LightBlue))?,
-                Color16::LightMagenta => write!(writer, "{}", Bg(termion::color::LightMagenta))?,
-                Color16::LightCyan    => write!(writer, "{}", Bg(termion::color::LightCyan))?,
-                Color16::LightWhite   => write!(writer, "{}", Bg(termion::color::LightCyan))?,
-            },
-            Color::C256(c256)     => write!(writer, "{}", Bg(termion::color::AnsiValue(c256)))?,
-            Color::True(r, g, b) => write!(writer, "{}", Bg(termion::color::Rgb(r, g, b)))?,
+            Color::Black        => write!(writer, "{}", Bg(termion::color::Black))?,
+            Color::Red          => write!(writer, "{}", Bg(termion::color::Red))?,
+            Color::Green        => write!(writer, "{}", Bg(termion::color::Green))?,
+            Color::Yellow       => write!(writer, "{}", Bg(termion::color::Yellow))?,
+            Color::Blue         => write!(writer, "{}", Bg(termion::color::Blue))?,
+            Color::Magenta      => write!(writer, "{}", Bg(termion::color::Magenta))?,
+            Color::Cyan         => write!(writer, "{}", Bg(termion::color::Cyan))?,
+            Color::White        => write!(writer, "{}", Bg(termion::color::White))?,
+            Color::LightBlack   => write!(writer, "{}", Bg(termion::color::LightBlack))?,
+            Color::LightRed     => write!(writer, "{}", Bg(termion::color::LightRed))?,
+            Color::LightGreen   => write!(writer, "{}", Bg(termion::color::LightGreen))?,
+            Color::LightYellow  => write!(writer, "{}", Bg(termion::color::LightYellow))?,
+            Color::LightBlue    => write!(writer, "{}", Bg(termion::color::LightBlue))?,
+            Color::LightMagenta => write!(writer, "{}", Bg(termion::color::LightMagenta))?,
+            Color::LightCyan    => write!(writer, "{}", Bg(termion::color::LightCyan))?,
+            Color::LightWhite   => write!(writer, "{}", Bg(termion::color::LightCyan))?,
+            Color::Ansi(c)     => write!(writer, "{}", Bg(termion::color::AnsiValue(c)))?,
+            Color::Rgb(r, g, b) => write!(writer, "{}", Bg(termion::color::Rgb(r, g, b)))?,
         }
 
         Ok(())

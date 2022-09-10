@@ -19,13 +19,13 @@ impl Default for Style {
 }
 
 impl Style {
-    pub fn clean() -> Self
+    pub fn clean(mut self) -> Self
     {
-        Self {
-            text_style: Some(TextStyle::NORMAL),
-            fg_color: Some(Color::Normal),
-            bg_color: Some(Color::Normal),
-        }
+        self.text_style = Some(TextStyle::NORMAL);
+        self.fg_color = Some(Color::Normal);
+        self.bg_color = Some(Color::Normal);
+
+        self
     }
 
     pub fn text_style(mut self, new_ts: TextStyle) -> Self
@@ -64,13 +64,6 @@ bitflags! {
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Color {
     Normal,
-    C16(Color16),
-    C256(u8),
-    True(u8, u8, u8),
-}
-
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub enum Color16 {
     Black,
     Red,
     Green,
@@ -87,4 +80,6 @@ pub enum Color16 {
     LightMagenta,
     LightCyan,
     LightWhite,
+    Ansi(u8),
+    Rgb(u8, u8, u8),
 }
