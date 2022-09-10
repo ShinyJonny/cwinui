@@ -267,7 +267,7 @@ impl Window {
 
     fn draw_border(&mut self)
     {
-        let mut inner = self.inner.borrow_mut();
+        let inner = self.inner.borrow_mut();
 
         let height = inner.height as u32;
         let width = inner.width as u32;
@@ -296,7 +296,7 @@ impl Window {
 
     fn clear_border(&mut self)
     {
-        let mut inner = self.inner.borrow_mut();
+        let inner = self.inner.borrow_mut();
 
         let height = inner.height as u32;
         let width = inner.width as u32;

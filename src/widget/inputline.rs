@@ -31,7 +31,7 @@ pub struct InputLine {
 impl InputLine {
     pub fn new(y: u32, x: u32, length: usize) -> Self
     {
-        let mut inner = InnerWidget::new(y, x, 1, length);
+        let inner = InnerWidget::new(y, x, 1, length);
         inner.show_cursor();
         for i in 0..length {
             inner.putc(0, i as u32, BLANK_CHAR);
