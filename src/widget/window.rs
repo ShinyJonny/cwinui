@@ -149,7 +149,7 @@ impl Window {
             x += 1;
         }
 
-        if print_len < line.content.len() {
+        if print_len < line.content.chars().count() {
             // FIXME: use native slicing API.
             line = StyledText {
                 content: line.content.slice_in_chars(0, print_len),

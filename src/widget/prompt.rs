@@ -28,13 +28,14 @@ impl Prompt {
     pub fn new(label: &str, y: u32, x: u32, len: usize) -> Self
     {
         let label = String::from(label);
+        let label_len = label.chars().count();
 
-        if len <= label.len() {
+        if len <= label_len {
             panic!("length of Prompt is smaller or equal to the length o the label");
         }
 
-        let input_len = len - label.len();
-        let input_x = x + label.len() as u32;
+        let input_len = len - label_len;
+        let input_x = x + label_len as u32;
 
         let mut inputline = InputLine::new(y, input_x, input_len);
         let win = Window::new(y, x, 1, len);
