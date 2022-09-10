@@ -1,10 +1,8 @@
 use bitflags::bitflags;
 
-type TextStyleType = u8;
-
 #[derive(Clone, Copy)]
 pub struct Style {
-    pub text_style: Option<TextStyleType>,
+    pub text_style: Option<TextStyle>,
     pub fg_color: Option<Color>,
     pub bg_color: Option<Color>,
 }
@@ -21,13 +19,9 @@ impl Default for Style {
 }
 
 impl Style {
-    pub fn text_style(mut self, new_ts: u8) -> Self
+    pub fn text_style(mut self, new_ts: TextStyle) -> Self
     {
-        if let Some(text_style) = self.text_style.as_mut() {
-            *text_style |= new_ts;
-        } else {
-            self.text_style = Some(new_ts);
-        }
+        self.text_style = Some(new_ts);
 
         self
     }
@@ -48,7 +42,8 @@ impl Style {
 }
 
 bitflags! {
-    pub struct TextStyle: TextStyleType {
+    pub struct TextStyle: u8 {
+        const NORMAL    = 0b00000000;
         const BOLD      = 0b00000001;
         const BLINK     = 0b00000010;
         const INVERT    = 0b00000100;
@@ -57,14 +52,15 @@ bitflags! {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Color {
+    Normal,
     C16(Color16),
     C256(u8),
-    CTrue(u8, u8, u8),
+    True(u8, u8, u8),
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Color16 {
     Black,
     Red,
