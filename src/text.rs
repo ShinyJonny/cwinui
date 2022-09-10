@@ -36,3 +36,25 @@ impl From<char> for StyledChar {
         }
     }
 }
+
+pub trait IntoStyledText<'s>
+{
+    fn styled<F>(self, f: F) -> StyledText<'s>
+    where
+        F: FnOnce(Style) -> Style;
+}
+
+impl<'s, T> IntoStyledText<'s> for T
+where
+    T: Into<StyledText<'s>>
+{
+    fn styled<F>(self, f: F) -> StyledText<'s>
+    where
+        F: FnOnce(Style) -> Style
+    {
+        let mut new = self.into();
+        new.style = f(new.style);
+
+        new
+    }
+}
