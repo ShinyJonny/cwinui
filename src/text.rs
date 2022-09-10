@@ -2,23 +2,26 @@ use crate::style::Style;
 
 // TODO: implement slicing.
 
-#[derive(PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct StyledText<'s> {
     pub content: &'s str,
     pub style: Style,
 }
 
-impl<'s> From<&'s str> for StyledText<'s> {
-    fn from(s: &'s str) -> Self
+impl<'s, T> From<&'s T> for StyledText<'s>
+where
+    T: AsRef<str>
+{
+    fn from(s: &'s T) -> Self
     {
         Self {
-            content: s,
+            content: s.as_ref(),
             style: Style::default(),
         }
     }
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct StyledChar {
     pub c: char,
     pub style: Style,

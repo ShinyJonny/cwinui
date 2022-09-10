@@ -74,12 +74,12 @@ impl Window {
         C: Into<StyledChar>
     {
         self.border_style = (
+            border.0.into(),
             border.1.into(),
-            border.1.into(),
-            border.1.into(),
-            border.1.into(),
-            border.1.into(),
-            border.1.into(),
+            border.2.into(),
+            border.3.into(),
+            border.4.into(),
+            border.5.into(),
         );
         if self.has_border {
             self.draw_border();
@@ -131,7 +131,7 @@ impl Window {
         // TODO: support printing with newlines (and other non-standard whitespace).
         // TODO: check for variable-length characters.
 
-        let mut text = line.into();
+        let mut line = line.into();
 
         let ch = self.content_height();
         let cw = self.content_width();
@@ -139,7 +139,7 @@ impl Window {
             return;
         }
 
-        let mut print_len = text.content.chars().count();
+        let mut print_len = line.content.chars().count();
         if x as usize + print_len > cw {
             print_len = cw - x as usize;
         }
@@ -149,15 +149,15 @@ impl Window {
             x += 1;
         }
 
-        if print_len < text.content.len() {
+        if print_len < line.content.len() {
             // FIXME: use native slicing API.
-            text = StyledText {
-                content: text.content.slice_in_chars(0, print_len),
-                style: text.style,
+            line = StyledText {
+                content: line.content.slice_in_chars(0, print_len),
+                style: line.style,
             }
         }
 
-        self.inner.print(y, x, text);
+        self.inner.print(y, x, line);
     }
 
     pub fn printj<'s, T>(&mut self, line: T, j: Justify)
@@ -167,9 +167,9 @@ impl Window {
         // TODO: support printing with newlines (and other non-standard whitespace).
         // FIXME: check for variable-length characters.
 
-        let text = line.into();
+        let line = line.into();
 
-        let char_count = text.content.chars().count();
+        let char_count = line.content.chars().count();
 
         match j {
             Justify::Left(row) => self.print(row, 0, line),

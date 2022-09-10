@@ -106,7 +106,7 @@ impl InteractiveWidget for InputLine {
                         self.output.push(c);
                         let output_len = output_len + 1;
 
-                        self.inner.print(0, 0, self.output.as_str().slice_in_chars(output_len + 1 - self.length, output_len));
+                        self.inner.print(0, 0, &self.output.as_str().slice_in_chars(output_len + 1 - self.length, output_len));
                     }
                 }
             },
@@ -123,7 +123,7 @@ impl InteractiveWidget for InputLine {
                         self.output.pop();
                         let output_len = output_len - 1;
 
-                        self.inner.print(0, 0, self.output.as_str().slice_in_chars(output_len + 1 - self.length, output_len));
+                        self.inner.print(0, 0, &self.output.as_str().slice_in_chars(output_len + 1 - self.length, output_len));
                     }
                 }
             },
