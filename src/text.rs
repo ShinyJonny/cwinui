@@ -1,5 +1,8 @@
 use crate::style::Style;
 
+// TODO: implement slicing.
+
+#[derive(PartialEq, Eq)]
 pub struct StyledText<'s> {
     pub content: &'s str,
     pub style: Style,
@@ -15,6 +18,7 @@ impl<'s> From<&'s str> for StyledText<'s> {
     }
 }
 
+#[derive(PartialEq, Eq)]
 pub struct StyledChar {
     pub c: char,
     pub style: Style,

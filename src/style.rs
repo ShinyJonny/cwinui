@@ -1,6 +1,6 @@
 use bitflags::bitflags;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Style {
     pub text_style: Option<TextStyle>,
     pub fg_color: Option<Color>,
@@ -19,6 +19,15 @@ impl Default for Style {
 }
 
 impl Style {
+    pub fn clean() -> Self
+    {
+        Self {
+            text_style: Some(TextStyle::NORMAL),
+            fg_color: Some(Color::Normal),
+            bg_color: Some(Color::Normal),
+        }
+    }
+
     pub fn text_style(mut self, new_ts: TextStyle) -> Self
     {
         self.text_style = Some(new_ts);

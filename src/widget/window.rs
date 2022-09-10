@@ -8,11 +8,12 @@ use crate::layout::{
 };
 use crate::pos;
 use crate::misc::SliceInChars;
+use crate::text::{StyledChar, StyledText};
 
 pub struct Window {
     inner: InnerWidget,
     has_border: bool,
-    border_style: (char, char, char, char, char, char),
+    border_style: (StyledChar, StyledChar, StyledChar, StyledChar, StyledChar, StyledChar),
 }
 
 impl Window {
@@ -22,7 +23,14 @@ impl Window {
             inner: InnerWidget::new(start_y, start_x, height, width),
             has_border: false,
             // TODO: add border style for each side.
-            border_style: ('\0', '\0', '\0', '\0', '\0', '\0'),
+            border_style: (
+                '\0'.into(),
+                '\0'.into(),
+                '\0'.into(),
+                '\0'.into(),
+                '\0'.into(),
+                '\0'.into()
+            ),
         }
     }
 
@@ -61,9 +69,18 @@ impl Window {
 
     // (horizontal bars, vertical bars, top-left corner, top-right corner, bottom-left corner,
     // bottom-right corner)
-    pub fn set_border(&mut self, border: (char, char, char, char, char, char))
+    pub fn set_border<C>(&mut self, border: (C, C, C, C, C, C))
+    where
+        C: Into<StyledChar>
     {
-        self.border_style = border;
+        self.border_style = (
+            border.1.into(),
+            border.1.into(),
+            border.1.into(),
+            border.1.into(),
+            border.1.into(),
+            border.1.into(),
+        );
         if self.has_border {
             self.draw_border();
         }
@@ -90,7 +107,9 @@ impl Window {
         Ok(())
     }
 
-    pub fn putc(&mut self, mut y: u32, mut x: u32, c: char)
+    pub fn putc<C>(&mut self, mut y: u32, mut x: u32, c: C)
+    where
+        C: Into<StyledChar>
     {
         let ch = self.content_height();
         let cw = self.content_width();
@@ -105,10 +124,14 @@ impl Window {
         self.inner.putc(y, x, c);
     }
 
-    pub fn print(&mut self, mut y: u32, mut x: u32, line: &str)
+    pub fn print<'s, T>(&mut self, mut y: u32, mut x: u32, line: T)
+    where
+        T: Into<StyledText<'s>>
     {
         // TODO: support printing with newlines (and other non-standard whitespace).
         // TODO: check for variable-length characters.
+
+        let mut text = line.into();
 
         let ch = self.content_height();
         let cw = self.content_width();
@@ -116,7 +139,7 @@ impl Window {
             return;
         }
 
-        let mut print_len = line.chars().count();
+        let mut print_len = text.content.chars().count();
         if x as usize + print_len > cw {
             print_len = cw - x as usize;
         }
@@ -125,15 +148,28 @@ impl Window {
             y += 1;
             x += 1;
         }
-        self.inner.print(y, x, line.slice_in_chars(0, print_len));
+
+        if print_len < text.content.len() {
+            // FIXME: use native slicing API.
+            text = StyledText {
+                content: text.content.slice_in_chars(0, print_len),
+                style: text.style,
+            }
+        }
+
+        self.inner.print(y, x, text);
     }
 
-    pub fn printj(&mut self, line: &str, j: Justify)
+    pub fn printj<'s, T>(&mut self, line: T, j: Justify)
+    where
+        T: Into<StyledText<'s>>
     {
         // TODO: support printing with newlines (and other non-standard whitespace).
         // FIXME: check for variable-length characters.
 
-        let char_count = line.chars().count();
+        let text = line.into();
+
+        let char_count = text.content.chars().count();
 
         match j {
             Justify::Left(row) => self.print(row, 0, line),
@@ -233,67 +269,52 @@ impl Window {
     {
         let mut inner = self.inner.borrow_mut();
 
-        let mut height = inner.height;
-        let mut width = inner.width;
+        let height = inner.height as u32;
+        let width = inner.width as u32;
 
-        if height < 1 {
-            height = 1;
-        }
-        if width < 1 {
-            width = 1;
+        drop(inner);
+
+        if height < 1 || width < 1 {
+            return;
         }
 
-        let w = inner.width;
-
-        if self.border_style.0 != '\0' {
-            for i in 0..inner.width {
-                inner.buffer[pos![w, 0, 0 + i]] = self.border_style.0;
-                inner.buffer[pos![w, 0 + height - 1, 0 + i]] = self.border_style.0;
-            }
+        // Top and bottom edges.
+        self.inner.fill(0, 0, self.border_style.0, width as usize);
+        self.inner.fill(height as u32 - 1, 0, self.border_style.0, width as usize);
+        // Right and left edges.
+        for i in 0..height {
+            // TODO: implement and use vertical fill.
+            self.inner.putc(0 + i, 0, self.border_style.1);
+            self.inner.putc(0 + i, 0 + width as u32 - 1, self.border_style.1);
         }
-        if self.border_style.1 != '\0' {
-            for i in 0..inner.height {
-                inner.buffer[pos![w, 0 + i, 0]] = self.border_style.1;
-                inner.buffer[pos![w, 0 + i, 0 + width - 1]] = self.border_style.1;
-            }
-        }
-        if self.border_style.2 != '\0' {
-            inner.buffer[pos![w, 0, 0]] = self.border_style.2;
-        }
-        if self.border_style.3 != '\0' {
-            inner.buffer[pos![w, 0, 0 + width - 1]] = self.border_style.3;
-        }
-        if self.border_style.4 != '\0' {
-            inner.buffer[pos![w, 0 + height - 1, 0 + width - 1]] = self.border_style.4;
-        }
-        if self.border_style.5 != '\0' {
-            inner.buffer[pos![w, 0 + height - 1, 0]] = self.border_style.5;
-        }
+        // Four corners: top-left, top-right, bottom-right, bottom-left.
+        self.inner.putc(0, 0, self.border_style.2);
+        self.inner.putc(0, 0 + width - 1, self.border_style.3);
+        self.inner.putc(0 + height - 1, 0 + width - 1, self.border_style.4);
+        self.inner.putc(0 + height - 1, 0, self.border_style.5);
     }
 
     fn clear_border(&mut self)
     {
         let mut inner = self.inner.borrow_mut();
 
-        let mut height = inner.height;
-        let mut width = inner.width;
+        let height = inner.height as u32;
+        let width = inner.width as u32;
 
-        if height < 1 {
-            height = 1;
-        }
-        if width < 1 {
-            width = 1;
+        drop(inner);
+
+        if height < 1 || width < 1 {
+            return;
         }
 
-        let w = inner.width;
-
-        for i in 0..inner.width {
-            inner.buffer[pos![w, 0, 0 + i]] = '\0';
-            inner.buffer[pos![w, 0 + height - 1, 0 + i]] = '\0';
-        }
-        for i in 0..inner.height {
-            inner.buffer[pos![w, 0 + i, 0]] = '\0';
-            inner.buffer[pos![w, 0 + i, 0 + width - 1]] = '\0';
+        // Top and bottom edges.
+        self.inner.fill(0, 0, '\0', width as usize);
+        self.inner.fill(height as u32 - 1, 0, '\0', width as usize);
+        // Right and left edges.
+        for i in 0..height {
+            // TODO: implement and use vertical fill.
+            self.inner.putc(0 + i, 0, '\0');
+            self.inner.putc(0 + i, 0 + width as u32 - 1, '\0');
         }
     }
 
@@ -304,7 +325,9 @@ impl Window {
 
         for y in 1..inner.height {
             for x in 1..inner.width {
+                //FIXME: implement this through APIs.
                 inner.buffer[pos![w, y, x]] = inner.buffer[pos![w, y - 1, x - 1]];
+                inner.style_buffer[pos![w, y, x]] = inner.style_buffer[pos![w, y - 1, x - 1]];
             }
         }
     }
@@ -316,7 +339,9 @@ impl Window {
 
         for y in 1..inner.height {
             for x in 1..inner.width {
+                //FIXME: implement this through APIs.
                 inner.buffer[pos![w, y - 1, x - 1]] = inner.buffer[pos![w, y, x]];
+                inner.style_buffer[pos![w, y - 1, x - 1]] = inner.style_buffer[pos![w, y, x]];
             }
         }
     }
