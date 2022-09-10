@@ -3,6 +3,8 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use crate::pos;
+use crate::style::Style;
+use crate::text::{StyledText, StyledChar};
 
 pub struct Cursor {
     pub y: u32,
@@ -12,6 +14,7 @@ pub struct Cursor {
 
 pub struct InnerWidgetBody {
     pub buffer: Vec<char>,
+    pub style_buffer: Vec<Style>,
     pub cursor: Cursor,
     pub start_y: u32,
     pub start_x: u32,
@@ -31,6 +34,7 @@ impl InnerWidget {
             Rc::new(RefCell::new(
                 InnerWidgetBody {
                     buffer: vec!['\0'; width * height],
+                    style_buffer: vec![Style::default(); width * height],
                     start_y,
                     start_x,
                     height,
@@ -54,10 +58,13 @@ impl InnerWidget {
         self.borrow_mut().subwidgets.push(sub);
     }
 
-    pub fn print(&mut self, y: u32, x: u32, line: &str)
+    pub fn print<'t, T>(&self, y: u32, x: u32, text: T)
+    where
+        T: Into<StyledText<'t>>
     {
         let y = y as usize;
         let x = x as usize;
+        let text = text.into();
 
         let mut body = self.borrow_mut();
 
@@ -69,20 +76,42 @@ impl InnerWidget {
         // FIXME: check for variable-length characters.
         // FIXME: check for non-printable characters.
 
-        let mut print_len = line.chars().count();
+        let mut print_len = text.content.chars().count();
         if x + print_len > body.width {
             print_len = body.width - x;
         }
 
         let w = body.width;
-        let mut chars = line.chars();
+        let mut chars = text.content.chars();
         for i in 0..print_len {
             body.buffer[pos![w, y, x + i]] = chars.next().unwrap();
         }
+
+        let override_fg = text.style.fg_color.is_some();
+        let override_bg = text.style.bg_color.is_some();
+        let override_ts = text.style.text_style.is_some();
+        if override_fg {
+            for i in 0..print_len {
+                body.style_buffer[pos![w, y, x + i]].fg_color = text.style.fg_color;
+            }
+        }
+        if override_bg {
+            for i in 0..print_len {
+                body.style_buffer[pos![w, y, x + i]].bg_color = text.style.bg_color;
+            }
+        }
+        if override_ts {
+            for i in 0..print_len {
+                body.style_buffer[pos![w, y, x + i]].text_style = text.style.text_style;
+            }
+        }
     }
 
-    pub fn putc(&mut self, y: u32, x: u32, c: char)
+    pub fn putc<T>(&self, y: u32, x: u32, c: T)
+    where
+        T: Into<StyledChar>
     {
+        let c = c.into();
         let mut body = self.borrow_mut();
 
         if x as usize >= body.width || y as usize >= body.height {
@@ -90,27 +119,105 @@ impl InnerWidget {
         }
 
         let w = body.width;
-        body.buffer[pos![w, y as usize, x as usize]] = c;
-    }
+        let pos = pos![w, y as usize, x as usize];
+        body.buffer[pos] = c.c;
 
-    pub fn clear(&mut self)
-    {
-        for c in self.borrow_mut().buffer.iter_mut() {
-            *c = '\0';
+
+        let override_fg = c.style.fg_color.is_some();
+        let override_bg = c.style.bg_color.is_some();
+        let override_ts = c.style.text_style.is_some();
+
+        if override_fg {
+            body.style_buffer[pos].fg_color = c.style.fg_color;
+        }
+        if override_bg {
+            body.style_buffer[pos].bg_color = c.style.bg_color;
+        }
+        if override_ts {
+            body.style_buffer[pos].text_style = c.style.text_style;
         }
     }
 
-    pub fn show_cursor(&mut self)
+    pub fn fill<T>(&self, y: u32, x: u32, c: T, len: usize)
+    where
+        T: Into<StyledChar>
+    {
+        let y = y as usize;
+        let x = x as usize;
+        let c = c.into();
+
+        let mut body = self.borrow_mut();
+
+        if x >= body.width || y >= body.height {
+            return;
+        }
+
+        let mut fill_len = len;
+        if x + fill_len > body.width {
+            fill_len = body.width - x;
+        }
+
+        let w = body.width;
+        for i in 0..fill_len {
+            body.buffer[pos![w, y, x + i]] = c.c;
+        }
+
+        let override_fg = c.style.fg_color.is_some();
+        let override_bg = c.style.bg_color.is_some();
+        let override_ts = c.style.text_style.is_some();
+        if override_fg {
+            for i in 0..fill_len {
+                body.style_buffer[pos![w, y, x + i]].fg_color = c.style.fg_color;
+            }
+        }
+        if override_bg {
+            for i in 0..fill_len {
+                body.style_buffer[pos![w, y, x + i]].bg_color = c.style.bg_color;
+            }
+        }
+        if override_ts {
+            for i in 0..fill_len {
+                body.style_buffer[pos![w, y, x + i]].text_style = c.style.text_style;
+            }
+        }
+    }
+
+    #[inline]
+    pub fn peekc(&self, y: u32, x: u32) -> StyledChar
+    {
+        let inner = self.borrow();
+        let pos = pos![inner.width, y as usize, x as usize];
+
+        StyledChar {
+            c: inner.buffer[pos],
+            style: inner.style_buffer[pos]
+        }
+    }
+
+    pub fn clear(&self)
+    {
+        let mut inner = self.borrow_mut();
+
+        // FIXME: optimise into one loop.
+        for c in inner.buffer.iter_mut() {
+            *c = '\0';
+        }
+        for s in inner.style_buffer.iter_mut() {
+            *s = Style::default();
+        }
+    }
+
+    pub fn show_cursor(&self)
     {
         self.borrow_mut().cursor.hidden = false;
     }
 
-    pub fn hide_cursor(&mut self)
+    pub fn hide_cursor(&self)
     {
         self.borrow_mut().cursor.hidden = true;
     }
 
-    pub fn move_cursor(&mut self, y: u32, x: u32)
+    pub fn move_cursor(&self, y: u32, x: u32)
     {
         let mut body = self.borrow_mut();
 
@@ -122,7 +229,7 @@ impl InnerWidget {
         body.cursor.x = x;
     }
 
-    pub fn advance_cursor(&mut self, steps: i32)
+    pub fn advance_cursor(&self, steps: i32)
     {
         let mut body = self.borrow_mut();
 

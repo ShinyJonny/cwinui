@@ -7,6 +7,7 @@ use crate::layout::{
 };
 use crate::sub_impl_aligned;
 use crate::sub_impl_alignable;
+use crate::text::{StyledText, OwnedStyledText};
 
 use super::{
     Widget,
@@ -20,21 +21,24 @@ use super::{
 
 pub struct Prompt {
     win: Window,
-    label: String,
+    label: OwnedStyledText,
     inputline: InputLine,
 }
 
 impl Prompt {
-    pub fn new(label: &str, y: u32, x: u32, len: usize) -> Self
+    pub fn new<'s, T>(label: T, y: u32, x: u32, len: usize) -> Self
+    where
+        T: Into<StyledText<'s>>
     {
-        let label = String::from(label);
+        let label = OwnedStyledText::from(label.into());
+        let label_len = label.content.chars().count();
 
-        if len <= label.len() {
+        if len <= label_len {
             panic!("length of Prompt is smaller or equal to the length o the label");
         }
 
-        let input_len = len - label.len();
-        let input_x = x + label.len() as u32;
+        let input_len = len - label_len;
+        let input_x = x + label_len as u32;
 
         let mut inputline = InputLine::new(y, input_x, input_len);
         let win = Window::new(y, x, 1, len);

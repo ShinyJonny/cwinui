@@ -12,7 +12,7 @@ It is currently based around shared buffers and is focused on efficiency. The im
 - [x] Windowing support (based on shared buffers).
 - [x] Custom widgets.
 - [x] Alignment support (widgets can be aligned to each other in various ways, e.g. center, top-left, etc.
-- [ ] Color support (WIP)
+- [x] Color support.
 - [ ] Dynamic layouts and resizing.
 
 ## Installation
@@ -21,5 +21,5 @@ Add this to your project's `Cargo.toml`:
 
 ```toml
 [dependencies]
-cwinui = { git = "https://github.com/ShinyJonny/cwinui" tag = "v0.1.0 "}
+cwinui = { git = "https://github.com/ShinyJonny/cwinui" tag = "v0.1.1 "}
 ```
