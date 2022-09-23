@@ -5,7 +5,7 @@ use crate::layout::{
     Alignable,
     Align,
 };
-use crate::text::StyledChar;
+use crate::style::StyledChar;
 
 pub struct HorizBar {
     inner: InnerWidget,
@@ -37,17 +37,11 @@ impl HorizBar {
     fn redraw(&mut self)
     {
         let style = self.style;
-
         let width = self.inner.borrow().width;
 
-        let mut last_x = width as u32;
-        if last_x > 0 {
-            last_x -= 1;
-        }
-
-        self.inner.fill(0, 0, style.1, width);
+        self.inner.hfill(0, 0, style.1, width);
         self.inner.putc(0, 0, style.0);
-        self.inner.putc(0, last_x, style.2);
+        self.inner.putc(0, width as u32 - 1, style.2);
     }
 }
 
@@ -200,19 +194,11 @@ impl VertBar {
     fn redraw(&mut self)
     {
         let style = self.style;
+        let height = self.inner.borrow_mut().height;
 
-        let width = self.inner.borrow_mut().width;
-        let mut last_y = width as u32;
-        if last_y > 0 {
-            last_y -= 1;
-        }
-
-        for y in 1..last_y {
-            // TODO: implement this using vertical fill.
-            self.inner.putc(y, 0, style.1);
-        }
+        self.inner.vfill(0, 0, style.1, height);
         self.inner.putc(0, 0, style.0);
-        self.inner.putc(last_y, 0, style.2);
+        self.inner.putc(height as u32 - 1, 0, style.2);
     }
 }
 

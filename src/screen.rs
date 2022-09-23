@@ -356,7 +356,7 @@ mod render {
             Color::LightCyan    => write!(writer, "{}", Fg(termion::color::LightCyan))?,
             Color::LightWhite   => write!(writer, "{}", Fg(termion::color::LightCyan))?,
             Color::Ansi(c)     => write!(writer, "{}", Fg(termion::color::AnsiValue(c)))?,
-            Color::Rgb(r, g, b) => write!(writer, "{}", Fg(termion::color::Rgb(r, g, b)))?,
+            Color::Rgb((r, g, b)) => write!(writer, "{}", Fg(termion::color::Rgb(r, g, b)))?,
         }
 
         Ok(())
@@ -386,7 +386,7 @@ mod render {
             Color::LightCyan    => write!(writer, "{}", Bg(termion::color::LightCyan))?,
             Color::LightWhite   => write!(writer, "{}", Bg(termion::color::LightCyan))?,
             Color::Ansi(c)     => write!(writer, "{}", Bg(termion::color::AnsiValue(c)))?,
-            Color::Rgb(r, g, b) => write!(writer, "{}", Bg(termion::color::Rgb(r, g, b)))?,
+            Color::Rgb((r, g, b)) => write!(writer, "{}", Bg(termion::color::Rgb(r, g, b)))?,
         }
 
         Ok(())

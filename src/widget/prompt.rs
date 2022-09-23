@@ -7,7 +7,7 @@ use crate::layout::{
 };
 use crate::sub_impl_aligned;
 use crate::sub_impl_alignable;
-use crate::text::{StyledText, OwnedStyledText};
+use crate::style::{OwnedStyledText, StyledText};
 
 use super::{
     Widget,
@@ -34,7 +34,7 @@ impl Prompt {
         let label_len = label.content.chars().count();
 
         if len <= label_len {
-            panic!("length of Prompt is smaller or equal to the length o the label");
+            panic!("length of Prompt is smaller or equal to the length of the label");
         }
 
         let input_len = len - label_len;

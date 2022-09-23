@@ -58,7 +58,7 @@ impl Menu {
         let end = usize::min(self.scroll + self.visible_count(), self.items.len());
 
         for (i, item) in self.items[start..end].iter().enumerate() {
-            self.win.print(i as u32, 2, item);
+            self.win.print(i as u32, 2, item.as_str());
         }
         if self.active_item >= start && self.active_item < end {
             self.win.putc((self.active_item - self.scroll) as u32, 0, '*');

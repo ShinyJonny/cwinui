@@ -8,7 +8,7 @@ use crate::layout::{
 };
 use crate::pos;
 use crate::misc::SliceInChars;
-use crate::text::{StyledChar, StyledText};
+use crate::style::{StyledChar, StyledText};
 
 pub struct Window {
     inner: InnerWidget,
@@ -279,14 +279,11 @@ impl Window {
         }
 
         // Top and bottom edges.
-        self.inner.fill(0, 0, self.border_style.0, width as usize);
-        self.inner.fill(height as u32 - 1, 0, self.border_style.0, width as usize);
+        self.inner.hfill(0, 0, self.border_style.0, width as usize);
+        self.inner.hfill(height - 1, 0, self.border_style.0, width as usize);
         // Right and left edges.
-        for i in 0..height {
-            // TODO: implement and use vertical fill.
-            self.inner.putc(0 + i, 0, self.border_style.1);
-            self.inner.putc(0 + i, 0 + width as u32 - 1, self.border_style.1);
-        }
+        self.inner.vfill(0, 0, self.border_style.1, height as usize);
+        self.inner.vfill(0, width - 1, self.border_style.1, height as usize);
         // Four corners: top-left, top-right, bottom-right, bottom-left.
         self.inner.putc(0, 0, self.border_style.2);
         self.inner.putc(0, 0 + width - 1, self.border_style.3);
@@ -308,14 +305,11 @@ impl Window {
         }
 
         // Top and bottom edges.
-        self.inner.fill(0, 0, '\0', width as usize);
-        self.inner.fill(height as u32 - 1, 0, '\0', width as usize);
+        self.inner.hfill(0, 0, '\0', width as usize);
+        self.inner.hfill(height - 1, 0, '\0', width as usize);
         // Right and left edges.
-        for i in 0..height {
-            // TODO: implement and use vertical fill.
-            self.inner.putc(0 + i, 0, '\0');
-            self.inner.putc(0 + i, 0 + width as u32 - 1, '\0');
-        }
+        self.inner.vfill(0, 0, '\0', height as usize);
+        self.inner.vfill(0, width - 1, '\0', height as usize);
     }
 
     fn shift_content_in(&mut self)

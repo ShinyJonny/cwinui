@@ -81,5 +81,111 @@ pub enum Color {
     LightCyan,
     LightWhite,
     Ansi(u8),
-    Rgb(u8, u8, u8),
+    Rgb((u8, u8, u8)),
+}
+
+// TODO: implement slicing.
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub struct StyledText<'s> {
+    pub content: &'s str,
+    pub style: Style,
+}
+
+impl<'s, T> From<&'s T> for StyledText<'s>
+where
+    T: AsRef<str> + ?Sized
+{
+    fn from(s: &'s T) -> Self
+    {
+        Self {
+            content: s.as_ref(),
+            style: Style::default(),
+        }
+    }
+}
+
+impl<'s> From<&'s OwnedStyledText> for StyledText<'s>
+{
+    fn from(s: &'s OwnedStyledText) -> Self
+    {
+        Self {
+            content: s.content.as_str(),
+            style: s.style,
+        }
+    }
+}
+
+#[derive(Clone, PartialEq, Eq)]
+pub struct OwnedStyledText {
+    pub content: String,
+    pub style: Style,
+}
+
+impl <'s, T> From<T> for OwnedStyledText
+where
+    T: Into<StyledText<'s>>
+{
+    fn from(t: T) -> Self
+    {
+        let t: StyledText = t.into();
+
+        Self {
+            content: String::from(t.content),
+            style: t.style,
+        }
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub struct StyledChar {
+    pub content: char,
+    pub style: Style,
+}
+
+impl From<char> for StyledChar {
+    fn from(c: char) -> Self
+    {
+        Self {
+            content: c,
+            style: Style::default(),
+        }
+    }
+}
+
+pub trait WithStyle<T>
+{
+    fn with_style<F>(self, f: F) -> T
+    where
+        F: FnOnce(Style) -> Style;
+}
+
+impl<T> WithStyle<StyledChar> for T
+where
+    T: Into<StyledChar>
+{
+    fn with_style<F>(self, f: F) -> StyledChar
+    where
+        F: FnOnce(Style) -> Style
+    {
+        let mut new = self.into();
+        new.style = f(new.style);
+
+        new
+    }
+}
+
+impl<'s, T> WithStyle<StyledText<'s>> for T
+where
+    T: Into<StyledText<'s>>
+{
+    fn with_style<F>(self, f: F) -> StyledText<'s>
+    where
+        F: FnOnce(Style) -> Style
+    {
+        let mut new = self.into();
+        new.style = f(new.style);
+
+        new
+    }
 }

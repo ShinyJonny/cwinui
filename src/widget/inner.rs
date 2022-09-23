@@ -3,8 +3,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use crate::pos;
-use crate::style::Style;
-use crate::text::{StyledText, StyledChar};
+use crate::style::{Style, StyledChar, StyledText};
 
 pub struct Cursor {
     pub y: u32,
@@ -58,9 +57,9 @@ impl InnerWidget {
         self.borrow_mut().subwidgets.push(sub);
     }
 
-    pub fn print<'t, T>(&self, y: u32, x: u32, text: T)
+    pub fn print<'s, T>(&self, y: u32, x: u32, text: T)
     where
-        T: Into<StyledText<'t>>
+        T: Into<StyledText<'s>>
     {
         let y = y as usize;
         let x = x as usize;
@@ -87,23 +86,8 @@ impl InnerWidget {
             body.buffer[pos![w, y, x + i]] = chars.next().unwrap();
         }
 
-        let override_fg = text.style.fg_color.is_some();
-        let override_bg = text.style.bg_color.is_some();
-        let override_ts = text.style.text_style.is_some();
-        if override_fg {
-            for i in 0..print_len {
-                body.style_buffer[pos![w, y, x + i]].fg_color = text.style.fg_color;
-            }
-        }
-        if override_bg {
-            for i in 0..print_len {
-                body.style_buffer[pos![w, y, x + i]].bg_color = text.style.bg_color;
-            }
-        }
-        if override_ts {
-            for i in 0..print_len {
-                body.style_buffer[pos![w, y, x + i]].text_style = text.style.text_style;
-            }
+        for i in 0..print_len {
+            body.style_buffer[pos![w, y, x + i]] = text.style;
         }
     }
 
@@ -120,25 +104,11 @@ impl InnerWidget {
 
         let w = body.width;
         let pos = pos![w, y as usize, x as usize];
-        body.buffer[pos] = c.c;
-
-
-        let override_fg = c.style.fg_color.is_some();
-        let override_bg = c.style.bg_color.is_some();
-        let override_ts = c.style.text_style.is_some();
-
-        if override_fg {
-            body.style_buffer[pos].fg_color = c.style.fg_color;
-        }
-        if override_bg {
-            body.style_buffer[pos].bg_color = c.style.bg_color;
-        }
-        if override_ts {
-            body.style_buffer[pos].text_style = c.style.text_style;
-        }
+        body.buffer[pos] = c.content;
+        body.style_buffer[pos] = c.style;
     }
 
-    pub fn fill<T>(&self, y: u32, x: u32, c: T, len: usize)
+    pub fn hfill<T>(&self, y: u32, x: u32, c: T, len: usize)
     where
         T: Into<StyledChar>
     {
@@ -159,26 +129,40 @@ impl InnerWidget {
 
         let w = body.width;
         for i in 0..fill_len {
-            body.buffer[pos![w, y, x + i]] = c.c;
+            body.buffer[pos![w, y, x + i]] = c.content;
         }
 
-        let override_fg = c.style.fg_color.is_some();
-        let override_bg = c.style.bg_color.is_some();
-        let override_ts = c.style.text_style.is_some();
-        if override_fg {
-            for i in 0..fill_len {
-                body.style_buffer[pos![w, y, x + i]].fg_color = c.style.fg_color;
-            }
+        for i in 0..fill_len {
+            body.style_buffer[pos![w, y, x + i]] = c.style;
         }
-        if override_bg {
-            for i in 0..fill_len {
-                body.style_buffer[pos![w, y, x + i]].bg_color = c.style.bg_color;
-            }
+    }
+
+    pub fn vfill<T>(&self, y: u32, x: u32, c: T, len: usize)
+    where
+        T: Into<StyledChar>
+    {
+        let y = y as usize;
+        let x = x as usize;
+        let c = c.into();
+
+        let mut body = self.borrow_mut();
+
+        if x >= body.width || y >= body.height {
+            return;
         }
-        if override_ts {
-            for i in 0..fill_len {
-                body.style_buffer[pos![w, y, x + i]].text_style = c.style.text_style;
-            }
+
+        let mut fill_len = len;
+        if y + fill_len > body.width {
+            fill_len = body.height - y;
+        }
+
+        let w = body.width;
+        for i in 0..fill_len {
+            body.buffer[pos![w, y + i, x]] = c.content;
+        }
+
+        for i in 0..fill_len {
+            body.style_buffer[pos![w, y + i, x]] = c.style;
         }
     }
 
@@ -189,7 +173,7 @@ impl InnerWidget {
         let pos = pos![inner.width, y as usize, x as usize];
 
         StyledChar {
-            c: inner.buffer[pos],
+            content: inner.buffer[pos],
             style: inner.style_buffer[pos]
         }
     }
