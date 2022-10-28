@@ -1,3 +1,4 @@
+use crate::style::OwnedStyledText;
 use super::{
     Widget,
     InteractiveWidget,
@@ -16,58 +17,95 @@ use crate::layout::{
 use crate::sub_impl_aligned;
 use crate::sub_impl_alignable;
 
+type Transformer = fn(&str) -> OwnedStyledText;
+
+struct Theme {
+    normal: Transformer,
+    selected: Transformer,
+}
+
 pub struct Menu {
     win: Window,
     items: Vec<String>,
     output: Option<usize>,
     active_item: usize,
     scroll: usize,
+    theme: Theme,
 }
 
 impl Menu {
     pub fn new(
         y: u32,
         x: u32,
-        height: usize,
-        width: usize,
+        size: Option<(usize, usize)>,
         items: &[&str],
     ) -> Self
     {
-        let mut new_items = Vec::with_capacity(items.len());
-        for s in items {
-            new_items.push(String::from(*s));
-        }
+        let items: Vec<_> = items.iter().map(|it| String::from(*it)).collect();
 
-        let mut ret = Self {
+        let (height, width) = if let Some((height, width)) = size {
+            (height, width)
+        } else {
+            let item_lens = items.iter().map(|it| it.len());
+            let longest = item_lens.reduce(|longest, it_len| std::cmp::max(longest, it_len)).unwrap_or(0);
+            (items.len() + 3, longest)
+        };
+
+        let mut menu = Self {
             win: Window::new(y, x, height, width),
-            items: new_items,
+            items,
             output: None,
             active_item: 0,
             scroll: 0,
+            theme: Theme {
+                normal: |item| {
+                    let mut line = OwnedStyledText::from("  ");
+                    line.content.push_str(item);
+                    line
+                },
+                selected: |item| {
+                    let mut line = OwnedStyledText::from("* ");
+                    line.content.push_str(item);
+                    line
+                },
+            },
         };
-        ret.redraw();
+        menu.redraw();
 
-        ret
+        menu
+    }
+
+    pub fn set_theme(&mut self, normal: Transformer, selected: Transformer)
+    {
+        self.theme.normal = normal;
+        self.theme.selected = selected;
+
+        self.redraw();
     }
 
     fn redraw(&mut self)
     {
         self.win.clear();
 
-        let start = self.scroll;
-        let end = usize::min(self.scroll + self.visible_count(), self.items.len());
+        let first_item = self.scroll;
 
-        for (i, item) in self.items[start..end].iter().enumerate() {
-            self.win.print(i as u32, 2, item.as_str());
-        }
-        if self.active_item >= start && self.active_item < end {
-            self.win.putc((self.active_item - self.scroll) as u32, 0, '*');
+        let mut i = first_item;
+        while i < self.visible_count() {
+            let transform = if self.active_item == i {
+                self.theme.selected
+            } else {
+                self.theme.normal
+            };
+
+            let win_index = (i - first_item) as u32;
+            self.win.print(win_index, 0, &transform(&self.items[i]));
+            i += 1;
         }
     }
 
     fn visible_count(&self) -> usize
     {
-        self.win.content_height()
+        std::cmp::min(self.win.content_height(), self.items.len())
     }
 }
 

@@ -7,41 +7,76 @@ use crate::layout::{
 };
 use crate::style::StyledChar;
 
+struct Theme {
+    beg: StyledChar,
+    end: StyledChar,
+    body: StyledChar,
+}
+
 pub struct HorizBar {
     inner: InnerWidget,
-    style: (StyledChar, StyledChar, StyledChar),
+    theme: Theme,
 }
 
 impl HorizBar {
     pub fn new(start_y: u32, start_x: u32, width: usize) -> Self
     {
-        Self {
+        let mut bar = Self {
             inner: InnerWidget::new(start_y, start_x, 1, width),
-            style: ('\0'.into(), '\0'.into(), '\0'.into()),
-        }
+            theme: Theme {
+                beg: '\0'.into(),
+                end: '\0'.into(),
+                body: '\0'.into(),
+            },
+        };
+        bar.redraw();
+
+        bar
     }
 
-    // left corner, bar, right corner.
-    pub fn set_style<T>(&mut self, style: (T, T, T))
+    pub fn theme<C>(
+        mut self,
+        beg: C,
+        end: C,
+        body: C,
+    ) -> Self
     where
-        T: Into<StyledChar>
+        C: Into<StyledChar>
     {
-        self.style = (
-            style.0.into(),
-            style.1.into(),
-            style.2.into()
-        );
+        self.theme = Theme {
+            beg: beg.into(),
+            end: end.into(),
+            body: body.into(),
+        };
+        self.redraw();
+
+        self
+    }
+
+    pub fn set_theme<C>(
+        &mut self,
+        beg: C,
+        end: C,
+        body: C,
+    )
+    where
+        C: Into<StyledChar>
+    {
+        self.theme = Theme {
+            beg: beg.into(),
+            end: end.into(),
+            body: body.into(),
+        };
         self.redraw();
     }
 
     fn redraw(&mut self)
     {
-        let style = self.style;
         let width = self.inner.borrow().width;
 
-        self.inner.hfill(0, 0, style.1, width);
-        self.inner.putc(0, 0, style.0);
-        self.inner.putc(0, width as u32 - 1, style.2);
+        self.inner.hfill(0, 0, self.theme.body, width);
+        self.inner.putc(0, 0, self.theme.beg);
+        self.inner.putc(0, width as u32 - 1, self.theme.end);
     }
 }
 
@@ -168,37 +203,68 @@ impl Alignable for HorizBar {
 
 pub struct VertBar {
     inner: InnerWidget,
-    style: (StyledChar, StyledChar, StyledChar),
+    theme: Theme,
 }
 
 impl VertBar {
     pub fn new(start_y: u32, start_x: u32, height: usize) -> Self
     {
-        Self {
+        let mut bar = Self {
             inner: InnerWidget::new(start_y, start_x, height, 1),
-            style: ('\0'.into(), '\0'.into(), '\0'.into()),
-        }
+            theme: Theme {
+                beg: '0'.into(),
+                end: '0'.into(),
+                body: '0'.into(),
+            },
+        };
+        bar.redraw();
+
+        bar
     }
 
-    // top corner, bar, bottom corner.
-    pub fn set_style(&mut self, style: (char, char, char))
+    pub fn theme<C>(
+        mut self,
+        beg: C,
+        end: C,
+        body: C,
+    ) -> Self
+    where
+        C: Into<StyledChar>
     {
-        self.style = (
-            style.0.into(),
-            style.1.into(),
-            style.2.into()
-        );
+        self.theme = Theme {
+            beg: beg.into(),
+            end: end.into(),
+            body: body.into(),
+        };
+        self.redraw();
+
+        self
+    }
+
+    pub fn set_theme<C>(
+        &mut self,
+        beg: C,
+        end: C,
+        body: C,
+    )
+    where
+        C: Into<StyledChar>
+    {
+        self.theme = Theme {
+            beg: beg.into(),
+            end: end.into(),
+            body: body.into(),
+        };
         self.redraw();
     }
 
     fn redraw(&mut self)
     {
-        let style = self.style;
         let height = self.inner.borrow_mut().height;
 
-        self.inner.vfill(0, 0, style.1, height);
-        self.inner.putc(0, 0, style.0);
-        self.inner.putc(height as u32 - 1, 0, style.2);
+        self.inner.vfill(0, 0, self.theme.body, height);
+        self.inner.putc(0, 0, self.theme.beg);
+        self.inner.putc(height as u32 - 1, 0, self.theme.end);
     }
 }
 

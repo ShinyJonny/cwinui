@@ -7,7 +7,7 @@ use crate::layout::{
 };
 use crate::sub_impl_aligned;
 use crate::sub_impl_alignable;
-use crate::style::{OwnedStyledText, StyledText};
+use crate::style::{OwnedStyledText, StyledText, Style, StyledChar};
 
 use super::{
     Widget,
@@ -19,10 +19,17 @@ use super::{
     PoisonError,
 };
 
+struct Theme {
+    sep: OwnedStyledText,
+    input_style: Style,
+    input_blank_c: StyledChar,
+}
+
 pub struct Prompt {
     win: Window,
     label: OwnedStyledText,
     inputline: InputLine,
+    theme: Theme,
 }
 
 impl Prompt {
@@ -30,15 +37,19 @@ impl Prompt {
     where
         T: Into<StyledText<'s>>
     {
-        let label = OwnedStyledText::from(label.into());
-        let label_len = label.content.chars().count();
+        let label = label.into().to_owned();
+        let sep = OwnedStyledText::from(": ");
 
-        if len <= label_len {
-            panic!("length of Prompt is smaller or equal to the length of the label");
+        let label_len = label.content.chars().count();
+        let sep_len = sep.content.chars().count();
+        let prefix_len = label_len + sep_len;
+
+        if prefix_len + 2 > len {
+            panic!("prompt is not large enough");
         }
 
-        let input_len = len - label_len;
-        let input_x = x + label_len as u32;
+        let input_len = len - prefix_len;
+        let input_x = x + prefix_len as u32;
 
         let mut inputline = InputLine::new(y, input_x, input_len);
         let win = Window::new(y, x, 1, len);
@@ -50,31 +61,114 @@ impl Prompt {
             win,
             label,
             inputline,
+            theme: Theme {
+                sep,
+                input_style: Style::default(),
+                input_blank_c: ' '.into(),
+            },
         };
         prompt.redraw();
 
         prompt
     }
 
-    pub fn is_active(&self) -> bool
+    pub fn theme<'t, T, C>(
+        mut self,
+        sep: T,
+        input_style: Style,
+        input_blank_c: C
+    ) -> Self
+    where
+        T: Into<StyledText<'t>>,
+        C: Into<StyledChar>
     {
-        self.inputline.is_active()
+        let input_blank_c = input_blank_c.into();
+        let sep = sep.into();
+
+        let prefix_len = self.label.content.chars().count() + sep.content.chars().count();
+        if prefix_len + 2 > self.win.content_width() {
+            panic!("prompt is not large enough");
+        }
+
+        let (start_y, start_x) = self.win.content_yx();
+        self.inputline.change_pos(start_y, start_x + prefix_len as u32);
+        self.inputline.resize(self.win.content_width() - prefix_len);
+
+        self.theme = Theme {
+            // FIXME: get rid of these allocations.
+            sep: sep.to_owned(),
+            input_style,
+            input_blank_c
+        };
+        self.inputline.set_theme(self.theme.input_blank_c, self.theme.input_style);
+        self.redraw();
+
+        self
     }
 
-    pub fn set_active(&mut self)
+    pub fn set_theme<'t, T, C>(
+        &mut self,
+        sep: T,
+        input_style: Style,
+        input_blank_c: C
+    )
+    where
+        T: Into<StyledText<'t>>,
+        C: Into<StyledChar>
     {
-        self.inputline.set_active();
+        let input_blank_c = input_blank_c.into();
+        let sep = sep.into();
+
+        let prefix_len = self.label.content.chars().count() + sep.content.chars().count();
+        if prefix_len + 2 > self.win.content_width() {
+            panic!("prompt is not large enough");
+        }
+
+        let (start_y, start_x) = self.win.content_yx();
+        self.inputline.change_pos(start_y, start_x + prefix_len as u32);
+        self.inputline.resize(self.win.content_width() - prefix_len);
+
+        self.theme = Theme {
+            // FIXME: get rid of these allocations.
+            sep: sep.to_owned(),
+            input_style,
+            input_blank_c,
+        };
+        self.inputline.set_theme(self.theme.input_blank_c, self.theme.input_style);
+        self.redraw();
     }
 
-    pub fn set_inactive(&mut self)
+    pub fn set_label<'t, T>(&mut self, label: T)
+    where
+        T: Into<StyledText<'t>>
     {
-        self.inputline.set_inactive();
+        let label = label.into();
+
+        let prefix_len = label.content.chars().count() + self.theme.sep.content.chars().count();
+        if prefix_len + 2 > self.win.content_width() {
+            panic!("prompt is not large enough");
+        }
+
+        let (start_y, start_x) = self.win.content_yx();
+        self.inputline.change_pos(start_y, start_x + prefix_len as u32);
+        self.inputline.resize(self.win.content_width() - prefix_len);
+
+        // FIXME: get rid of these allocations.
+        self.label = label.to_owned();
+        self.redraw();
     }
+
+    // TODO: is_active
+    // TODO: set_active
+    // TODO: set_inactive
 
     fn redraw(&mut self)
     {
+        let sep_x = self.label.content.chars().count() as u32;
+
         self.win.print(0, 0, &self.label);
-        // TODO: redraw subwidgets.
+        self.win.print(0, sep_x, &self.theme.sep);
+        self.inputline.redraw();
     }
 }
 

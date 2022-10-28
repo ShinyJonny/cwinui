@@ -14,68 +14,119 @@ use crate::layout::{
     Alignable,
     Align,
 };
+use crate::style::{StyledChar, Style, WithStyle};
 
-const BLANK_CHAR: char = ' ';
-const INACTIVE_BLANK_CHAR: char = ' ';
 const INPUT_CAPACITY: usize = 2048;
+
+struct Theme {
+    blank_c: StyledChar,
+    input_style: Style,
+}
 
 pub struct InputLine {
     inner: InnerWidget,
     length: usize,
     output_ready: bool,
-    output: String,
+    input: String,
     cursor_pos: u32,
-    active: bool,
+    theme: Theme,
 }
 
 impl InputLine {
     pub fn new(y: u32, x: u32, length: usize) -> Self
     {
+        let theme = Theme {
+            blank_c: ' '.into(),
+            input_style: Style::default(),
+        } ;
         let inner = InnerWidget::new(y, x, 1, length);
         inner.show_cursor();
-        for i in 0..length {
-            inner.putc(0, i as u32, BLANK_CHAR);
-        }
 
-        Self {
+        let mut il = Self {
             inner,
             length,
             output_ready: false,
-            output: String::with_capacity(INPUT_CAPACITY),
+            input: String::with_capacity(INPUT_CAPACITY),
             cursor_pos: 0,
-            active: true,
-        }
+            theme,
+        };
+        il.redraw();
+
+        il
     }
 
-    pub fn is_active(&self) -> bool
+    pub fn theme<C>(
+        mut self,
+        blank_c: C,
+        input_style: Style,
+    ) -> Self
+    where
+        C: Into<StyledChar>
     {
-        self.active
+        self.theme = Theme {
+            blank_c: blank_c.into(),
+            input_style,
+        };
+        self.redraw();
+
+        self
     }
 
-    pub fn set_active(&mut self)
+    pub fn set_theme<C>(
+        &mut self,
+        blank_c: C,
+        input_style: Style,
+    )
+    where
+        C: Into<StyledChar>
     {
-        self.active = true;
-        self.inner.show_cursor();
-        self.set_blanks(BLANK_CHAR);
+        self.theme = Theme {
+            blank_c: blank_c.into(),
+            input_style,
+        };
+        self.redraw();
     }
 
-    pub fn set_inactive(&mut self)
+    pub fn redraw(&mut self)
     {
-        self.active = false;
-        self.inner.hide_cursor();
-        self.set_blanks(INACTIVE_BLANK_CHAR);
-    }
+        // Draw the input.
 
-    fn set_blanks(&mut self, c: char)
-    {
-        let blank_count = self.length as isize - 1 - self.output.chars().count() as isize;
-        let first_blank = self.output.chars().count() as u32;
+        let input_len = self.input.chars().count();
+        let visible_input = if input_len + 1 < self.length {
+            self.input.as_str()
+        } else {
+            self.input.slice_in_chars(input_len + 1 - self.length, input_len)
+        };
+        self.inner.print(0, 0, visible_input.with_style(|_| self.theme.input_style));
+
+        // Draw the blanks.
+
+        let blank_count = self.length as isize - 1 - input_len as isize;
+        let first_blank_x = input_len as u32;
         if blank_count > 0 {
-            for x in first_blank..(first_blank + blank_count as u32) {
-                self.inner.putc(0, x, c)
-            }
+            self.inner.hfill(0, first_blank_x, self.theme.blank_c, blank_count as usize);
         }
-        self.inner.putc(0, self.length as u32 - 1, c);
+        self.inner.putc(0, self.length as u32 - 1, self.theme.blank_c);
+
+        self.inner.move_cursor(0, self.cursor_pos);
+    }
+
+    pub fn resize(&mut self, len: usize)
+    {
+        if len < 1 {
+            panic!("input line cannot be resized below 1");
+        }
+
+        self.inner.resize(1, len);
+        self.length = len;
+
+        self.cursor_pos = if self.input.len() + 1 > self.length {
+            self.length as u32
+        } else {
+            self.input.len() as u32
+        };
+
+        self.redraw();
     }
 }
 
@@ -95,36 +146,26 @@ impl InteractiveWidget for InputLine {
             },
             Event::Key(Key::Char(c)) => {
                 if c.is_alphanumeric() || c.is_ascii_punctuation() || c == ' ' {
-                    let output_len = self.output.chars().count();
+                    let input_len = self.input.chars().count();
 
-                    if output_len + 1 < self.length {
-                        self.output.push(c);
-                        self.inner.putc(0, self.cursor_pos, c);
-                        self.inner.advance_cursor(1);
+                    if input_len + 1 < self.length {
                         self.cursor_pos += 1;
-                    } else {
-                        self.output.push(c);
-                        let output_len = output_len + 1;
-
-                        self.inner.print(0, 0, self.output.as_str().slice_in_chars(output_len + 1 - self.length, output_len));
                     }
+                    self.input.push(c);
+
+                    self.redraw();
                 }
             },
             Event::Key(Key::Backspace) => {
-                if !self.output.is_empty() {
-                    let output_len = self.output.chars().count();
+                if !self.input.is_empty() {
+                    let input_len = self.input.chars().count();
 
-                    if output_len + 1 <= self.length {
-                        self.output.pop();
-                        self.inner.putc(0, self.cursor_pos - 1, BLANK_CHAR);
-                        self.inner.advance_cursor(-1);
+                    if input_len + 1 <= self.length {
                         self.cursor_pos -= 1;
-                    } else {
-                        self.output.pop();
-                        let output_len = output_len - 1;
-
-                        self.inner.print(0, 0, self.output.as_str().slice_in_chars(output_len + 1 - self.length, output_len));
                     }
+                    self.input.pop();
+
+                    self.redraw();
                 }
             },
             // TODO: arrow keys
@@ -138,14 +179,14 @@ impl OutputWidget<String> for InputLine {
     fn try_get_output(&self) -> Option<String>
     {
         if self.output_ready {
-            return Some(self.output.clone());
+            return Some(self.input.clone());
         }
         None
     }
 
     fn get_output(&self) -> Result<String, PoisonError<String>>
     {
-        let output = self.output.clone();
+        let output = self.input.clone();
 
         if self.output_ready {
             return Ok(output);

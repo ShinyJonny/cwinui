@@ -227,6 +227,20 @@ impl InnerWidget {
 
         body.cursor.x = (body.cursor.x as i32 + steps) as u32;
     }
+
+    /// Resizes the widget.
+    /// This does not preserve the contents. Users should always treat it as though the contents
+    /// become garbage.
+    pub fn resize(&mut self, height: usize, width: usize)
+    {
+        let buf_size = height * width;
+        let mut body = self.borrow_mut();
+
+        body.height = height;
+        body.width = width;
+        body.buffer.resize(buf_size, '\0');
+        body.style_buffer.resize(buf_size, Style::default());
+    }
 }
 
 impl Deref for InnerWidget {

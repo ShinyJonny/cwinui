@@ -10,10 +10,21 @@ use crate::pos;
 use crate::misc::SliceInChars;
 use crate::style::{StyledChar, StyledText};
 
+struct Theme {
+    top_bar:             StyledChar,
+    right_bar:           StyledChar,
+    bottom_bar:          StyledChar,
+    left_bar:            StyledChar,
+    topleft_corner:      StyledChar,
+    topright_corner:     StyledChar,
+    bottomright_corner:  StyledChar,
+    bottomleft_corner:   StyledChar,
+}
+
 pub struct Window {
     inner: InnerWidget,
     has_border: bool,
-    border_style: (StyledChar, StyledChar, StyledChar, StyledChar, StyledChar, StyledChar),
+    theme: Theme,
 }
 
 impl Window {
@@ -23,14 +34,16 @@ impl Window {
             inner: InnerWidget::new(start_y, start_x, height, width),
             has_border: false,
             // TODO: add border style for each side.
-            border_style: (
-                '\0'.into(),
-                '\0'.into(),
-                '\0'.into(),
-                '\0'.into(),
-                '\0'.into(),
-                '\0'.into()
-            ),
+            theme: Theme {
+                top_bar:             '\0'.into(),
+                right_bar:           '\0'.into(),
+                bottom_bar:          '\0'.into(),
+                left_bar:            '\0'.into(),
+                topleft_corner:      '\0'.into(),
+                topright_corner:     '\0'.into(),
+                bottomright_corner:  '\0'.into(),
+                bottomleft_corner:   '\0'.into(),
+            },
         }
     }
 
@@ -67,20 +80,30 @@ impl Window {
         }
     }
 
-    // (horizontal bars, vertical bars, top-left corner, top-right corner, bottom-left corner,
-    // bottom-right corner)
-    pub fn set_border<C>(&mut self, border: (C, C, C, C, C, C))
+    pub fn set_theme<C>(
+        &mut self,
+        top_bar: C,
+        right_bar: C,
+        bottom_bar: C,
+        left_bar: C,
+        topleft_corner: C,
+        topright_corner: C,
+        bottomright_corner: C,
+        bottomleft_corner: C
+    )
     where
         C: Into<StyledChar>
     {
-        self.border_style = (
-            border.0.into(),
-            border.1.into(),
-            border.2.into(),
-            border.3.into(),
-            border.4.into(),
-            border.5.into(),
-        );
+        self.theme = Theme {
+            top_bar: top_bar.into(),
+            right_bar: right_bar.into(),
+            bottom_bar: bottom_bar.into(),
+            left_bar: left_bar.into(),
+            topleft_corner: topleft_corner.into(),
+            topright_corner: topright_corner.into(),
+            bottomright_corner: bottomright_corner.into(),
+            bottomleft_corner: bottomleft_corner.into(),
+        };
         if self.has_border {
             self.draw_border();
         }
@@ -279,16 +302,16 @@ impl Window {
         }
 
         // Top and bottom edges.
-        self.inner.hfill(0, 0, self.border_style.0, width as usize);
-        self.inner.hfill(height - 1, 0, self.border_style.0, width as usize);
+        self.inner.hfill(0, 0, self.theme.top_bar, width as usize);
+        self.inner.hfill(height - 1, 0, self.theme.bottom_bar, width as usize);
         // Right and left edges.
-        self.inner.vfill(0, 0, self.border_style.1, height as usize);
-        self.inner.vfill(0, width - 1, self.border_style.1, height as usize);
-        // Four corners: top-left, top-right, bottom-right, bottom-left.
-        self.inner.putc(0, 0, self.border_style.2);
-        self.inner.putc(0, 0 + width - 1, self.border_style.3);
-        self.inner.putc(0 + height - 1, 0 + width - 1, self.border_style.4);
-        self.inner.putc(0 + height - 1, 0, self.border_style.5);
+        self.inner.vfill(0, 0, self.theme.left_bar, height as usize);
+        self.inner.vfill(0, width - 1, self.theme.right_bar, height as usize);
+        // Corners.
+        self.inner.putc(0, 0, self.theme.topleft_corner);
+        self.inner.putc(0, 0 + width - 1, self.theme.topright_corner);
+        self.inner.putc(0 + height - 1, 0 + width - 1, self.theme.bottomright_corner);
+        self.inner.putc(0 + height - 1, 0, self.theme.bottomleft_corner);
     }
 
     fn clear_border(&mut self)

@@ -92,6 +92,13 @@ pub struct StyledText<'s> {
     pub style: Style,
 }
 
+impl<'s> StyledText<'s> {
+    pub fn to_owned(&self) -> OwnedStyledText
+    {
+        OwnedStyledText::from(*self)
+    }
+}
+
 impl<'s, T> From<&'s T> for StyledText<'s>
 where
     T: AsRef<str> + ?Sized
