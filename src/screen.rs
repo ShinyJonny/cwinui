@@ -56,7 +56,7 @@ impl Screen {
         }
 
         let mut stdout = MouseTerminal::from(std::io::stdout()).into_raw_mode().unwrap();
-        write!(stdout, "{}", termion::cursor::Hide).unwrap();
+        render::hide_cursor(&mut stdout).unwrap();
 
         Self {
             height: rows,
@@ -103,11 +103,12 @@ impl Screen {
     {
         for y in 0..self.height - 1 {
             self.render_line(y);
-            write!(self.stdout, "\r\n").unwrap();
+            render::write_str(&mut self.stdout, "\r\n").unwrap();
         }
 
         self.render_line(self.height - 1);
-        write!(self.stdout, "\r{}", termion::cursor::Up(self.height as u16 - 1)).unwrap();
+        render::write_char(&mut self.stdout, '\r').unwrap();
+        render::move_cursor(&mut self.stdout, -(self.height as isize - 1), 0).unwrap();
 
         // TODO: implement cursor with a real cursor.
         if !self.cursor.hidden {
@@ -118,14 +119,13 @@ impl Screen {
                 self.cursor.x as isize
             ).unwrap();
             // char printing
-            write!(
-                self.stdout,
-                "{}{}{}{}",
-                termion::style::Invert,
-                self.buffer[pos![self.width, self.cursor.y as usize, self.cursor.x as usize]],
-                termion::style::NoInvert,
-                termion::cursor::Left(1),
+            render::add_text_style(&mut self.stdout, TextStyle::INVERT).unwrap();
+            render::write_char(
+                &mut self.stdout,
+                self.buffer[pos![self.width, self.cursor.y as usize, self.cursor.x as usize]]
             ).unwrap();
+            render::subtract_text_style(&mut self.stdout, TextStyle::INVERT).unwrap();
+            render::move_cursor(&mut self.stdout, 0, -1).unwrap();
             // Move the cursor back to the top left of the screen.
             render::move_cursor(
                 &mut self.stdout,
@@ -156,7 +156,7 @@ impl Screen {
             .expect("failed to set bg color");
         render::set_text_style(&mut self.stdout, saved_ts)
             .expect("failed to set text style");
-        write!(self.stdout, "{}", chars[0])
+        render::write_char(&mut self.stdout, chars[0])
             .expect("failed to write a char to the screen");
 
         for x in 1..self.width {
@@ -179,7 +179,7 @@ impl Screen {
                 saved_ts = cur_style.text_style;
             }
 
-            write!(self.stdout, "{}", cur_char)
+            render::write_char(&mut self.stdout, *cur_char)
                 .expect("failed to write a char to the screen");
         }
     }
@@ -295,10 +295,13 @@ impl Screen {
 impl Drop for Screen {
     fn drop(&mut self)
     {
+        render::set_fg_color(&mut self.stdout, Color::Normal).unwrap();
+        render::set_bg_color(&mut self.stdout, Color::Normal).unwrap();
+        render::set_text_style(&mut self.stdout, TextStyle::NORMAL).unwrap();
         for _row in 0..self.height {
-            write!(self.stdout, "\n").unwrap();
+            render::write_char(&mut self.stdout, '\n').unwrap();
         }
-        write!(self.stdout, "{}", termion::cursor::Show).unwrap();
+        render::show_cursor(&mut self.stdout).unwrap();
     }
 }
 
@@ -307,6 +310,30 @@ mod render {
     use termion::color::{Bg, Fg};
 
     use crate::style::{Color, TextStyle};
+
+    #[inline]
+    pub fn write_char<W: Write>(writer: &mut W, c: char) -> Result<(), std::io::Error>
+    {
+        write!(writer, "{}", c)
+    }
+
+    #[inline]
+    pub fn write_str<W: Write>(writer: &mut W, s: &str) -> Result<(), std::io::Error>
+    {
+        write!(writer, "{}", s)
+    }
+
+    #[inline]
+    pub fn show_cursor<W: Write>(writer: &mut W) -> Result<(), std::io::Error>
+    {
+        write!(writer, "{}", termion::cursor::Show)
+    }
+
+    #[inline]
+    pub fn hide_cursor<W: Write>(writer: &mut W) -> Result<(), std::io::Error>
+    {
+        write!(writer, "{}", termion::cursor::Hide)
+    }
 
     #[inline]
     pub fn move_cursor<W: Write>(writer: &mut W, y: isize, x: isize) -> Result<(), std::io::Error>
@@ -422,6 +449,58 @@ mod render {
         if ts.contains(TextStyle::UNDERLINE) {
             write!(writer, "{}", termion::style::Underline)?;
         } else {
+            write!(writer, "{}", termion::style::NoUnderline)?;
+        }
+
+        Ok(())
+    }
+
+    #[inline]
+    pub fn add_text_style<W: Write>(writer: &mut W, ts: TextStyle) -> Result<(), std::io::Error>
+    {
+        if ts.contains(TextStyle::BOLD) {
+            write!(writer, "{}", termion::style::Bold)?;
+        }
+
+        if ts.contains(TextStyle::BLINK) {
+            write!(writer, "{}", termion::style::Blink)?;
+        }
+
+        if ts.contains(TextStyle::INVERT) {
+            write!(writer, "{}", termion::style::Invert)?;
+        }
+
+        if ts.contains(TextStyle::ITALIC) {
+            write!(writer, "{}", termion::style::Italic)?;
+        }
+
+        if ts.contains(TextStyle::UNDERLINE) {
+            write!(writer, "{}", termion::style::Underline)?;
+        }
+
+        Ok(())
+    }
+
+    #[inline]
+    pub fn subtract_text_style<W: Write>(writer: &mut W, ts: TextStyle) -> Result<(), std::io::Error>
+    {
+        if ts.contains(TextStyle::BOLD) {
+            write!(writer, "{}", termion::style::NoBold)?;
+        }
+
+        if ts.contains(TextStyle::BLINK) {
+            write!(writer, "{}", termion::style::NoBlink)?;
+        }
+
+        if ts.contains(TextStyle::INVERT) {
+            write!(writer, "{}", termion::style::NoInvert)?;
+        }
+
+        if ts.contains(TextStyle::ITALIC) {
+            write!(writer, "{}", termion::style::NoItalic)?;
+        }
+
+        if ts.contains(TextStyle::UNDERLINE) {
             write!(writer, "{}", termion::style::NoUnderline)?;
         }
 
