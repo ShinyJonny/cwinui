@@ -87,19 +87,19 @@ pub enum Color {
 // TODO: implement slicing.
 
 #[derive(Clone, Copy, PartialEq, Eq)]
-pub struct StyledText<'s> {
+pub struct StyledStr<'s> {
     pub content: &'s str,
     pub style: Style,
 }
 
-impl<'s> StyledText<'s> {
-    pub fn to_owned(&self) -> OwnedStyledText
+impl<'s> StyledStr<'s> {
+    pub fn to_owned(&self) -> StyledString
     {
-        OwnedStyledText::from(*self)
+        StyledString::from(*self)
     }
 }
 
-impl<'s, T> From<&'s T> for StyledText<'s>
+impl<'s, T> From<&'s T> for StyledStr<'s>
 where
     T: AsRef<str> + ?Sized
 {
@@ -112,9 +112,9 @@ where
     }
 }
 
-impl<'s> From<&'s OwnedStyledText> for StyledText<'s>
+impl<'s> From<&'s StyledString> for StyledStr<'s>
 {
-    fn from(s: &'s OwnedStyledText) -> Self
+    fn from(s: &'s StyledString) -> Self
     {
         Self {
             content: s.content.as_str(),
@@ -124,18 +124,18 @@ impl<'s> From<&'s OwnedStyledText> for StyledText<'s>
 }
 
 #[derive(Clone, PartialEq, Eq)]
-pub struct OwnedStyledText {
+pub struct StyledString {
     pub content: String,
     pub style: Style,
 }
 
-impl <'s, T> From<T> for OwnedStyledText
+impl <'s, T> From<T> for StyledString
 where
-    T: Into<StyledText<'s>>
+    T: Into<StyledStr<'s>>
 {
     fn from(t: T) -> Self
     {
-        let t: StyledText = t.into();
+        let t: StyledStr = t.into();
 
         Self {
             content: String::from(t.content),
@@ -182,11 +182,11 @@ where
     }
 }
 
-impl<'s, T> WithStyle<StyledText<'s>> for T
+impl<'s, T> WithStyle<StyledStr<'s>> for T
 where
-    T: Into<StyledText<'s>>
+    T: Into<StyledStr<'s>>
 {
-    fn with_style<F>(self, f: F) -> StyledText<'s>
+    fn with_style<F>(self, f: F) -> StyledStr<'s>
     where
         F: FnOnce(Style) -> Style
     {

@@ -8,7 +8,7 @@ use crate::layout::{
 };
 use crate::pos;
 use crate::misc::SliceInChars;
-use crate::style::{StyledChar, StyledText};
+use crate::style::{StyledChar, StyledStr};
 
 struct Theme {
     top_bar:             StyledChar,
@@ -149,7 +149,7 @@ impl Window {
 
     pub fn print<'s, T>(&mut self, mut y: u32, mut x: u32, line: T)
     where
-        T: Into<StyledText<'s>>
+        T: Into<StyledStr<'s>>
     {
         // TODO: support printing with newlines (and other non-standard whitespace).
         // TODO: check for variable-length characters.
@@ -174,7 +174,7 @@ impl Window {
 
         if print_len < line.content.chars().count() {
             // FIXME: use native slicing API.
-            line = StyledText {
+            line = StyledStr {
                 content: line.content.slice_in_chars(0, print_len),
                 style: line.style,
             }
@@ -185,7 +185,7 @@ impl Window {
 
     pub fn printj<'s, T>(&mut self, line: T, j: Justify)
     where
-        T: Into<StyledText<'s>>
+        T: Into<StyledStr<'s>>
     {
         // TODO: support printing with newlines (and other non-standard whitespace).
         // FIXME: check for variable-length characters.

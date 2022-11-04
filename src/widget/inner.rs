@@ -3,7 +3,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use crate::pos;
-use crate::style::{Style, StyledChar, StyledText};
+use crate::style::{Style, StyledChar, StyledStr};
 
 pub struct Cursor {
     pub y: u32,
@@ -59,7 +59,7 @@ impl InnerWidget {
 
     pub fn print<'s, T>(&self, y: u32, x: u32, text: T)
     where
-        T: Into<StyledText<'s>>
+        T: Into<StyledStr<'s>>
     {
         let y = y as usize;
         let x = x as usize;

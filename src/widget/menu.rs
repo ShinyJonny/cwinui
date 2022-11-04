@@ -1,4 +1,4 @@
-use crate::style::OwnedStyledText;
+use crate::style::StyledString;
 use super::{
     Widget,
     InteractiveWidget,
@@ -17,7 +17,7 @@ use crate::layout::{
 use crate::sub_impl_aligned;
 use crate::sub_impl_alignable;
 
-type Transformer = fn(&str) -> OwnedStyledText;
+type Transformer = fn(&str) -> StyledString;
 
 struct Theme {
     normal: Transformer,
@@ -59,12 +59,12 @@ impl Menu {
             scroll: 0,
             theme: Theme {
                 normal: |item| {
-                    let mut line = OwnedStyledText::from("  ");
+                    let mut line = StyledString::from("  ");
                     line.content.push_str(item);
                     line
                 },
                 selected: |item| {
-                    let mut line = OwnedStyledText::from("* ");
+                    let mut line = StyledString::from("* ");
                     line.content.push_str(item);
                     line
                 },

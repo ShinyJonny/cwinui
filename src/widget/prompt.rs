@@ -7,7 +7,7 @@ use crate::layout::{
 };
 use crate::sub_impl_aligned;
 use crate::sub_impl_alignable;
-use crate::style::{OwnedStyledText, StyledText, Style, StyledChar};
+use crate::style::{StyledString, StyledStr, Style, StyledChar};
 
 use super::{
     Widget,
@@ -20,14 +20,14 @@ use super::{
 };
 
 struct Theme {
-    sep: OwnedStyledText,
+    sep: StyledString,
     input_style: Style,
     input_blank_c: StyledChar,
 }
 
 pub struct Prompt {
     win: Window,
-    label: OwnedStyledText,
+    label: StyledString,
     inputline: InputLine,
     theme: Theme,
 }
@@ -35,10 +35,10 @@ pub struct Prompt {
 impl Prompt {
     pub fn new<'s, T>(label: T, y: u32, x: u32, len: usize) -> Self
     where
-        T: Into<StyledText<'s>>
+        T: Into<StyledStr<'s>>
     {
         let label = label.into().to_owned();
-        let sep = OwnedStyledText::from(": ");
+        let sep = StyledString::from(": ");
 
         let label_len = label.content.chars().count();
         let sep_len = sep.content.chars().count();
@@ -79,7 +79,7 @@ impl Prompt {
         input_blank_c: C
     ) -> Self
     where
-        T: Into<StyledText<'t>>,
+        T: Into<StyledStr<'t>>,
         C: Into<StyledChar>
     {
         let input_blank_c = input_blank_c.into();
@@ -113,7 +113,7 @@ impl Prompt {
         input_blank_c: C
     )
     where
-        T: Into<StyledText<'t>>,
+        T: Into<StyledStr<'t>>,
         C: Into<StyledChar>
     {
         let input_blank_c = input_blank_c.into();
@@ -140,7 +140,7 @@ impl Prompt {
 
     pub fn set_label<'t, T>(&mut self, label: T)
     where
-        T: Into<StyledText<'t>>
+        T: Into<StyledStr<'t>>
     {
         let label = label.into();
 
