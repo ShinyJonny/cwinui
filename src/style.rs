@@ -165,6 +165,7 @@ pub trait WithStyle<T>
     fn with_style<F>(self, f: F) -> T
     where
         F: FnOnce(Style) -> Style;
+    fn styled(self) -> T;
 }
 
 impl<T> WithStyle<StyledChar> for T
@@ -180,6 +181,11 @@ where
 
         new
     }
+
+    fn styled(self) -> StyledChar
+    {
+        self.into()
+    }
 }
 
 impl<'s, T> WithStyle<StyledStr<'s>> for T
@@ -194,5 +200,10 @@ where
         new.style = f(new.style);
 
         new
+    }
+
+    fn styled(self) -> StyledStr<'s>
+    {
+        self.into()
     }
 }

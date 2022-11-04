@@ -1,3 +1,4 @@
+use crate::style::WithStyle;
 use super::{Widget, InnerWidget};
 use crate::layout::{
     self,
@@ -24,9 +25,9 @@ impl HorizBar {
         let mut bar = Self {
             inner: InnerWidget::new(start_y, start_x, 1, width),
             theme: Theme {
-                beg: '\0'.into(),
-                end: '\0'.into(),
-                body: '\0'.into(),
+                beg: '\0'.styled(),
+                end: '\0'.styled(),
+                body: '\0'.styled(),
             },
         };
         bar.redraw();
@@ -212,9 +213,9 @@ impl VertBar {
         let mut bar = Self {
             inner: InnerWidget::new(start_y, start_x, height, 1),
             theme: Theme {
-                beg: '0'.into(),
-                end: '0'.into(),
-                body: '0'.into(),
+                beg: '0'.styled(),
+                end: '0'.styled(),
+                body: '0'.styled(),
             },
         };
         bar.redraw();

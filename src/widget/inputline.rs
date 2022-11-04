@@ -36,7 +36,7 @@ impl InputLine {
     pub fn new(y: u32, x: u32, length: usize) -> Self
     {
         let theme = Theme {
-            blank_c: ' '.into(),
+            blank_c: ' '.styled(),
             input_style: Style::default(),
         } ;
         let inner = InnerWidget::new(y, x, 1, length);
@@ -64,7 +64,7 @@ impl InputLine {
         C: Into<StyledChar>
     {
         self.theme = Theme {
-            blank_c: blank_c.into(),
+            blank_c: blank_c.styled(),
             input_style,
         };
         self.redraw();
@@ -81,7 +81,7 @@ impl InputLine {
         C: Into<StyledChar>
     {
         self.theme = Theme {
-            blank_c: blank_c.into(),
+            blank_c: blank_c.styled(),
             input_style,
         };
         self.redraw();

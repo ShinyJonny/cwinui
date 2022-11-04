@@ -1,3 +1,4 @@
+use crate::style::WithStyle;
 use super::{InnerWidget, Widget};
 use crate::layout::{
     self,
@@ -35,14 +36,14 @@ impl Window {
             has_border: false,
             // TODO: add border style for each side.
             theme: Theme {
-                top_bar:             '\0'.into(),
-                right_bar:           '\0'.into(),
-                bottom_bar:          '\0'.into(),
-                left_bar:            '\0'.into(),
-                topleft_corner:      '\0'.into(),
-                topright_corner:     '\0'.into(),
-                bottomright_corner:  '\0'.into(),
-                bottomleft_corner:   '\0'.into(),
+                top_bar:             '\0'.styled(),
+                right_bar:           '\0'.styled(),
+                bottom_bar:          '\0'.styled(),
+                left_bar:            '\0'.styled(),
+                topleft_corner:      '\0'.styled(),
+                topright_corner:     '\0'.styled(),
+                bottomright_corner:  '\0'.styled(),
+                bottomleft_corner:   '\0'.styled(),
             },
         }
     }

@@ -7,7 +7,7 @@ use crate::layout::{
 };
 use crate::sub_impl_aligned;
 use crate::sub_impl_alignable;
-use crate::style::{StyledString, StyledStr, Style, StyledChar};
+use crate::style::{StyledString, StyledStr, Style, StyledChar, WithStyle};
 
 use super::{
     Widget,
@@ -64,7 +64,7 @@ impl Prompt {
             theme: Theme {
                 sep,
                 input_style: Style::default(),
-                input_blank_c: ' '.into(),
+                input_blank_c: ' '.styled(),
             },
         };
         prompt.redraw();
