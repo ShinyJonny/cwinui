@@ -299,10 +299,10 @@ impl Window {
         for y in 1..inner.height as usize {
             for x in 1..inner.width as usize {
                 //FIXME: implement this through APIs.
-                inner.buffer[offset![x, y, w]]
-                    = inner.buffer[offset![x - 1, y - 1, w]];
-                inner.style_buffer[offset![x, y, w]]
-                    = inner.style_buffer[offset![x - 1, y - 1, w]];
+                inner.buffer[offset!(x, y, w)]
+                    = inner.buffer[offset!(x - 1, y - 1, w)];
+                inner.style_buffer[offset!(x, y, w)]
+                    = inner.style_buffer[offset!(x - 1, y - 1, w)];
             }
         }
     }
@@ -315,10 +315,10 @@ impl Window {
         for y in 1..inner.height as usize {
             for x in 1..inner.width as usize {
                 //FIXME: implement this through APIs.
-                inner.buffer[offset![x - 1, y - 1, w]]
-                    = inner.buffer[offset![x, y, w]];
-                inner.style_buffer[offset![x - 1, y - 1, w]]
-                    = inner.style_buffer[offset![x, y, w]];
+                inner.buffer[offset!(x - 1, y - 1, w)]
+                    = inner.buffer[offset!(x, y, w)];
+                inner.style_buffer[offset!(x - 1, y - 1, w)]
+                    = inner.style_buffer[offset!(x, y, w)];
             }
         }
     }

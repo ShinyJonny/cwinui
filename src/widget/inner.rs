@@ -87,11 +87,11 @@ impl InnerWidget {
 
         let mut chars = text.content.chars();
         for i in 0..print_len {
-            body.buffer[offset![x + i, y, width]] = chars.next().unwrap();
+            body.buffer[offset!(x + i, y, width)] = chars.next().unwrap();
         }
 
         for i in 0..print_len {
-            body.style_buffer[offset![x + i, y, width]] = text.style;
+            body.style_buffer[offset!(x + i, y, width)] = text.style;
         }
     }
 
@@ -107,7 +107,7 @@ impl InnerWidget {
         }
 
         let w = body.width as usize;
-        let pos = offset![x as usize, y as usize, w];
+        let pos = offset!(x as usize, y as usize, w);
         body.buffer[pos] = c.content;
         body.style_buffer[pos] = c.style;
     }
@@ -131,11 +131,11 @@ impl InnerWidget {
         let fill_len = if x + len > width { width - x } else { len };
 
         for i in 0..fill_len {
-            body.buffer[offset![x + i, y, width]] = c.content;
+            body.buffer[offset!(x + i, y, width)] = c.content;
         }
 
         for i in 0..fill_len {
-            body.style_buffer[offset![x + i, y, width]] = c.style;
+            body.style_buffer[offset!(x + i, y, width)] = c.style;
         }
     }
 
@@ -159,11 +159,11 @@ impl InnerWidget {
         let fill_len = if y + len > height { height - y } else { len };
 
         for i in 0..fill_len {
-            body.buffer[offset![x, y + i, width]] = c.content;
+            body.buffer[offset!(x, y + i, width)] = c.content;
         }
 
         for i in 0..fill_len {
-            body.style_buffer[offset![x, y + i, width]] = c.style;
+            body.style_buffer[offset!(x, y + i, width)] = c.style;
         }
     }
 
@@ -171,7 +171,7 @@ impl InnerWidget {
     pub fn peekc(&self, x: u16, y: u16) -> StyledChar
     {
         let inner = self.borrow();
-        let pos = offset![x as usize, y as usize, inner.width as usize];
+        let pos = offset!(x as usize, y as usize, inner.width as usize);
 
         StyledChar {
             content: inner.buffer[pos],

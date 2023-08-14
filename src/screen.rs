@@ -122,11 +122,11 @@ impl Screen {
             render::add_text_style(&mut self.stdout, TextStyle::INVERT).unwrap();
             render::write_char(
                 &mut self.stdout,
-                self.buffer[offset![
+                self.buffer[offset!(
                     self.cursor.x as usize,
                     self.cursor.y as usize,
                     self.width as usize
-                ]]
+                )]
             ).unwrap();
             render::subtract_text_style(&mut self.stdout, TextStyle::INVERT).unwrap();
             render::move_cursor(&mut self.stdout, 0, -1).unwrap();
@@ -145,7 +145,7 @@ impl Screen {
     fn render_line(&mut self, y: u16)
     {
         let width = self.width as usize;
-        let line_offset = offset![0, y as usize, width];
+        let line_offset = offset!(0, y as usize, width);
         let chars = &self.buffer[line_offset..line_offset + width];
         let styles = &self.style_buffer[line_offset..line_offset + width];
 
@@ -261,8 +261,8 @@ impl Screen {
 
         for y in 0..y_iterations {
             for x in 0..x_iterations {
-                let w_pos = offset![x, y, w_width];
-                let s_pos = offset![start_x + x, start_y + y, s_width];
+                let w_pos = offset!(x, y, w_width);
+                let s_pos = offset!(start_x + x, start_y + y, s_width);
 
                 let c = w.buffer[w_pos];
 
