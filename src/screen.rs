@@ -27,15 +27,14 @@ impl Default for InternalStyle {
 }
 
 struct Cursor {
-    y: u32,
-    x: u32,
+    y: u16,
+    x: u16,
     hidden: bool,
 }
 
 pub struct Screen {
-    pub height: usize,
-    pub width: usize,
-    pub dtime: f64,
+    pub height: u16,
+    pub width: u16,
     cursor: Cursor,
     buffer: Vec<char>,
     style_buffer: Vec<InternalStyle>,
@@ -44,26 +43,27 @@ pub struct Screen {
 }
 
 impl Screen {
-    pub fn init(rows: usize, cols: usize) -> Self
+    pub fn init(rows: u16, cols: u16) -> Self
     {
         let (x, y) = termion::terminal_size()
             .expect("Failed to detect terminal size.");
-        let y = y as usize;
-        let x = x as usize;
 
         if rows > y || cols > x {
             panic!("terminal too small, needs to be at least: {cols}x{rows}");
         }
 
-        let mut stdout = MouseTerminal::from(std::io::stdout()).into_raw_mode().unwrap();
+        let mut stdout = MouseTerminal::from(std::io::stdout())
+            .into_raw_mode()
+            .unwrap();
         render::hide_cursor(&mut stdout).unwrap();
+
+        let buf_size = cols as usize * rows as usize;
 
         Self {
             height: rows,
             width: cols,
-            dtime: 0f64,
-            buffer: vec![' '; cols * rows],
-            style_buffer: vec![InternalStyle::default(); cols * rows],
+            buffer: vec![' '; buf_size],
+            style_buffer: vec![InternalStyle::default(); buf_size],
             stdout,
             widgets: Vec::new(),
             cursor: Cursor { y: 0, x: 0, hidden: true },
@@ -122,7 +122,11 @@ impl Screen {
             render::add_text_style(&mut self.stdout, TextStyle::INVERT).unwrap();
             render::write_char(
                 &mut self.stdout,
-                self.buffer[offset![self.cursor.x as usize, self.cursor.y as usize, self.width]]
+                self.buffer[offset![
+                    self.cursor.x as usize,
+                    self.cursor.y as usize,
+                    self.width as usize
+                ]]
             ).unwrap();
             render::subtract_text_style(&mut self.stdout, TextStyle::INVERT).unwrap();
             render::move_cursor(&mut self.stdout, 0, -1).unwrap();
@@ -138,11 +142,12 @@ impl Screen {
             .expect("failed to flush stdout");
     }
 
-    fn render_line(&mut self, y: usize)
+    fn render_line(&mut self, y: u16)
     {
-        let line_offset = offset![0, y, self.width];
-        let chars = &self.buffer[line_offset..line_offset + self.width];
-        let styles = &self.style_buffer[line_offset..line_offset + self.width];
+        let width = self.width as usize;
+        let line_offset = offset![0, y as usize, width];
+        let chars = &self.buffer[line_offset..line_offset + width];
+        let styles = &self.style_buffer[line_offset..line_offset + width];
 
         // FIXME: optimise.
 
@@ -159,7 +164,7 @@ impl Screen {
         render::write_char(&mut self.stdout, chars[0])
             .expect("failed to write a char to the screen");
 
-        for x in 1..self.width {
+        for x in 1..width {
             let cur_style = &styles[x];
             let cur_char = &chars[x];
 
@@ -241,22 +246,23 @@ impl Screen {
         let start_x = w.start_x as usize;
         let start_y = w.start_y as usize;
 
-        let mut y_iterations = w.height;
-        let mut x_iterations = w.width;
-        if start_y + w.height > self.height {
-            y_iterations = self.height - start_y;
-        }
-        if start_x + w.width > self.width {
-            x_iterations = self.width - start_x;
-        }
+        let w_width = w.width as usize;
+        let s_width = self.width as usize;
+        let w_height = w.height as usize;
+        let s_height = self.height as usize;
 
-        let ww = w.width;
-        let sw = self.width;
+        let mut x_iterations = if start_x + w_width > s_width
+            { s_width - start_x }
+            else { w_width };
+
+        let mut y_iterations = if start_y + w_height > s_height
+            { s_height - start_y }
+            else { w_height };
 
         for y in 0..y_iterations {
             for x in 0..x_iterations {
-                let w_pos = offset![x, y, ww];
-                let s_pos = offset![start_x + x, start_y + y, sw];
+                let w_pos = offset![x, y, w_width];
+                let s_pos = offset![start_x + x, start_y + y, s_width];
 
                 let c = w.buffer[w_pos];
 
@@ -281,9 +287,9 @@ impl Screen {
         }
     }
 
-    fn move_cursor(&mut self, y: u32, x: u32)
+    fn move_cursor(&mut self, y: u16, x: u16)
     {
-        if y as usize >= self.height || x as usize >= self.width {
+        if y >= self.height || x >= self.width {
             return;
         }
 

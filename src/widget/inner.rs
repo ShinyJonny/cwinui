@@ -7,8 +7,8 @@ use crate::util::offset;
 use crate::style::{Style, StyledChar, StyledStr};
 
 pub struct Cursor {
-    pub y: u32,
-    pub x: u32,
+    pub y: u16,
+    pub x: u16,
     pub hidden: bool,
 }
 
@@ -16,11 +16,11 @@ pub struct InnerWidgetBody {
     pub buffer: Vec<char>,
     pub style_buffer: Vec<Style>,
     pub cursor: Cursor,
-    pub start_x: u32,
-    pub start_y: u32,
-    pub width: usize,
-    pub height: usize,
-    pub z_index: u32,
+    pub start_x: u16,
+    pub start_y: u16,
+    pub width: u16,
+    pub height: u16,
+    pub z_index: u16,
     pub hidden: bool,
     pub subwidgets: Vec<InnerWidget>,
 }
@@ -36,10 +36,10 @@ impl InnerWidget {
                 InnerWidgetBody {
                     buffer: vec!['\0'; (width * height) as usize],
                     style_buffer: vec![Style::default(); (width * height) as usize],
-                    start_x: start_x as u32,
-                    start_y: start_y as u32,
-                    width: width as usize,
-                    height: height as usize,
+                    start_x,
+                    start_y,
+                    width,
+                    height,
                     cursor: Cursor { y: 0, x: 0, hidden: true },
                     z_index: 1,
                     hidden: true,
@@ -59,7 +59,7 @@ impl InnerWidget {
         self.borrow_mut().subwidgets.push(sub);
     }
 
-    pub fn print<'s, T>(&self, x: u32, y: u32, text: T)
+    pub fn print<'s, T>(&self, x: u16, y: u16, text: T)
     where
         T: Into<StyledStr<'s>>
     {
@@ -68,8 +68,9 @@ impl InnerWidget {
         let text = text.into();
 
         let mut body = self.borrow_mut();
+        let width = body.width as usize;
 
-        if x >= body.width || y >= body.height {
+        if x >= width || y >= width {
             return;
         }
 
@@ -77,40 +78,41 @@ impl InnerWidget {
         // FIXME: check for variable-length characters.
         // FIXME: check for non-printable characters.
 
-        let mut print_len = text.content.chars().count();
-        if x + print_len > body.width {
-            print_len = body.width - x;
-        }
+        let text_chars = text.content.chars().count();
+        let print_len = if x + text_chars > width {
+            width - x
+        } else {
+            text_chars
+        };
 
-        let w = body.width;
         let mut chars = text.content.chars();
         for i in 0..print_len {
-            body.buffer[offset![x + i, y, w]] = chars.next().unwrap();
+            body.buffer[offset![x + i, y, width]] = chars.next().unwrap();
         }
 
         for i in 0..print_len {
-            body.style_buffer[offset![x + i, y, w]] = text.style;
+            body.style_buffer[offset![x + i, y, width]] = text.style;
         }
     }
 
-    pub fn putc<T>(&self, x: u32, y: u32, c: T)
+    pub fn putc<T>(&self, x: u16, y: u16, c: T)
     where
         T: Into<StyledChar>
     {
         let c = c.into();
         let mut body = self.borrow_mut();
 
-        if x as usize >= body.width || y as usize >= body.height {
+        if x >= body.width || y >= body.height {
             return;
         }
 
-        let w = body.width;
+        let w = body.width as usize;
         let pos = offset![x as usize, y as usize, w];
         body.buffer[pos] = c.content;
         body.style_buffer[pos] = c.style;
     }
 
-    pub fn hfill<T>(&self, x: u32, y: u32, c: T, len: usize)
+    pub fn hfill<T>(&self, x: u16, y: u16, c: T, len: usize)
     where
         T: Into<StyledChar>
     {
@@ -120,26 +122,24 @@ impl InnerWidget {
 
         let mut body = self.borrow_mut();
 
-        if x >= body.width || y >= body.height {
+        let width = body.width as usize;
+
+        if x >= width || y >= width {
             return;
         }
 
-        let mut fill_len = len;
-        if x + fill_len > body.width {
-            fill_len = body.width - x;
-        }
+        let fill_len = if x + len > width { width - x } else { len };
 
-        let w = body.width;
         for i in 0..fill_len {
-            body.buffer[offset![x + i, y, w]] = c.content;
+            body.buffer[offset![x + i, y, width]] = c.content;
         }
 
         for i in 0..fill_len {
-            body.style_buffer[offset![x + i, y, w]] = c.style;
+            body.style_buffer[offset![x + i, y, width]] = c.style;
         }
     }
 
-    pub fn vfill<T>(&self, x: u32, y: u32, c: T, len: usize)
+    pub fn vfill<T>(&self, x: u16, y: u16, c: T, len: usize)
     where
         T: Into<StyledChar>
     {
@@ -149,30 +149,29 @@ impl InnerWidget {
 
         let mut body = self.borrow_mut();
 
-        if x >= body.width || y >= body.height {
+        let width = body.width as usize;
+        let height = body.height as usize;
+
+        if x >= width || y >= height {
             return;
         }
 
-        let mut fill_len = len;
-        if y + fill_len > body.width {
-            fill_len = body.height - y;
-        }
+        let fill_len = if y + len > height { height - y } else { len };
 
-        let w = body.width;
         for i in 0..fill_len {
-            body.buffer[offset![x, y + i, w]] = c.content;
+            body.buffer[offset![x, y + i, width]] = c.content;
         }
 
         for i in 0..fill_len {
-            body.style_buffer[offset![x, y + i, w]] = c.style;
+            body.style_buffer[offset![x, y + i, width]] = c.style;
         }
     }
 
     #[inline]
-    pub fn peekc(&self, x: u32, y: u32) -> StyledChar
+    pub fn peekc(&self, x: u16, y: u16) -> StyledChar
     {
         let inner = self.borrow();
-        let pos = offset![x as usize, y as usize, inner.width];
+        let pos = offset![x as usize, y as usize, inner.width as usize];
 
         StyledChar {
             content: inner.buffer[pos],
@@ -203,11 +202,11 @@ impl InnerWidget {
         self.borrow_mut().cursor.hidden = true;
     }
 
-    pub fn move_cursor(&self, x: u32, y: u32)
+    pub fn move_cursor(&self, x: u16, y: u16)
     {
         let mut body = self.borrow_mut();
 
-        if x as usize >= body.width || y as usize >= body.height {
+        if x >= body.width || y >= body.height {
             return;
         }
 
@@ -215,27 +214,29 @@ impl InnerWidget {
         body.cursor.y = y;
     }
 
-    pub fn advance_cursor(&self, steps: i32)
+    pub fn advance_cursor(&self, steps: i16)
     {
         let mut body = self.borrow_mut();
 
         if steps < 0 {
-            if (-steps) as u32 > body.cursor.x {
+            if (-steps) as u16 > body.cursor.x {
                 return;
             }
-        } else if steps as u32 + body.cursor.x >= body.width as u32 {
+        } else if steps as u16 + body.cursor.x >= body.width {
             return;
         }
 
-        body.cursor.x = (body.cursor.x as i32 + steps) as u32;
+        body.cursor.x = (body.cursor.x as i16 + steps) as u16;
     }
 
     /// Resizes the widget.
     /// This does not preserve the contents. Users should always treat it as though the contents
     /// become garbage.
-    pub fn resize(&mut self, width: usize, height: usize)
+    // TODO: create a struct for just the sizes, similar to how `Pos` is just
+    // for the position.
+    pub fn resize(&mut self, width: u16, height: u16)
     {
-        let buf_size = width * height;
+        let buf_size = width as usize * height as usize;
         let mut body = self.borrow_mut();
 
         body.width = width;
