@@ -74,11 +74,11 @@ impl Prompt {
     }
 
     pub fn set_theme<'t, T, C>(
-        mut self,
+        &mut self,
         sep: T,
         input_style: Style,
         input_blank_c: C
-    ) -> Self
+    )
     where
         T: Into<StyledStr<'t>>,
         C: Into<StyledChar>
@@ -107,6 +107,19 @@ impl Prompt {
         };
         self.inputline.set_theme(self.theme.input_blank_c, self.theme.input_style);
         self.redraw();
+    }
+
+    pub fn theme<'t, T, C>(
+        mut self,
+        sep: T,
+        input_style: Style,
+        input_blank_c: C
+    ) -> Self
+    where
+        T: Into<StyledStr<'t>>,
+        C: Into<StyledChar>
+    {
+        self.set_theme(sep, input_style, input_blank_c);
 
         self
     }
@@ -141,7 +154,7 @@ impl Prompt {
 
     fn redraw(&mut self)
     {
-        let sep_x = self.label.content.chars().count() as u32;
+        let sep_x = self.label.content.chars().count() as u16;
 
         self.win.print(0, 0, &self.label);
         self.win.print(sep_x, 0, &self.theme.sep);

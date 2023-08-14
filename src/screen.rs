@@ -251,11 +251,11 @@ impl Screen {
         let w_height = w.height as usize;
         let s_height = self.height as usize;
 
-        let mut x_iterations = if start_x + w_width > s_width
+        let x_iterations = if start_x + w_width > s_width
             { s_width - start_x }
             else { w_width };
 
-        let mut y_iterations = if start_y + w_height > s_height
+        let y_iterations = if start_y + w_height > s_height
             { s_height - start_y }
             else { w_height };
 

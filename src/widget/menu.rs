@@ -91,7 +91,7 @@ impl Menu {
                 self.theme.normal
             };
 
-            let win_index = (i - first_item) as u32;
+            let win_index = (i - first_item) as u16;
             self.win.print(0, win_index, &transform(&self.items[i]));
             i += 1;
         }

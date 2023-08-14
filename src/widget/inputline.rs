@@ -24,7 +24,7 @@ pub struct InputLine {
     length: u16,
     output_ready: bool,
     input: String,
-    cursor_pos: u32,
+    cursor_pos: u16,
     theme: Theme,
 }
 
@@ -96,19 +96,23 @@ impl InputLine {
         let visible_input = if input_len + 1 < self.length as usize {
             self.input.as_str()
         } else {
-            self.input.slice_in_chars(input_len + 1 - self.length as usize,
-                input_len)
+            self.input.slice_in_chars(
+                input_len + 1 - self.length as usize,
+                input_len
+            )
         };
-        self.inner.print(0, 0, visible_input.with_style(|_| self.theme.input_style));
+        self.inner.print(0, 0,
+            visible_input.with_style(|_| self.theme.input_style));
 
         // Draw the blanks.
 
         let blank_count = self.length as isize - 1 - input_len as isize;
-        let first_blank_x = input_len as u32;
+        let first_blank_x = input_len as u16;
         if blank_count > 0 {
-            self.inner.hfill(first_blank_x, 0, self.theme.blank_c, blank_count as usize);
+            self.inner.hfill(first_blank_x, 0, self.theme.blank_c,
+                 blank_count as usize);
         }
-        self.inner.putc(self.length as u32 - 1, 0, self.theme.blank_c);
+        self.inner.putc(self.length - 1, 0, self.theme.blank_c);
 
         self.inner.move_cursor(self.cursor_pos, 0);
     }
@@ -119,14 +123,12 @@ impl InputLine {
             panic!("input line cannot be resized below 1");
         }
 
-        self.inner.resize(len as usize, 1);
+        self.inner.resize(len , 1);
         self.length = len;
 
-        self.cursor_pos = if self.input.len() + 1 > self.length as usize {
-            self.length as u32
-        } else {
-            self.input.len() as u32
-        };
+        self.cursor_pos = if self.input.len() + 1 > self.length as usize
+            { self.length }
+            else { self.input.len() as u16 };
 
         self.redraw();
     }

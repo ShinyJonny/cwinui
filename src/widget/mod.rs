@@ -19,7 +19,7 @@ pub trait Widget {
 
     // TODO: These could be maybe moved directly to InnerWidget.
 
-    fn set_zindex(&mut self, index: u32)
+    fn set_zindex(&mut self, index: u16)
     {
         self.share_inner().borrow_mut().z_index = index;
     }

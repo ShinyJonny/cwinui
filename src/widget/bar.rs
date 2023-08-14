@@ -76,9 +76,9 @@ impl HorizBar {
     {
         let width = self.inner.borrow().width;
 
-        self.inner.hfill(0, 0, self.theme.body, width);
+        self.inner.hfill(0, 0, self.theme.body, width as usize);
         self.inner.putc(0, 0, self.theme.beg);
-        self.inner.putc(width as u32 - 1, 0, self.theme.end);
+        self.inner.putc(width - 1, 0, self.theme.end);
     }
 }
 
@@ -155,9 +155,9 @@ impl VertBar {
     {
         let height = self.inner.borrow_mut().height;
 
-        self.inner.vfill(0, 0, self.theme.body, height);
+        self.inner.vfill(0, 0, self.theme.body, height as usize);
         self.inner.putc(0, 0, self.theme.beg);
-        self.inner.putc(0, height as u32 - 1, self.theme.end);
+        self.inner.putc(0, height - 1, self.theme.end);
     }
 }
 
