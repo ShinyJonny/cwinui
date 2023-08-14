@@ -98,7 +98,7 @@ impl Menu {
             };
 
             let win_index = (i - first_item) as u32;
-            self.win.print(win_index, 0, &transform(&self.items[i]));
+            self.win.print(0, win_index, &transform(&self.items[i]));
             i += 1;
         }
     }

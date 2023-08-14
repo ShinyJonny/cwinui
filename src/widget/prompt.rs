@@ -167,7 +167,7 @@ impl Prompt {
         let sep_x = self.label.content.chars().count() as u32;
 
         self.win.print(0, 0, &self.label);
-        self.win.print(0, sep_x, &self.theme.sep);
+        self.win.print(sep_x, 0, &self.theme.sep);
         self.inputline.redraw();
     }
 }

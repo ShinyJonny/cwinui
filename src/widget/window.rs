@@ -1,12 +1,6 @@
 use crate::style::WithStyle;
 use super::{InnerWidget, Widget};
-use crate::layout::{
-    self,
-    Aligned,
-    Alignable,
-    Justify,
-    Align,
-};
+use crate::layout::{Justify, Area};
 use crate::util::offset;
 use crate::misc::SliceInChars;
 use crate::style::{StyledChar, StyledStr};
@@ -29,55 +23,40 @@ pub struct Window {
 }
 
 impl Window {
-    pub fn new(start_y: u32, start_x: u32, height: usize, width: usize) -> Self
+    pub fn new(area: Area) -> Self
     {
         Self {
-            inner: InnerWidget::new(start_y, start_x, height, width),
+            inner: InnerWidget::new(area),
             has_border: false,
             // TODO: add border style for each side.
             theme: Theme {
-                top_bar:             '\0'.styled(),
-                right_bar:           '\0'.styled(),
-                bottom_bar:          '\0'.styled(),
-                left_bar:            '\0'.styled(),
-                topleft_corner:      '\0'.styled(),
-                topright_corner:     '\0'.styled(),
-                bottomright_corner:  '\0'.styled(),
-                bottomleft_corner:   '\0'.styled(),
+                top_bar:            '\0'.styled(),
+                right_bar:          '\0'.styled(),
+                bottom_bar:         '\0'.styled(),
+                left_bar:           '\0'.styled(),
+                topleft_corner:     '\0'.styled(),
+                topright_corner:    '\0'.styled(),
+                bottomright_corner: '\0'.styled(),
+                bottomleft_corner:  '\0'.styled(),
             },
         }
     }
 
-    pub fn content_width(&self) -> usize
+    pub fn content_area(&self) -> Area
     {
         let inner = self.inner.borrow();
 
-        if self.has_border {
-            inner.width - 2
-        } else {
-            inner.width
-        }
-    }
-
-    pub fn content_height(&self) -> usize
-    {
-        let inner = self.inner.borrow();
+        let area = Area {
+            x: inner.start_x,
+            y: inner.start_y,
+            width: inner.width,
+            height: inner.height,
+        };
 
         if self.has_border {
-            inner.height - 2
+            area.inset(1)
         } else {
-            inner.height
-        }
-    }
-
-    pub fn content_yx(&self) -> (u32, u32)
-    {
-        let inner = self.inner.borrow();
-
-        if self.has_border {
-            (inner.start_y + 1, inner.start_x + 1)
-        } else {
-            (inner.start_y, inner.start_x)
+            area
         }
     }
 
@@ -131,7 +110,7 @@ impl Window {
         Ok(())
     }
 
-    pub fn putc<C>(&mut self, mut y: u32, mut x: u32, c: C)
+    pub fn putc<C>(&mut self, mut x: u32, mut y: u32, c: C)
     where
         C: Into<StyledChar>
     {
@@ -148,7 +127,7 @@ impl Window {
         self.inner.putc(x, y, c);
     }
 
-    pub fn print<'s, T>(&mut self, mut y: u32, mut x: u32, line: T)
+    pub fn print<'s, T>(&mut self, mut x: u32, mut y: u32, line: T)
     where
         T: Into<StyledStr<'s>>
     {
@@ -157,9 +136,9 @@ impl Window {
 
         let mut line = line.into();
 
-        let ch = self.content_height();
         let cw = self.content_width();
-        if y >= ch as u32 || x >= cw as u32 {
+        let ch = self.content_height();
+        if x >= cw as u32 || y >= ch as u32 {
             return;
         }
 
@@ -169,8 +148,8 @@ impl Window {
         }
 
         if self.has_border {
-            y += 1;
             x += 1;
+            y += 1;
         }
 
         if print_len < line.content.chars().count() {
@@ -196,7 +175,7 @@ impl Window {
         let char_count = line.content.chars().count();
 
         match j {
-            Justify::Left(row) => self.print(row, 0, line),
+            Justify::Left(row) => self.print(0, row, line),
             Justify::HCentre(row) => {
                 let x: usize;
                 if char_count >= self.inner_width() {
@@ -204,7 +183,7 @@ impl Window {
                 } else {
                     x = (self.inner_width() - char_count) / 2;
                 }
-                self.print(row, x as u32, line);
+                self.print(x as u32, row, line);
             },
             Justify::Right(row) => {
                 let x: usize;
@@ -213,23 +192,23 @@ impl Window {
                 } else {
                     x = self.inner_width() - char_count;
                 }
-                self.print(row, x as u32, line);
+                self.print(x as u32, row, line);
             },
-            Justify::Top(col) => self.print(0, col, line),
+            Justify::Top(col) => self.print(col, 0, line),
             Justify::VCentre(col) => {
                 let mut y = self.inner_height();
                 if y > 0 {
                     y -= 1;
                 }
                 y /= 2;
-                self.print(y as u32, col, line)
+                self.print(col, y as u32, line)
             },
             Justify::Bottom(col) => {
                 let mut y = self.inner_height();
                 if y > 0 {
                     y -= 1;
                 }
-                self.print(y as u32, col, line)
+                self.print(col, y as u32, line)
             },
             Justify::TopLeft => self.printj(line, Justify::Left(0)),
             Justify::TopCentre => self.printj(line, Justify::HCentre(0)),
@@ -277,7 +256,7 @@ impl Window {
         }
 
         for x in 0..cw {
-            self.putc(y as u32, x as u32, '\0');
+            self.putc(x as u32, y as u32, '\0');
         }
     }
 
@@ -369,134 +348,5 @@ impl Widget for Window {
     fn share_inner(&self) -> InnerWidget
     {
         self.inner.share()
-    }
-}
-
-impl Aligned for Window {
-    fn inner_width(&self) -> usize
-    {
-        self.content_width()
-    }
-
-    fn inner_height(&self) -> usize
-    {
-        self.content_height()
-    }
-
-    fn inner_start_yx(&self) -> (u32, u32)
-    {
-        self.content_yx()
-    }
-
-    fn outer_width(&self) -> usize
-    {
-        self.inner.borrow().width
-    }
-
-    fn outer_height(&self) -> usize
-    {
-        self.inner.borrow().height
-    }
-
-    fn outer_start_yx(&self) -> (u32, u32)
-    {
-        let inner = self.inner.borrow();
-        (inner.start_y, inner.start_x)
-    }
-
-    fn centre(&self) -> (u32, u32)
-    {
-        let inner = self.inner.borrow();
-
-        let (mut centre_y, mut centre_x) = (
-            inner.start_y + inner.height as u32 / 2,
-            inner.start_x + inner.width as u32 / 2
-        );
-        if centre_y > 0 {
-            centre_y -= 1;
-        }
-        if centre_x > 0 {
-            centre_x -= 1;
-        }
-
-        (centre_y, centre_x)
-    }
-}
-
-impl Alignable for Window {
-    fn align_centres<T: Aligned>(&mut self, anchor: &T)
-    {
-        let (acy, acx) = anchor.centre();
-        let (scy, scx) = self.centre();
-
-        let acy = acy as i64;
-        let acx = acx as i64;
-        let scy = scy as i64;
-        let scx = scx as i64;
-
-        let mut inner = self.inner.borrow_mut();
-        inner.start_y = (inner.start_y as i64 + (acy - scy)) as u32;
-        inner.start_x = (inner.start_x as i64 + (acx - scx)) as u32;
-    }
-
-    fn align_to_inner<T: Aligned>(&mut self, anchor: &T, a: Align)
-    {
-        let mut inner = self.inner.borrow_mut();
-
-        let (ay, ax) = anchor.inner_start_yx();
-        let aheight = anchor.inner_height();
-        let awidth = anchor.inner_width();
-        let sheight = inner.height;
-        let swidth = inner.width;
-
-        let (new_y, new_x) = layout::align(
-            a,
-            sheight, swidth,
-            ay, ax, aheight, awidth
-        );
-
-        inner.start_y = new_y;
-        inner.start_x = new_x;
-    }
-
-    fn align_to_outer<T: Aligned>(&mut self, anchor: &T, a: Align)
-    {
-        let mut inner = self.inner.borrow_mut();
-
-        let (ay, ax) = anchor.outer_start_yx();
-        let aheight = anchor.outer_height();
-        let awidth = anchor.outer_width();
-        let sheight = inner.height;
-        let swidth = inner.width;
-
-        let (new_y, new_x) = layout::align(
-            a,
-            sheight, swidth,
-            ay, ax, aheight, awidth
-        );
-
-        inner.start_y = new_y;
-        inner.start_x = new_x;
-    }
-
-    fn adjust_pos(&mut self, y: i32, x: i32)
-    {
-        let mut inner = self.inner.borrow_mut();
-        let new_y = inner.start_y as i32 + y;
-        let new_x = inner.start_x as i32 + x;
-
-        if new_y < 0 || new_x < 0 {
-            panic!("position adjustment is out of bounds");
-        }
-
-        inner.start_y = new_y as u32;
-        inner.start_x = new_x as u32;
-    }
-
-    fn change_pos(&mut self, y: u32, x: u32)
-    {
-        let mut inner = self.inner.borrow_mut();
-        inner.start_y = y;
-        inner.start_x = x;
     }
 }

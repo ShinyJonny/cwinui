@@ -170,6 +170,16 @@ impl Area {
     pub fn align_centres(&self, anchor: Self) -> Self { todo!(); } // TODO
 
     pub fn align_to(&self, anchor: Self, align: Align) -> Self { todo!(); } // TODO
+
+    pub fn inset(&self, count: u32) -> Self
+    {
+        Self {
+            x: self.start_x + count,
+            y: self.start_y + count,
+            width: self.width - count * 2,
+            height: self.height - count * 2,
+        }
+    }
 }
 
 #[macro_export]
