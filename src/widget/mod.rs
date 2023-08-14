@@ -44,6 +44,7 @@ pub trait OutputWidget<T> : Widget {
     fn get_output(&self) -> Result<T, PoisonError<T>>;
 }
 
+// TODO: FIXME: rename this.
 pub struct PoisonError<T>(T);
 
 impl<T> PoisonError<T> {

@@ -9,13 +9,8 @@ use super::{
 };
 use termion::event::{Event, Key};
 
-use crate::layout::{
-    Aligned,
-    Alignable,
-    Align,
-};
-use crate::sub_impl_aligned;
-use crate::sub_impl_alignable;
+use crate::layout::Area;
+use crate::Pos;
 
 type Transformer = fn(&str) -> StyledString;
 
@@ -34,25 +29,24 @@ pub struct Menu {
 }
 
 impl Menu {
-    pub fn new(
-        y: u32,
-        x: u32,
-        size: Option<(usize, usize)>,
-        items: &[&str],
-    ) -> Self
+    // TODO: create a *size* struct purely for `width` and `height`.
+    // Use it also in other widgets (check), mainly in `InnerWidget`.
+    pub fn new(pos: Pos, size: Option<(usize, usize)>, items: &[&str]) -> Self
     {
         let items: Vec<_> = items.iter().map(|it| String::from(*it)).collect();
 
-        let (height, width) = if let Some((height, width)) = size {
-            (height, width)
+        let (width, height) = if let Some((width, height)) = size {
+            (width, height)
         } else {
-            let item_lens = items.iter().map(|it| it.len());
-            let longest = item_lens.reduce(|longest, it_len| std::cmp::max(longest, it_len)).unwrap_or(0);
-            (items.len() + 3, longest)
+            let item_lengths = items.iter().map(|it| it.len());
+            let longest = item_lengths
+                .reduce(|longest, it_len| std::cmp::max(longest, it_len))
+                .unwrap_or(0);
+            (longest, items.len() + 3)
         };
 
         let mut menu = Self {
-            win: Window::new(y, x, height, width),
+            win: Window::new(Area { x: pos.x, y: pos.y, width, height }),
             items,
             output: None,
             active_item: 0,
@@ -168,6 +162,3 @@ impl OutputWidget<usize> for Menu {
         }
     }
 }
-
-sub_impl_aligned!(Menu, win);
-sub_impl_alignable!(Menu, win);

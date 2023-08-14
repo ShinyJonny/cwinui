@@ -1,12 +1,7 @@
 use termion::event::Event;
 
-use crate::layout::{
-    Aligned,
-    Alignable,
-    Align,
-};
-use crate::sub_impl_aligned;
-use crate::sub_impl_alignable;
+use crate::Pos;
+use crate::layout::Area;
 use crate::style::{StyledString, StyledStr, Style, StyledChar, WithStyle};
 
 use super::{
@@ -33,7 +28,7 @@ pub struct Prompt {
 }
 
 impl Prompt {
-    pub fn new<'s, T>(label: T, y: u32, x: u32, len: usize) -> Self
+    pub fn new<'s, T>(pos: Pos, label: T, len: usize) -> Self
     where
         T: Into<StyledStr<'s>>
     {
@@ -48,11 +43,17 @@ impl Prompt {
             panic!("prompt is not large enough");
         }
 
+        let input_x = pos.x + prefix_len as u16;
         let input_len = len - prefix_len;
-        let input_x = x + prefix_len as u32;
 
-        let mut inputline = InputLine::new(y, input_x, input_len);
-        let win = Window::new(y, x, 1, len);
+        let mut inputline
+            = InputLine::new(Pos { x: input_x, y: pos.y }, input_len);
+        let win = Window::new(Area {
+            x: pos.x,
+            y: pos.y,
+            width: len as u16,
+            height: 1
+        });
 
         inputline.show();
         win.share_inner().add_subwidget(inputline.share_inner());
@@ -72,7 +73,7 @@ impl Prompt {
         prompt
     }
 
-    pub fn theme<'t, T, C>(
+    pub fn set_theme<'t, T, C>(
         mut self,
         sep: T,
         input_style: Style,
@@ -86,13 +87,16 @@ impl Prompt {
         let sep = sep.into();
 
         let prefix_len = self.label.content.chars().count() + sep.content.chars().count();
-        if prefix_len + 2 > self.win.content_width() {
+
+        let content_area = self.win.content_area();
+
+        if prefix_len + 2 > content_area.width as usize {
             panic!("prompt is not large enough");
         }
 
-        let (start_y, start_x) = self.win.content_yx();
-        self.inputline.change_pos(start_y, start_x + prefix_len as u32);
-        self.inputline.resize(self.win.content_width() - prefix_len);
+        let Area { x: start_x, y: start_y, width: _, height: _ } = content_area;
+        todo!("change the pos of the inputline to `start_x + prefix_len` and `start_y`"); // TODO
+        self.inputline.resize(content_area.width as usize - prefix_len);
 
         self.theme = Theme {
             // FIXME: get rid of these allocations.
@@ -106,38 +110,6 @@ impl Prompt {
         self
     }
 
-    pub fn set_theme<'t, T, C>(
-        &mut self,
-        sep: T,
-        input_style: Style,
-        input_blank_c: C
-    )
-    where
-        T: Into<StyledStr<'t>>,
-        C: Into<StyledChar>
-    {
-        let input_blank_c = input_blank_c.into();
-        let sep = sep.into();
-
-        let prefix_len = self.label.content.chars().count() + sep.content.chars().count();
-        if prefix_len + 2 > self.win.content_width() {
-            panic!("prompt is not large enough");
-        }
-
-        let (start_y, start_x) = self.win.content_yx();
-        self.inputline.change_pos(start_y, start_x + prefix_len as u32);
-        self.inputline.resize(self.win.content_width() - prefix_len);
-
-        self.theme = Theme {
-            // FIXME: get rid of these allocations.
-            sep: sep.to_owned(),
-            input_style,
-            input_blank_c,
-        };
-        self.inputline.set_theme(self.theme.input_blank_c, self.theme.input_style);
-        self.redraw();
-    }
-
     pub fn set_label<'t, T>(&mut self, label: T)
     where
         T: Into<StyledStr<'t>>
@@ -145,12 +117,15 @@ impl Prompt {
         let label = label.into();
 
         let prefix_len = label.content.chars().count() + self.theme.sep.content.chars().count();
-        if prefix_len + 2 > self.win.content_width() {
+
+        let content_area = self.win.content_area();
+
+        if prefix_len + 2 > content_area.width as usize {
             panic!("prompt is not large enough");
         }
 
-        let (start_y, start_x) = self.win.content_yx();
-        self.inputline.change_pos(start_y, start_x + prefix_len as u32);
+        let Area { x: start_x, y: start_y, width: _, height: _ } = content_area;
+        todo!("change the pos of the inputline to `start_x + prefix_len` and `start_y`"); // TODO
         self.inputline.resize(self.win.content_width() - prefix_len);
 
         // FIXME: get rid of these allocations.
@@ -197,6 +172,3 @@ impl OutputWidget<String> for Prompt {
         self.inputline.get_output()
     }
 }
-
-sub_impl_aligned!(Prompt, win);
-sub_impl_alignable!(Prompt, win, [inputline]);
