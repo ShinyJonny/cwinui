@@ -139,22 +139,37 @@ pub fn align(
     (y, x)
 }
 
-pub trait Aligned {
-    fn inner_width(&self) -> usize;
-    fn inner_height(&self) -> usize;
-    fn inner_start_yx(&self) -> (u32, u32);
-    fn outer_width(&self) -> usize;
-    fn outer_height(&self) -> usize;
-    fn outer_start_yx(&self) -> (u32, u32);
-    fn centre(&self) -> (u32, u32);
+/// Position coordinates.
+#[derive(Debug, Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Pos {
+    pub x: u16,
+    pub y: u16,
 }
 
-pub trait Alignable : Aligned {
-    fn align_centres<T: Aligned>(&mut self, anchor: &T);
-    fn align_to_inner<T: Aligned>(&mut self, anchor: &T, a: Align);
-    fn align_to_outer<T: Aligned>(&mut self, anchor: &T, a: Align);
-    fn adjust_pos(&mut self, y: i32, x: i32);
-    fn change_pos(&mut self, y: u32, x: u32);
+/// Rectangular area, used for layouting.
+#[derive(Debug, Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Area {
+    pub x: u16,
+    pub y: u16,
+    pub width: u16,
+    pub height: u16,
+}
+
+impl Area {
+    /// The coordinates of the center of the area.
+    pub fn centre(&self) -> Pos
+    {
+        Pos {
+            x: self.x + self.width / 2,
+            y: self.y + self.height / 2,
+        }
+    }
+
+    // TODO: revise the signature and naming:
+    // - do we mutate or create a new struct?
+    pub fn align_centres(&self, anchor: Self) -> Self { todo!(); } // TODO
+
+    pub fn align_to(&self, anchor: Self, align: Align) -> Self { todo!(); } // TODO
 }
 
 #[macro_export]
