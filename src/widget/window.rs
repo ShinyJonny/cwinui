@@ -145,7 +145,7 @@ impl Window {
             y += 1;
             x += 1;
         }
-        self.inner.putc(y, x, c);
+        self.inner.putc(x, y, c);
     }
 
     pub fn print<'s, T>(&mut self, mut y: u32, mut x: u32, line: T)
@@ -181,7 +181,7 @@ impl Window {
             }
         }
 
-        self.inner.print(y, x, line);
+        self.inner.print(x, y, line);
     }
 
     pub fn printj<'s, T>(&mut self, line: T, j: Justify)
@@ -304,15 +304,15 @@ impl Window {
 
         // Top and bottom edges.
         self.inner.hfill(0, 0, self.theme.top_bar, width as usize);
-        self.inner.hfill(height - 1, 0, self.theme.bottom_bar, width as usize);
+        self.inner.hfill(0, height - 1, self.theme.bottom_bar, width as usize);
         // Right and left edges.
         self.inner.vfill(0, 0, self.theme.left_bar, height as usize);
-        self.inner.vfill(0, width - 1, self.theme.right_bar, height as usize);
+        self.inner.vfill(width - 1, 0, self.theme.right_bar, height as usize);
         // Corners.
         self.inner.putc(0, 0, self.theme.topleft_corner);
-        self.inner.putc(0, 0 + width - 1, self.theme.topright_corner);
-        self.inner.putc(0 + height - 1, 0 + width - 1, self.theme.bottomright_corner);
-        self.inner.putc(0 + height - 1, 0, self.theme.bottomleft_corner);
+        self.inner.putc(0 + width - 1, 0, self.theme.topright_corner);
+        self.inner.putc(0 + width - 1, 0 + height - 1, self.theme.bottomright_corner);
+        self.inner.putc(0, 0 + height - 1, self.theme.bottomleft_corner);
     }
 
     fn clear_border(&mut self)
@@ -330,10 +330,10 @@ impl Window {
 
         // Top and bottom edges.
         self.inner.hfill(0, 0, '\0', width as usize);
-        self.inner.hfill(height - 1, 0, '\0', width as usize);
+        self.inner.hfill(0, height - 1, '\0', width as usize);
         // Right and left edges.
         self.inner.vfill(0, 0, '\0', height as usize);
-        self.inner.vfill(0, width - 1, '\0', height as usize);
+        self.inner.vfill(width - 1, 0, '\0', height as usize);
     }
 
     fn shift_content_in(&mut self)

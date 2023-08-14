@@ -2,6 +2,7 @@ use std::ops::Deref;
 use std::cell::RefCell;
 use std::rc::Rc;
 
+use crate::layout::Area;
 use crate::util::pos;
 use crate::style::{Style, StyledChar, StyledStr};
 
@@ -15,8 +16,8 @@ pub struct InnerWidgetBody {
     pub buffer: Vec<char>,
     pub style_buffer: Vec<Style>,
     pub cursor: Cursor,
-    pub start_y: u32,
     pub start_x: u32,
+    pub start_y: u32,
     pub width: usize,
     pub height: usize,
     pub z_index: u32,
@@ -27,17 +28,18 @@ pub struct InnerWidgetBody {
 pub struct InnerWidget(Rc<RefCell<InnerWidgetBody>>);
 
 impl InnerWidget {
-    pub fn new(start_y: u32, start_x: u32, height: usize, width: usize) -> Self
+    pub fn new(area: Area) -> Self
     {
+        let Area { x: start_x, y: start_y, width, height } = area;
         Self (
             Rc::new(RefCell::new(
                 InnerWidgetBody {
                     buffer: vec!['\0'; width * height],
                     style_buffer: vec![Style::default(); width * height],
-                    start_y,
                     start_x,
-                    height,
+                    start_y,
                     width,
+                    height,
                     cursor: Cursor { y: 0, x: 0, hidden: true },
                     z_index: 1,
                     hidden: true,
@@ -57,12 +59,12 @@ impl InnerWidget {
         self.borrow_mut().subwidgets.push(sub);
     }
 
-    pub fn print<'s, T>(&self, y: u32, x: u32, text: T)
+    pub fn print<'s, T>(&self, x: u32, y: u32, text: T)
     where
         T: Into<StyledStr<'s>>
     {
-        let y = y as usize;
         let x = x as usize;
+        let y = y as usize;
         let text = text.into();
 
         let mut body = self.borrow_mut();
@@ -91,7 +93,7 @@ impl InnerWidget {
         }
     }
 
-    pub fn putc<T>(&self, y: u32, x: u32, c: T)
+    pub fn putc<T>(&self, x: u32, y: u32, c: T)
     where
         T: Into<StyledChar>
     {
@@ -108,12 +110,12 @@ impl InnerWidget {
         body.style_buffer[pos] = c.style;
     }
 
-    pub fn hfill<T>(&self, y: u32, x: u32, c: T, len: usize)
+    pub fn hfill<T>(&self, x: u32, y: u32, c: T, len: usize)
     where
         T: Into<StyledChar>
     {
-        let y = y as usize;
         let x = x as usize;
+        let y = y as usize;
         let c = c.into();
 
         let mut body = self.borrow_mut();
@@ -137,12 +139,12 @@ impl InnerWidget {
         }
     }
 
-    pub fn vfill<T>(&self, y: u32, x: u32, c: T, len: usize)
+    pub fn vfill<T>(&self, x: u32, y: u32, c: T, len: usize)
     where
         T: Into<StyledChar>
     {
-        let y = y as usize;
         let x = x as usize;
+        let y = y as usize;
         let c = c.into();
 
         let mut body = self.borrow_mut();
@@ -167,7 +169,7 @@ impl InnerWidget {
     }
 
     #[inline]
-    pub fn peekc(&self, y: u32, x: u32) -> StyledChar
+    pub fn peekc(&self, x: u32, y: u32) -> StyledChar
     {
         let inner = self.borrow();
         let pos = pos![inner.width, y as usize, x as usize];
@@ -201,16 +203,16 @@ impl InnerWidget {
         self.borrow_mut().cursor.hidden = true;
     }
 
-    pub fn move_cursor(&self, y: u32, x: u32)
+    pub fn move_cursor(&self, x: u32, y: u32)
     {
         let mut body = self.borrow_mut();
 
-        if y as usize >= body.height || x as usize >= body.width {
+        if x as usize >= body.width || y as usize >= body.height {
             return;
         }
 
-        body.cursor.y = y;
         body.cursor.x = x;
+        body.cursor.y = y;
     }
 
     pub fn advance_cursor(&self, steps: i32)
@@ -231,13 +233,13 @@ impl InnerWidget {
     /// Resizes the widget.
     /// This does not preserve the contents. Users should always treat it as though the contents
     /// become garbage.
-    pub fn resize(&mut self, height: usize, width: usize)
+    pub fn resize(&mut self, width: usize, height: usize)
     {
-        let buf_size = height * width;
+        let buf_size = width * height;
         let mut body = self.borrow_mut();
 
-        body.height = height;
         body.width = width;
+        body.height = height;
         body.buffer.resize(buf_size, '\0');
         body.style_buffer.resize(buf_size, Style::default());
     }

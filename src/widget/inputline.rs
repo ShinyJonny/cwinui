@@ -104,11 +104,11 @@ impl InputLine {
         let blank_count = self.length as isize - 1 - input_len as isize;
         let first_blank_x = input_len as u32;
         if blank_count > 0 {
-            self.inner.hfill(0, first_blank_x, self.theme.blank_c, blank_count as usize);
+            self.inner.hfill(first_blank_x, 0, self.theme.blank_c, blank_count as usize);
         }
-        self.inner.putc(0, self.length as u32 - 1, self.theme.blank_c);
+        self.inner.putc(self.length as u32 - 1, 0, self.theme.blank_c);
 
-        self.inner.move_cursor(0, self.cursor_pos);
+        self.inner.move_cursor(self.cursor_pos, 0);
     }
 
     pub fn resize(&mut self, len: usize)
@@ -117,7 +117,7 @@ impl InputLine {
             panic!("input line cannot be resized below 1");
         }
 
-        self.inner.resize(1, len);
+        self.inner.resize(len, 1);
         self.length = len;
 
         self.cursor_pos = if self.input.len() + 1 > self.length {

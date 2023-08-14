@@ -77,7 +77,7 @@ impl HorizBar {
 
         self.inner.hfill(0, 0, self.theme.body, width);
         self.inner.putc(0, 0, self.theme.beg);
-        self.inner.putc(0, width as u32 - 1, self.theme.end);
+        self.inner.putc(width as u32 - 1, 0, self.theme.end);
     }
 }
 
@@ -265,7 +265,7 @@ impl VertBar {
 
         self.inner.vfill(0, 0, self.theme.body, height);
         self.inner.putc(0, 0, self.theme.beg);
-        self.inner.putc(height as u32 - 1, 0, self.theme.end);
+        self.inner.putc(0, height as u32 - 1, self.theme.end);
     }
 }
 
