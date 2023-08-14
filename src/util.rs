@@ -1,7 +1,7 @@
-macro_rules! pos {
-    ( $width:expr, $y:expr, $x:expr ) => {
+macro_rules! offset {
+    ( $x:expr, $y:expr, $width:expr ) => {
         $y * $width + $x
     }
 }
 
-pub(crate) use pos;
+pub(crate) use offset;

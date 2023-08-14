@@ -7,7 +7,7 @@ use crate::layout::{
     Justify,
     Align,
 };
-use crate::util::pos;
+use crate::util::offset;
 use crate::misc::SliceInChars;
 use crate::style::{StyledChar, StyledStr};
 
@@ -344,8 +344,8 @@ impl Window {
         for y in 1..inner.height {
             for x in 1..inner.width {
                 //FIXME: implement this through APIs.
-                inner.buffer[pos![w, y, x]] = inner.buffer[pos![w, y - 1, x - 1]];
-                inner.style_buffer[pos![w, y, x]] = inner.style_buffer[pos![w, y - 1, x - 1]];
+                inner.buffer[offset![x, y, w]] = inner.buffer[offset![x - 1, y - 1, w]];
+                inner.style_buffer[offset![x, y, w]] = inner.style_buffer[offset![x - 1, y - 1, w]];
             }
         }
     }
@@ -358,8 +358,8 @@ impl Window {
         for y in 1..inner.height {
             for x in 1..inner.width {
                 //FIXME: implement this through APIs.
-                inner.buffer[pos![w, y - 1, x - 1]] = inner.buffer[pos![w, y, x]];
-                inner.style_buffer[pos![w, y - 1, x - 1]] = inner.style_buffer[pos![w, y, x]];
+                inner.buffer[offset![x - 1, y - 1, w]] = inner.buffer[offset![x, y, w]];
+                inner.style_buffer[offset![x - 1, y - 1, w]] = inner.style_buffer[offset![x, y, w]];
             }
         }
     }

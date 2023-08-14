@@ -7,7 +7,7 @@ use termion::input::MouseTerminal;
 use crate::style::{Color, TextStyle};
 use crate::widget::Widget;
 use crate::widget::InnerWidget;
-use crate::util::pos;
+use crate::util::offset;
 
 #[derive(Clone, Copy)]
 struct InternalStyle {
@@ -122,7 +122,7 @@ impl Screen {
             render::add_text_style(&mut self.stdout, TextStyle::INVERT).unwrap();
             render::write_char(
                 &mut self.stdout,
-                self.buffer[pos![self.width, self.cursor.y as usize, self.cursor.x as usize]]
+                self.buffer[offset![self.cursor.x as usize, self.cursor.y as usize, self.width]]
             ).unwrap();
             render::subtract_text_style(&mut self.stdout, TextStyle::INVERT).unwrap();
             render::move_cursor(&mut self.stdout, 0, -1).unwrap();
@@ -140,7 +140,7 @@ impl Screen {
 
     fn render_line(&mut self, y: usize)
     {
-        let line_offset = pos![self.width, y, 0];
+        let line_offset = offset![0, y, self.width];
         let chars = &self.buffer[line_offset..line_offset + self.width];
         let styles = &self.style_buffer[line_offset..line_offset + self.width];
 
@@ -255,8 +255,8 @@ impl Screen {
 
         for y in 0..y_iterations {
             for x in 0..x_iterations {
-                let w_pos = pos![ww, y, x];
-                let s_pos = pos![sw, start_y + y, start_x + x];
+                let w_pos = offset![x, y, ww];
+                let s_pos = offset![start_x + x, start_y + y, sw];
 
                 let c = w.buffer[w_pos];
 

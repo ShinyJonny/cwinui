@@ -3,7 +3,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use crate::layout::Area;
-use crate::util::pos;
+use crate::util::offset;
 use crate::style::{Style, StyledChar, StyledStr};
 
 pub struct Cursor {
@@ -85,11 +85,11 @@ impl InnerWidget {
         let w = body.width;
         let mut chars = text.content.chars();
         for i in 0..print_len {
-            body.buffer[pos![w, y, x + i]] = chars.next().unwrap();
+            body.buffer[offset![x + i, y, w]] = chars.next().unwrap();
         }
 
         for i in 0..print_len {
-            body.style_buffer[pos![w, y, x + i]] = text.style;
+            body.style_buffer[offset![x + i, y, w]] = text.style;
         }
     }
 
@@ -105,7 +105,7 @@ impl InnerWidget {
         }
 
         let w = body.width;
-        let pos = pos![w, y as usize, x as usize];
+        let pos = offset![x as usize, y as usize, w];
         body.buffer[pos] = c.content;
         body.style_buffer[pos] = c.style;
     }
@@ -131,11 +131,11 @@ impl InnerWidget {
 
         let w = body.width;
         for i in 0..fill_len {
-            body.buffer[pos![w, y, x + i]] = c.content;
+            body.buffer[offset![x + i, y, w]] = c.content;
         }
 
         for i in 0..fill_len {
-            body.style_buffer[pos![w, y, x + i]] = c.style;
+            body.style_buffer[offset![x + i, y, w]] = c.style;
         }
     }
 
@@ -160,11 +160,11 @@ impl InnerWidget {
 
         let w = body.width;
         for i in 0..fill_len {
-            body.buffer[pos![w, y + i, x]] = c.content;
+            body.buffer[offset![x, y + i, w]] = c.content;
         }
 
         for i in 0..fill_len {
-            body.style_buffer[pos![w, y + i, x]] = c.style;
+            body.style_buffer[offset![x, y + i, w]] = c.style;
         }
     }
 
@@ -172,7 +172,7 @@ impl InnerWidget {
     pub fn peekc(&self, x: u32, y: u32) -> StyledChar
     {
         let inner = self.borrow();
-        let pos = pos![inner.width, y as usize, x as usize];
+        let pos = offset![x as usize, y as usize, inner.width];
 
         StyledChar {
             content: inner.buffer[pos],
