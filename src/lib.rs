@@ -3,5 +3,5 @@ pub mod screen;
 pub mod widget;
 pub mod style;
 
-mod macros;
+mod util;
 mod misc;

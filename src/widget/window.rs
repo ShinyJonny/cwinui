@@ -7,7 +7,7 @@ use crate::layout::{
     Justify,
     Align,
 };
-use crate::pos;
+use crate::util::pos;
 use crate::misc::SliceInChars;
 use crate::style::{StyledChar, StyledStr};
 

@@ -2,7 +2,7 @@ use std::ops::Deref;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use crate::pos;
+use crate::util::pos;
 use crate::style::{Style, StyledChar, StyledStr};
 
 pub struct Cursor {

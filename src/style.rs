@@ -35,14 +35,14 @@ impl Style {
         self
     }
 
-    pub fn fg_color(mut self, color: Color) -> Self
+    pub fn fg(mut self, color: Color) -> Self
     {
         self.fg_color = Some(color);
 
         self
     }
 
-    pub fn bg_color(mut self, color: Color) -> Self
+    pub fn bg(mut self, color: Color) -> Self
     {
         self.bg_color = Some(color);
 
@@ -81,7 +81,8 @@ pub enum Color {
     LightCyan,
     LightWhite,
     Ansi(u8),
-    Rgb((u8, u8, u8)),
+    // FIXME: flatten the tuple.
+    Rgb(u8, u8, u8),
 }
 
 // TODO: implement slicing.

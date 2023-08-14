@@ -7,7 +7,7 @@ use termion::input::MouseTerminal;
 use crate::style::{Color, TextStyle};
 use crate::widget::Widget;
 use crate::widget::InnerWidget;
-use crate::pos;
+use crate::util::pos;
 
 #[derive(Clone, Copy)]
 struct InternalStyle {
@@ -365,7 +365,7 @@ mod render {
     pub fn set_fg_color<W: Write>(writer: &mut W, color: Color) -> Result<(), std::io::Error>
     {
         match color {
-            Color::Normal => write!(writer, "{}", Fg(termion::color::Reset))?,
+            Color::Normal       => write!(writer, "{}", Fg(termion::color::Reset))?,
             Color::Black        => write!(writer, "{}", Fg(termion::color::Black))?,
             Color::Red          => write!(writer, "{}", Fg(termion::color::Red))?,
             Color::Green        => write!(writer, "{}", Fg(termion::color::Green))?,
@@ -382,8 +382,8 @@ mod render {
             Color::LightMagenta => write!(writer, "{}", Fg(termion::color::LightMagenta))?,
             Color::LightCyan    => write!(writer, "{}", Fg(termion::color::LightCyan))?,
             Color::LightWhite   => write!(writer, "{}", Fg(termion::color::LightCyan))?,
-            Color::Ansi(c)     => write!(writer, "{}", Fg(termion::color::AnsiValue(c)))?,
-            Color::Rgb((r, g, b)) => write!(writer, "{}", Fg(termion::color::Rgb(r, g, b)))?,
+            Color::Ansi(c)      => write!(writer, "{}", Fg(termion::color::AnsiValue(c)))?,
+            Color::Rgb(r, g, b) => write!(writer, "{}", Fg(termion::color::Rgb(r, g, b)))?,
         }
 
         Ok(())
@@ -395,7 +395,7 @@ mod render {
     pub fn set_bg_color<W: Write>(writer: &mut W, color: Color) -> Result<(), std::io::Error>
     {
         match color {
-            Color::Normal => write!(writer, "{}", Bg(termion::color::Reset))?,
+            Color::Normal       => write!(writer, "{}", Bg(termion::color::Reset))?,
             Color::Black        => write!(writer, "{}", Bg(termion::color::Black))?,
             Color::Red          => write!(writer, "{}", Bg(termion::color::Red))?,
             Color::Green        => write!(writer, "{}", Bg(termion::color::Green))?,
@@ -412,8 +412,8 @@ mod render {
             Color::LightMagenta => write!(writer, "{}", Bg(termion::color::LightMagenta))?,
             Color::LightCyan    => write!(writer, "{}", Bg(termion::color::LightCyan))?,
             Color::LightWhite   => write!(writer, "{}", Bg(termion::color::LightCyan))?,
-            Color::Ansi(c)     => write!(writer, "{}", Bg(termion::color::AnsiValue(c)))?,
-            Color::Rgb((r, g, b)) => write!(writer, "{}", Bg(termion::color::Rgb(r, g, b)))?,
+            Color::Ansi(c)      => write!(writer, "{}", Bg(termion::color::AnsiValue(c)))?,
+            Color::Rgb(r, g, b) => write!(writer, "{}", Bg(termion::color::Rgb(r, g, b)))?,
         }
 
         Ok(())
