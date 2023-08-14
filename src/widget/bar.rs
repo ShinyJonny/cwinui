@@ -16,7 +16,7 @@ pub struct HorizBar {
 }
 
 impl HorizBar {
-    pub fn new(pos: Pos, width: usize) -> Self
+    pub fn new(pos: Pos, width: u16) -> Self
     {
         let mut bar = Self {
             inner: InnerWidget::new(Area {
@@ -95,7 +95,7 @@ pub struct VertBar {
 }
 
 impl VertBar {
-    pub fn new(pos: Pos, height: usize) -> Self
+    pub fn new(pos: Pos, height: u16) -> Self
     {
         let mut bar = Self {
             inner: InnerWidget::new(Area {

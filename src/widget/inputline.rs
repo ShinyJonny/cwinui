@@ -21,7 +21,7 @@ struct Theme {
 
 pub struct InputLine {
     inner: InnerWidget,
-    length: usize,
+    length: u16,
     output_ready: bool,
     input: String,
     cursor_pos: u32,
@@ -29,7 +29,7 @@ pub struct InputLine {
 }
 
 impl InputLine {
-    pub fn new(pos: Pos, length: usize) -> Self
+    pub fn new(pos: Pos, length: u16) -> Self
     {
         let theme = Theme {
             blank_c: ' '.styled(),
@@ -93,10 +93,11 @@ impl InputLine {
         // Draw the input.
 
         let input_len = self.input.chars().count();
-        let visible_input = if input_len + 1 < self.length {
+        let visible_input = if input_len + 1 < self.length as usize {
             self.input.as_str()
         } else {
-            self.input.slice_in_chars(input_len + 1 - self.length, input_len)
+            self.input.slice_in_chars(input_len + 1 - self.length as usize,
+                input_len)
         };
         self.inner.print(0, 0, visible_input.with_style(|_| self.theme.input_style));
 
@@ -112,16 +113,16 @@ impl InputLine {
         self.inner.move_cursor(self.cursor_pos, 0);
     }
 
-    pub fn resize(&mut self, len: usize)
+    pub fn resize(&mut self, len: u16)
     {
         if len < 1 {
             panic!("input line cannot be resized below 1");
         }
 
-        self.inner.resize(len, 1);
+        self.inner.resize(len as usize, 1);
         self.length = len;
 
-        self.cursor_pos = if self.input.len() + 1 > self.length {
+        self.cursor_pos = if self.input.len() + 1 > self.length as usize {
             self.length as u32
         } else {
             self.input.len() as u32
@@ -149,7 +150,7 @@ impl InteractiveWidget for InputLine {
                 if c.is_alphanumeric() || c.is_ascii_punctuation() || c == ' ' {
                     let input_len = self.input.chars().count();
 
-                    if input_len + 1 < self.length {
+                    if input_len + 1 < self.length as usize {
                         self.cursor_pos += 1;
                     }
                     self.input.push(c);
@@ -161,7 +162,7 @@ impl InteractiveWidget for InputLine {
                 if !self.input.is_empty() {
                     let input_len = self.input.chars().count();
 
-                    if input_len + 1 <= self.length {
+                    if input_len + 1 <= self.length as usize {
                         self.cursor_pos -= 1;
                     }
                     self.input.pop();

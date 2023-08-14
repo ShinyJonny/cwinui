@@ -34,12 +34,12 @@ impl InnerWidget {
         Self (
             Rc::new(RefCell::new(
                 InnerWidgetBody {
-                    buffer: vec!['\0'; width * height],
-                    style_buffer: vec![Style::default(); width * height],
-                    start_x,
-                    start_y,
-                    width,
-                    height,
+                    buffer: vec!['\0'; (width * height) as usize],
+                    style_buffer: vec![Style::default(); (width * height) as usize],
+                    start_x: start_x as u32,
+                    start_y: start_y as u32,
+                    width: width as usize,
+                    height: height as usize,
                     cursor: Cursor { y: 0, x: 0, hidden: true },
                     z_index: 1,
                     hidden: true,

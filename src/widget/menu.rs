@@ -36,13 +36,13 @@ impl Menu {
         let items: Vec<_> = items.iter().map(|it| String::from(*it)).collect();
 
         let (width, height) = if let Some((width, height)) = size {
-            (width, height)
+            (width as u16, height as u16)
         } else {
             let item_lengths = items.iter().map(|it| it.len());
             let longest = item_lengths
                 .reduce(|longest, it_len| std::cmp::max(longest, it_len))
                 .unwrap_or(0);
-            (longest, items.len() + 3)
+            (longest as u16, items.len() as u16 + 3)
         };
 
         let mut menu = Self {
@@ -99,7 +99,7 @@ impl Menu {
 
     fn visible_count(&self) -> usize
     {
-        std::cmp::min(self.win.content_height(), self.items.len())
+        std::cmp::min(self.win.content_area().height as usize, self.items.len())
     }
 }
 

@@ -28,7 +28,7 @@ pub struct Prompt {
 }
 
 impl Prompt {
-    pub fn new<'s, T>(pos: Pos, label: T, len: usize) -> Self
+    pub fn new<'s, T>(pos: Pos, label: T, len: u16) -> Self
     where
         T: Into<StyledStr<'s>>
     {
@@ -39,12 +39,12 @@ impl Prompt {
         let sep_len = sep.content.chars().count();
         let prefix_len = label_len + sep_len;
 
-        if prefix_len + 2 > len {
+        if prefix_len + 2 > len as usize {
             panic!("prompt is not large enough");
         }
 
         let input_x = pos.x + prefix_len as u16;
-        let input_len = len - prefix_len;
+        let input_len = len - prefix_len as u16;
 
         let mut inputline
             = InputLine::new(Pos { x: input_x, y: pos.y }, input_len);
@@ -86,17 +86,18 @@ impl Prompt {
         let input_blank_c = input_blank_c.into();
         let sep = sep.into();
 
-        let prefix_len = self.label.content.chars().count() + sep.content.chars().count();
+        let prefix_len = (self.label.content.chars().count()
+            + sep.content.chars().count()) as u16;
 
         let content_area = self.win.content_area();
 
-        if prefix_len + 2 > content_area.width as usize {
+        if prefix_len + 2 > content_area.width {
             panic!("prompt is not large enough");
         }
 
         let Area { x: start_x, y: start_y, width: _, height: _ } = content_area;
         todo!("change the pos of the inputline to `start_x + prefix_len` and `start_y`"); // TODO
-        self.inputline.resize(content_area.width as usize - prefix_len);
+        self.inputline.resize(content_area.width - prefix_len);
 
         self.theme = Theme {
             // FIXME: get rid of these allocations.
@@ -116,17 +117,18 @@ impl Prompt {
     {
         let label = label.into();
 
-        let prefix_len = label.content.chars().count() + self.theme.sep.content.chars().count();
+        let prefix_len = (label.content.chars().count()
+            + self.theme.sep.content.chars().count()) as u16;
 
         let content_area = self.win.content_area();
 
-        if prefix_len + 2 > content_area.width as usize {
+        if prefix_len + 2 > content_area.width {
             panic!("prompt is not large enough");
         }
 
         let Area { x: start_x, y: start_y, width: _, height: _ } = content_area;
         todo!("change the pos of the inputline to `start_x + prefix_len` and `start_y`"); // TODO
-        self.inputline.resize(self.win.content_width() - prefix_len);
+        self.inputline.resize(content_area.width - prefix_len);
 
         // FIXME: get rid of these allocations.
         self.label = label.to_owned();

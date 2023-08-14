@@ -47,10 +47,10 @@ impl Window {
         let inner = self.inner.borrow();
 
         let area = Area {
-            x: inner.start_x,
-            y: inner.start_y,
-            width: inner.width,
-            height: inner.height,
+            x: inner.start_x as u16,
+            y: inner.start_y as u16,
+            width: inner.width as u16,
+            height: inner.height as u16,
         };
 
         if self.has_border {
@@ -114,9 +114,10 @@ impl Window {
     where
         C: Into<StyledChar>
     {
-        let ch = self.content_height();
-        let cw = self.content_width();
-        if y >= ch as u32 || x >= cw as u32 {
+        let content_area = self.content_area();
+        let cw = content_area.width;
+        let ch = content_area.height;
+        if x >= cw as u32 || y >= ch as u32 {
             return;
         }
 
@@ -136,15 +137,16 @@ impl Window {
 
         let mut line = line.into();
 
-        let cw = self.content_width();
-        let ch = self.content_height();
+        let content_area = self.content_area();
+        let cw = content_area.width;
+        let ch = content_area.height;
         if x >= cw as u32 || y >= ch as u32 {
             return;
         }
 
         let mut print_len = line.content.chars().count();
-        if x as usize + print_len > cw {
-            print_len = cw - x as usize;
+        if x as usize + print_len > cw as usize {
+            print_len = cw as usize - x as usize;
         }
 
         if self.has_border {
@@ -173,30 +175,31 @@ impl Window {
         let line = line.into();
 
         let char_count = line.content.chars().count();
+        let content_area = self.content_area();
 
         match j {
             Justify::Left(row) => self.print(0, row, line),
             Justify::HCentre(row) => {
                 let x: usize;
-                if char_count >= self.inner_width() {
+                if char_count >= content_area.width as usize {
                     x = 0;
                 } else {
-                    x = (self.inner_width() - char_count) / 2;
+                    x = (content_area.width as usize - char_count) / 2;
                 }
                 self.print(x as u32, row, line);
             },
             Justify::Right(row) => {
                 let x: usize;
-                if char_count >= self.inner_width() {
+                if char_count >= content_area.width as usize {
                     x = 0;
                 } else {
-                    x = self.inner_width() - char_count;
+                    x = content_area.width as usize - char_count;
                 }
                 self.print(x as u32, row, line);
             },
             Justify::Top(col) => self.print(col, 0, line),
             Justify::VCentre(col) => {
-                let mut y = self.inner_height();
+                let mut y = content_area.height;
                 if y > 0 {
                     y -= 1;
                 }
@@ -204,7 +207,7 @@ impl Window {
                 self.print(col, y as u32, line)
             },
             Justify::Bottom(col) => {
-                let mut y = self.inner_height();
+                let mut y = content_area.height;
                 if y > 0 {
                     y -= 1;
                 }
@@ -215,7 +218,7 @@ impl Window {
             Justify::TopRight => self.printj(line, Justify::Right(0)),
             Justify::CentreLeft => self.printj(line, Justify::VCentre(0)),
             Justify::Centre => {
-                let mut y = self.inner_height();
+                let mut y = content_area.height;
                 if y > 0 {
                     y -= 1;
                 }
@@ -223,7 +226,7 @@ impl Window {
                 self.printj(line, Justify::HCentre(y as u32))
             },
             Justify::CentreRight => {
-                let mut y = self.inner_height();
+                let mut y = content_area.height;
                 if y > 0 {
                     y -= 1;
                 }
@@ -232,14 +235,14 @@ impl Window {
             },
             Justify::BottomLeft => self.printj(line, Justify::Bottom(0)),
             Justify::BottomCentre => {
-                let mut y = self.inner_height();
+                let mut y = content_area.height;
                 if y > 0 {
                     y -= 1;
                 }
                 self.printj(line, Justify::HCentre(y as u32))
             },
             Justify::BottomRight => {
-                let mut y = self.inner_height();
+                let mut y = content_area.height;
                 if y > 0 {
                     y -= 1;
                 }
@@ -248,9 +251,9 @@ impl Window {
         }
     }
 
-    pub fn clearln(&mut self, y: usize)
+    pub fn clearln(&mut self, y: u16)
     {
-        let cw = self.content_width();
+        let cw = self.content_area().width;
         if y >= cw {
             return;
         }

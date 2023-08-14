@@ -171,11 +171,11 @@ impl Area {
 
     pub fn align_to(&self, anchor: Self, align: Align) -> Self { todo!(); } // TODO
 
-    pub fn inset(&self, count: u32) -> Self
+    pub fn inset(&self, count: u16) -> Self
     {
         Self {
-            x: self.start_x + count,
-            y: self.start_y + count,
+            x: self.x + count,
+            y: self.y + count,
             width: self.width - count * 2,
             height: self.height - count * 2,
         }
