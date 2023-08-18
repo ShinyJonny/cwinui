@@ -1,6 +1,7 @@
 use crate::Pos;
+use crate::screen::Buffer;
 use crate::style::WithStyle;
-use super::{Widget, InnerWidget};
+use super::Widget;
 use crate::layout::Area;
 use crate::style::StyledChar;
 
@@ -11,29 +12,19 @@ struct Theme {
 }
 
 pub struct HorizBar {
-    inner: InnerWidget,
     theme: Theme,
 }
 
 impl HorizBar {
-    pub fn new(pos: Pos, width: u16) -> Self
+    pub fn new() -> Self
     {
-        let mut bar = Self {
-            inner: InnerWidget::new(Area {
-                x: pos.x,
-                y: pos.y,
-                width,
-                height: 1
-            }),
+        Self {
             theme: Theme {
                 beg: '\0'.styled(),
                 end: '\0'.styled(),
                 body: '\0'.styled(),
             },
-        };
-        bar.redraw();
-
-        bar
+        }
     }
 
     pub fn theme<C>(
@@ -45,12 +36,7 @@ impl HorizBar {
     where
         C: Into<StyledChar>
     {
-        self.theme = Theme {
-            beg: beg.into(),
-            end: end.into(),
-            body: body.into(),
-        };
-        self.redraw();
+        self.set_theme(beg, end, body);
 
         self
     }
@@ -69,50 +55,38 @@ impl HorizBar {
             end: end.into(),
             body: body.into(),
         };
-        self.redraw();
-    }
-
-    fn redraw(&mut self)
-    {
-        let width = self.inner.borrow().width;
-
-        self.inner.hfill(0, 0, self.theme.body, width as usize);
-        self.inner.putc(0, 0, self.theme.beg);
-        self.inner.putc(width - 1, 0, self.theme.end);
     }
 }
 
 impl Widget for HorizBar {
-    fn share_inner(&self) -> InnerWidget
+    fn render(&self, buf: &mut Buffer, area: Area)
     {
-        self.inner.share()
+        if area.width == 0 || area.height == 0 {
+            return;
+        }
+
+        let Pos {x, y} = area.top_left();
+        buf.vfill(x, y, self.theme.body, area.width as usize);
+        buf.putc(x, y, self.theme.beg);
+        let Pos {x, y} = area.top_right() - Pos { x: 1, y: 0 };
+        buf.putc(x, y, self.theme.end);
     }
 }
 
 pub struct VertBar {
-    inner: InnerWidget,
     theme: Theme,
 }
 
 impl VertBar {
-    pub fn new(pos: Pos, height: u16) -> Self
+    pub fn new() -> Self
     {
-        let mut bar = Self {
-            inner: InnerWidget::new(Area {
-                x: pos.x,
-                y: pos.y,
-                width: 1,
-                height,
-            }),
+        Self {
             theme: Theme {
                 beg: '0'.styled(),
                 end: '0'.styled(),
                 body: '0'.styled(),
             },
-        };
-        bar.redraw();
-
-        bar
+        }
     }
 
     pub fn theme<C>(
@@ -124,12 +98,7 @@ impl VertBar {
     where
         C: Into<StyledChar>
     {
-        self.theme = Theme {
-            beg: beg.into(),
-            end: end.into(),
-            body: body.into(),
-        };
-        self.redraw();
+        self.set_theme(beg, end, body);
 
         self
     }
@@ -148,22 +117,20 @@ impl VertBar {
             end: end.into(),
             body: body.into(),
         };
-        self.redraw();
-    }
-
-    fn redraw(&mut self)
-    {
-        let height = self.inner.borrow_mut().height;
-
-        self.inner.vfill(0, 0, self.theme.body, height as usize);
-        self.inner.putc(0, 0, self.theme.beg);
-        self.inner.putc(0, height - 1, self.theme.end);
     }
 }
 
 impl Widget for VertBar {
-    fn share_inner(&self) -> InnerWidget
+    fn render(&self, buf: &mut Buffer, area: Area)
     {
-        self.inner.share()
+        if area.width == 0 || area.height == 0 {
+            return;
+        }
+
+        let Pos {x, y} = area.top_left();
+        buf.hfill(x, y, self.theme.body, area.height as usize);
+        buf.putc(x, y, self.theme.beg);
+        let Pos {x, y} = area.bottom_left() - Pos { x: 0, y: 1 };
+        buf.putc(x, y, self.theme.end);
     }
 }
