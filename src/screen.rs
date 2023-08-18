@@ -9,7 +9,8 @@ use crate::widget::Widget;
 use crate::widget::InnerWidget;
 use crate::util::offset;
 
-#[derive(Clone, Copy)]
+/// Internal style structure.
+#[derive(Debug, Clone, Copy)]
 struct InternalStyle {
     fg_color: Color,
     bg_color: Color,
@@ -26,15 +27,16 @@ impl Default for InternalStyle {
     }
 }
 
+#[derive(Debug)]
 struct Cursor {
-    y: u16,
     x: u16,
+    y: u16,
     hidden: bool,
 }
 
 pub struct Screen {
-    pub height: u16,
     pub width: u16,
+    pub height: u16,
     cursor: Cursor,
     buffer: Vec<char>,
     style_buffer: Vec<InternalStyle>,

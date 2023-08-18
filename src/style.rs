@@ -1,6 +1,6 @@
 use bitflags::bitflags;
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Style {
     pub text_style: Option<TextStyle>,
     pub fg_color: Option<Color>,
@@ -61,7 +61,7 @@ bitflags! {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Color {
     Normal,
     Black,
@@ -87,7 +87,7 @@ pub enum Color {
 
 // TODO: implement slicing.
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct StyledStr<'s> {
     pub content: &'s str,
     pub style: Style,
@@ -124,7 +124,7 @@ impl<'s> From<&'s StyledString> for StyledStr<'s>
     }
 }
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct StyledString {
     pub content: String,
     pub style: Style,
@@ -145,7 +145,7 @@ where
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct StyledChar {
     pub content: char,
     pub style: Style,
