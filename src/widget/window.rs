@@ -2,7 +2,7 @@ use crate::style::WithStyle;
 use super::{InnerWidget, Widget};
 use crate::layout::{Justify, Area};
 use crate::util::offset;
-use crate::misc::SliceInChars;
+use crate::misc::SliceByChars;
 use crate::style::{StyledChar, StyledStr};
 
 struct Theme {
@@ -157,7 +157,7 @@ impl Window {
         if print_len < line.content.chars().count() {
             // FIXME: use native slicing API.
             line = StyledStr {
-                content: line.content.slice_in_chars(0, print_len),
+                content: line.content.slice_by_chars(0..print_len),
                 style: line.style,
             }
         }

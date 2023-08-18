@@ -8,7 +8,7 @@ use super::{
     PoisonError,
 };
 use crate::Pos;
-use crate::misc::SliceInChars;
+use crate::misc::SliceByChars;
 use crate::layout::Area;
 use crate::style::{StyledChar, Style, WithStyle};
 
@@ -96,9 +96,8 @@ impl InputLine {
         let visible_input = if input_len + 1 < self.length as usize {
             self.input.as_str()
         } else {
-            self.input.slice_in_chars(
-                input_len + 1 - self.length as usize,
-                input_len
+            self.input.slice_by_chars(
+                input_len + 1 - self.length as usize..input_len
             )
         };
         self.inner.print(0, 0,
