@@ -1,7 +1,6 @@
 use termion::event::{Event, Key};
 
 use super::{
-    InnerWidget,
     Widget,
     InteractiveWidget,
     OutputWidget,
@@ -10,6 +9,7 @@ use super::{
 use crate::Pos;
 use crate::misc::SliceByChars;
 use crate::layout::Area;
+use crate::screen::Buffer;
 use crate::style::{StyledChar, Style, WithStyle};
 
 const INPUT_CAPACITY: usize = 2048;
@@ -20,8 +20,7 @@ struct Theme {
 }
 
 pub struct InputLine {
-    inner: InnerWidget,
-    length: u16,
+    last_width: u16,
     output_ready: bool,
     input: String,
     cursor_pos: u16,
@@ -31,29 +30,16 @@ pub struct InputLine {
 impl InputLine {
     pub fn new(pos: Pos, length: u16) -> Self
     {
-        let theme = Theme {
-            blank_c: ' '.styled(),
-            input_style: Style::default(),
-        } ;
-        let inner = InnerWidget::new(Area {
-            x: pos.x,
-            y: pos.y,
-            width: length,
-            height: 1
-        });
-        inner.show_cursor();
-
-        let mut il = Self {
-            inner,
-            length,
+        Self {
+            last_width: 0,
             output_ready: false,
             input: String::with_capacity(INPUT_CAPACITY),
             cursor_pos: 0,
-            theme,
-        };
-        il.redraw();
-
-        il
+            theme: Theme {
+                blank_c: ' '.styled(),
+                input_style: Style::default(),
+            },
+        }
     }
 
     pub fn theme<C>(
@@ -64,11 +50,7 @@ impl InputLine {
     where
         C: Into<StyledChar>
     {
-        self.theme = Theme {
-            blank_c: blank_c.styled(),
-            input_style,
-        };
-        self.redraw();
+        self.set_theme(blank_c, input_style);
 
         self
     }
@@ -85,58 +67,47 @@ impl InputLine {
             blank_c: blank_c.styled(),
             input_style,
         };
-        self.redraw();
-    }
-
-    pub fn redraw(&mut self)
-    {
-        // Draw the input.
-
-        let input_len = self.input.chars().count();
-        let visible_input = if input_len + 1 < self.length as usize {
-            self.input.as_str()
-        } else {
-            self.input.slice_by_chars(
-                input_len + 1 - self.length as usize..input_len
-            )
-        };
-        self.inner.print(0, 0,
-            visible_input.with_style(|_| self.theme.input_style));
-
-        // Draw the blanks.
-
-        let blank_count = self.length as isize - 1 - input_len as isize;
-        let first_blank_x = input_len as u16;
-        if blank_count > 0 {
-            self.inner.hfill(first_blank_x, 0, self.theme.blank_c,
-                 blank_count as usize);
-        }
-        self.inner.putc(self.length - 1, 0, self.theme.blank_c);
-
-        self.inner.move_cursor(self.cursor_pos, 0);
-    }
-
-    pub fn resize(&mut self, len: u16)
-    {
-        if len < 1 {
-            panic!("input line cannot be resized below 1");
-        }
-
-        self.inner.resize(len , 1);
-        self.length = len;
-
-        self.cursor_pos = if self.input.len() + 1 > self.length as usize
-            { self.length }
-            else { self.input.len() as u16 };
-
-        self.redraw();
     }
 }
 
 impl Widget for InputLine {
-    fn share_inner(&self) -> InnerWidget
+    fn render(&mut self, buf: &mut Buffer, area: Area)
     {
-        self.inner.share()
+        if area.width == 0 || area.height == 0 {
+            return;
+        }
+
+        self.last_width = area.width;
+
+        // FIXME: this needs a review, especially the cursor position and the
+        // text after the cursor (under).
+
+        // Draw the input.
+
+        let input_len = self.input.chars().count();
+        let visible_input = if input_len + 1 < area.width as usize {
+            self.input.as_str()
+        } else {
+            self.input.slice_by_chars(
+                input_len + 1 - area.width as usize..input_len
+            )
+        };
+        buf.print(area.x, area.y,
+            visible_input.with_style(|_| self.theme.input_style));
+
+        // Draw the blanks.
+
+        if input_len + 1 < area.width as usize {
+            let blank_count = area.width as usize - 1 - input_len;
+            let first_blank_x = area.x + input_len as u16;
+            buf.hfill(first_blank_x, area.y, self.theme.blank_c,
+                 blank_count as usize);
+        }
+        let Pos { x, y } = area.top_right().sub_x(1);
+        buf.putc(x, y, self.theme.blank_c);
+
+        // FIXME: this is wrong, as the cursor can be bigger.
+        buf.move_cursor(area.top_left().add_x(self.cursor_pos));
     }
 }
 
@@ -149,26 +120,14 @@ impl InteractiveWidget for InputLine {
             },
             Event::Key(Key::Char(c)) => {
                 if c.is_alphanumeric() || c.is_ascii_punctuation() || c == ' ' {
-                    let input_len = self.input.chars().count();
-
-                    if input_len + 1 < self.length as usize {
-                        self.cursor_pos += 1;
-                    }
                     self.input.push(c);
-
-                    self.redraw();
+                    self.cursor_pos += 1;
                 }
             },
             Event::Key(Key::Backspace) => {
                 if !self.input.is_empty() {
-                    let input_len = self.input.chars().count();
-
-                    if input_len + 1 <= self.length as usize {
-                        self.cursor_pos -= 1;
-                    }
                     self.input.pop();
-
-                    self.redraw();
+                    self.cursor_pos -= 1;
                 }
             },
             // TODO: arrow keys
