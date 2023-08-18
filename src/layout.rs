@@ -21,6 +21,38 @@ impl Pos {
             y: self.x.saturating_sub(rhs.y),
         }
     }
+
+    pub fn add_x(self, x: u16) -> Self
+    {
+        Self {
+            x: self.x + x,
+            y: self.y,
+        }
+    }
+
+    pub fn add_y(self, y: u16) -> Self
+    {
+        Self {
+            x: self.x,
+            y: self.y + y,
+        }
+    }
+
+    pub fn sub_x(self, x: u16) -> Self
+    {
+        Self {
+            x: self.x - x,
+            y: self.y,
+        }
+    }
+
+    pub fn sub_y(self, y: u16) -> Self
+    {
+        Self {
+            x: self.x,
+            y: self.y - y,
+        }
+    }
 }
 
 impl std::ops::Add for Pos {

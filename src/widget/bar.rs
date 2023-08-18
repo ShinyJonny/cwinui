@@ -59,7 +59,7 @@ impl HorizBar {
 }
 
 impl Widget for HorizBar {
-    fn render(&self, buf: &mut Buffer, area: Area)
+    fn render(&mut self, buf: &mut Buffer, area: Area)
     {
         if area.width == 0 || area.height == 0 {
             return;
@@ -68,7 +68,7 @@ impl Widget for HorizBar {
         let Pos {x, y} = area.top_left();
         buf.vfill(x, y, self.theme.body, area.width as usize);
         buf.putc(x, y, self.theme.beg);
-        let Pos {x, y} = area.top_right() - Pos { x: 1, y: 0 };
+        let Pos {x, y} = area.top_right().sub_x(1);
         buf.putc(x, y, self.theme.end);
     }
 }
@@ -121,7 +121,7 @@ impl VertBar {
 }
 
 impl Widget for VertBar {
-    fn render(&self, buf: &mut Buffer, area: Area)
+    fn render(&mut self, buf: &mut Buffer, area: Area)
     {
         if area.width == 0 || area.height == 0 {
             return;
@@ -130,7 +130,7 @@ impl Widget for VertBar {
         let Pos {x, y} = area.top_left();
         buf.hfill(x, y, self.theme.body, area.height as usize);
         buf.putc(x, y, self.theme.beg);
-        let Pos {x, y} = area.bottom_left() - Pos { x: 0, y: 1 };
+        let Pos {x, y} = area.bottom_left().sub_y(1);
         buf.putc(x, y, self.theme.end);
     }
 }

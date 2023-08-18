@@ -1,23 +1,21 @@
 use termion::event::Event;
 
-//mod inner;
-//mod window;
-//mod bar;
-//mod inputline;
-//mod menu;
-//mod prompt;
+mod window;
+mod bar;
+mod inputline;
+mod menu;
+mod prompt;
 
-//pub use inner::{InnerWidget, InnerWidgetBody};
-//pub use window::Window;
-//pub use bar::{HorizBar, VertBar};
-//pub use inputline::InputLine;
-//pub use menu::Menu;
-//pub use prompt::Prompt;
+pub use window::Window;
+pub use bar::{HorizBar, VertBar};
+pub use inputline::InputLine;
+pub use menu::Menu;
+pub use prompt::Prompt;
 
 use crate::{Area, screen::Buffer};
 
 pub trait Widget {
-    fn render(&self, buf: &mut Buffer, area: Area);
+    fn render(&mut self, buf: &mut Buffer, area: Area);
 }
 
 pub trait InteractiveWidget : Widget {
