@@ -1,15 +1,16 @@
+mod buffer;
+
 use std::io::{Stdout, Write};
-use std::rc::Rc;
-use std::ops::Deref;
 use termion::raw::{RawTerminal, IntoRawMode};
 use termion::input::MouseTerminal;
 
+use crate::Area;
 use crate::style::{Color, TextStyle};
-use crate::widget::Widget;
-use crate::widget::InnerWidget;
 use crate::util::offset;
+use crate::widget::Widget;
 
-/// Internal style structure.
+pub use buffer::Buffer;
+
 #[derive(Debug, Clone, Copy)]
 struct InternalStyle {
     fg_color: Color,
@@ -18,12 +19,25 @@ struct InternalStyle {
 }
 
 impl Default for InternalStyle {
-    fn default() -> Self {
-        InternalStyle {
+    fn default() -> Self
+    {
+        Self {
             fg_color: Color::Normal,
             bg_color: Color::Normal,
             text_style: TextStyle::NORMAL,
         }
+    }
+}
+
+#[derive(Debug)]
+pub struct RenderContext<'b> {
+    buffer: Buffer<'b>,
+}
+
+impl<'b> RenderContext<'b> {
+    pub fn render_widget<W: Widget>(&mut self, widget: W, area: Area)
+    {
+        widget.render(&mut self.buffer, area);
     }
 }
 
@@ -38,10 +52,9 @@ pub struct Screen {
     pub width: u16,
     pub height: u16,
     cursor: Cursor,
-    buffer: Vec<char>,
-    style_buffer: Vec<InternalStyle>,
+    char_buf: Vec<char>,
+    style_buf: Vec<InternalStyle>,
     stdout: RawTerminal<MouseTerminal<Stdout>>,
-    widgets: Vec<InnerWidget>,
 }
 
 impl Screen {
@@ -50,90 +63,79 @@ impl Screen {
         let (x, y) = termion::terminal_size()
             .expect("Failed to detect terminal size.");
 
-        if rows > y || cols > x {
+        if cols > x || rows > y {
             panic!("terminal too small, needs to be at least: {cols}x{rows}");
         }
 
         let mut stdout = MouseTerminal::from(std::io::stdout())
             .into_raw_mode()
             .unwrap();
-        render::hide_cursor(&mut stdout).unwrap();
+
+        console::hide_cursor(&mut stdout).unwrap();
 
         let buf_size = cols as usize * rows as usize;
 
         Self {
-            height: rows,
             width: cols,
-            buffer: vec![' '; buf_size],
-            style_buffer: vec![InternalStyle::default(); buf_size],
+            height: rows,
+            char_buf: vec!['\0'; buf_size],
+            style_buf: vec![InternalStyle::default(); buf_size],
             stdout,
-            widgets: Vec::new(),
             cursor: Cursor { y: 0, x: 0, hidden: true },
         }
     }
 
-    /// Refreshes the screen.
-    pub fn refresh(&mut self)
+    pub fn draw<F>(&mut self, ui: F)
+    where
+        F: FnOnce(&mut RenderContext)
     {
-        self.draw();
-        self.render();
-    }
-
-    /// Adds a widget to the screen.
-    pub fn add_widget<T: Widget>(&mut self, w: &T)
-    {
-        self.widgets.push(w.share_inner());
-    }
-
-    /// Removes a widget from the screen.
-    pub fn rm_widget<T: Widget>(&mut self, w: &T)
-    {
-        let w = w.share_inner();
-
-        if let Some(i) = self.widgets.iter().position(|wid| {
-            std::ptr::eq(
-                Rc::deref(InnerWidget::deref(&w)),
-                Rc::deref(InnerWidget::deref(wid))
+        let mut ctx = RenderContext {
+            buffer: Buffer::from_raw_parts(
+                self.width,
+                self.height,
+                &mut self.char_buf,
+                &mut self.style_buf,
+                &mut self.cursor,
             )
-        }) {
-            self.widgets.remove(i);
-        }
+        };
+
+        ui(&mut ctx);
     }
 
     /// Writes the internal buffer to the terminal.
-    fn render(&mut self)
+    pub fn refresh(&mut self)
     {
         for y in 0..self.height - 1 {
-            self.render_line(y);
-            render::write_str(&mut self.stdout, "\r\n").unwrap();
+            self.write_line(y);
+            console::write_str(&mut self.stdout, "\r\n").unwrap();
         }
 
-        self.render_line(self.height - 1);
-        render::write_char(&mut self.stdout, '\r').unwrap();
-        render::move_cursor(&mut self.stdout, -(self.height as isize - 1), 0).unwrap();
+        self.write_line(self.height - 1);
+        console::write_char(&mut self.stdout, '\r').unwrap();
+        console::move_cursor(&mut self.stdout, -(self.height as isize - 1), 0).unwrap();
 
         // TODO: implement cursor with a real cursor.
         if !self.cursor.hidden {
             // Move the cursor to the its position.
-            render::move_cursor(
+            console::move_cursor(
                 &mut self.stdout,
                 self.cursor.y as isize,
                 self.cursor.x as isize
             ).unwrap();
             // char printing
-            render::add_text_style(&mut self.stdout, TextStyle::INVERT).unwrap();
-            render::write_char(
+            console::add_text_style(&mut self.stdout, TextStyle::INVERT).unwrap();
+            console::write_char(
                 &mut self.stdout,
-                self.buffer[offset!(
+                self.char_buf[offset!(
                     self.cursor.x as usize,
                     self.cursor.y as usize,
                     self.width as usize
                 )]
             ).unwrap();
-            render::subtract_text_style(&mut self.stdout, TextStyle::INVERT).unwrap();
-            render::move_cursor(&mut self.stdout, 0, -1).unwrap();
+            console::subtract_text_style(&mut self.stdout, TextStyle::INVERT).unwrap();
+            console::move_cursor(&mut self.stdout, 0, -1).unwrap();
             // Move the cursor back to the top left of the screen.
-            render::move_cursor(
+            console::move_cursor(
                 &mut self.stdout,
                 -(self.cursor.y as isize),
                 -(self.cursor.x as isize)
@@ -144,12 +146,12 @@ impl Screen {
             .expect("failed to flush stdout");
     }
 
-    fn render_line(&mut self, y: u16)
+    fn write_line(&mut self, y: u16)
     {
         let width = self.width as usize;
         let line_offset = offset!(0, y as usize, width);
-        let chars = &self.buffer[line_offset..line_offset + width];
-        let styles = &self.style_buffer[line_offset..line_offset + width];
+        let chars = &self.char_buf[line_offset..line_offset + width];
+        let styles = &self.style_buf[line_offset..line_offset + width];
 
         // FIXME: optimise.
 
@@ -157,13 +159,13 @@ impl Screen {
         let mut saved_bg = styles[0].bg_color;
         let mut saved_ts = styles[0].text_style;
         // The first char of every line is always set with colors and style.
-        render::set_fg_color(&mut self.stdout, saved_fg)
+        console::set_fg_color(&mut self.stdout, saved_fg)
             .expect("failed to set fg color");
-        render::set_bg_color(&mut self.stdout, saved_bg)
+        console::set_bg_color(&mut self.stdout, saved_bg)
             .expect("failed to set bg color");
-        render::set_text_style(&mut self.stdout, saved_ts)
+        console::set_text_style(&mut self.stdout, saved_ts)
             .expect("failed to set text style");
-        render::write_char(&mut self.stdout, chars[0])
+        console::write_char(&mut self.stdout, chars[0])
             .expect("failed to write a char to the screen");
 
         for x in 1..width {
@@ -171,149 +173,42 @@ impl Screen {
             let cur_char = &chars[x];
 
             if saved_fg != cur_style.fg_color {
-                render::set_fg_color(&mut self.stdout, cur_style.fg_color)
+                console::set_fg_color(&mut self.stdout, cur_style.fg_color)
                     .expect("failed to set fg color");
                 saved_fg = cur_style.fg_color;
             }
             if saved_bg != cur_style.bg_color {
-                render::set_bg_color(&mut self.stdout, cur_style.bg_color)
+                console::set_bg_color(&mut self.stdout, cur_style.bg_color)
                     .expect("failed to set bg color");
                 saved_bg = cur_style.bg_color;
             }
             if saved_ts != cur_style.text_style {
-                render::set_text_style(&mut self.stdout, cur_style.text_style)
+                console::set_text_style(&mut self.stdout, cur_style.text_style)
                     .expect("failed to set text style");
                 saved_ts = cur_style.text_style;
             }
 
-            render::write_char(&mut self.stdout, *cur_char)
+            console::write_char(&mut self.stdout, *cur_char)
                 .expect("failed to write a char to the screen");
         }
-    }
-
-    /// Constructs the internal buffer from all the widgets.
-    fn draw(&mut self)
-    {
-        self.buffer.fill(' ');
-        self.style_buffer.fill(InternalStyle::default());
-
-        self.cursor.hidden = true;
-
-        self.widgets.sort_by(|a, b| {
-            a.borrow().z_index.cmp(&b.borrow().z_index)
-        });
-
-        for i in 0..self.widgets.len() {
-            self.draw_widget(self.widgets[i].share());
-        }
-    }
-
-    fn draw_widget(&mut self, w: InnerWidget)
-    {
-        if w.borrow().hidden {
-            return;
-        }
-
-        self.draw_widget_buffers(w.share());
-
-        // NOTE: Doesn't support multiple cursors. The cursor position of the top widget with a
-        // shown cursor is used.
-        let inner = w.borrow();
-        if !inner.cursor.hidden {
-            let start_y = inner.start_y;
-            let start_x = inner.start_x;
-            let cursor_y = inner.cursor.y;
-            let cursor_x = inner.cursor.x;
-
-            self.move_cursor(start_y + cursor_y, start_x + cursor_x);
-            self.cursor.hidden = false;
-        }
-        drop(inner);
-
-        w.borrow_mut().subwidgets.sort_by(|a, b| {
-            a.borrow().z_index.cmp(&b.borrow().z_index)
-        });
-
-        for subw in &w.borrow().subwidgets {
-            self.draw_widget(subw.share())
-        }
-    }
-
-    fn draw_widget_buffers(&mut self, w: InnerWidget)
-    {
-        // FIXME: check for non-printable and variable-length characters (including whitespace).
-
-        let w = w.borrow();
-
-        let start_x = w.start_x as usize;
-        let start_y = w.start_y as usize;
-
-        let w_width = w.width as usize;
-        let s_width = self.width as usize;
-        let w_height = w.height as usize;
-        let s_height = self.height as usize;
-
-        let x_iterations = if start_x + w_width > s_width
-            { s_width - start_x }
-            else { w_width };
-
-        let y_iterations = if start_y + w_height > s_height
-            { s_height - start_y }
-            else { w_height };
-
-        for y in 0..y_iterations {
-            for x in 0..x_iterations {
-                let w_pos = offset!(x, y, w_width);
-                let s_pos = offset!(start_x + x, start_y + y, s_width);
-
-                let c = w.buffer[w_pos];
-
-                if c != '\0' {
-                    self.buffer[s_pos] = c;
-                }
-
-                let fg_color = w.style_buffer[w_pos].fg_color;
-                let bg_color = w.style_buffer[w_pos].bg_color;
-                let text_style = w.style_buffer[w_pos].text_style;
-
-                if let Some(color) = fg_color {
-                    self.style_buffer[s_pos].fg_color = color;
-                }
-                if let Some(color) = bg_color {
-                    self.style_buffer[s_pos].bg_color = color;
-                }
-                if let Some(ts) = text_style {
-                    self.style_buffer[s_pos].text_style = ts;
-                }
-            }
-        }
-    }
-
-    fn move_cursor(&mut self, y: u16, x: u16)
-    {
-        if y >= self.height || x >= self.width {
-            return;
-        }
-
-        self.cursor.y = y;
-        self.cursor.x = x;
     }
 }
 
 impl Drop for Screen {
     fn drop(&mut self)
     {
-        render::set_fg_color(&mut self.stdout, Color::Normal).unwrap();
-        render::set_bg_color(&mut self.stdout, Color::Normal).unwrap();
-        render::set_text_style(&mut self.stdout, TextStyle::NORMAL).unwrap();
+        console::set_fg_color(&mut self.stdout, Color::Normal).unwrap();
+        console::set_bg_color(&mut self.stdout, Color::Normal).unwrap();
+        console::set_text_style(&mut self.stdout, TextStyle::NORMAL).unwrap();
         for _row in 0..self.height {
-            render::write_char(&mut self.stdout, '\n').unwrap();
+            console::write_char(&mut self.stdout, '\n').unwrap();
         }
-        render::show_cursor(&mut self.stdout).unwrap();
+        console::show_cursor(&mut self.stdout).unwrap();
     }
 }
 
-mod render {
+#[allow(dead_code)]
+mod console {
     use std::io::Write;
     use termion::color::{Bg, Fg};
 

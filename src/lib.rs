@@ -6,4 +6,8 @@ pub mod style;
 mod util;
 mod misc;
 
-pub use layout::Pos;
+pub use layout::{
+    Pos,
+    Dim,
+    Area,
+};

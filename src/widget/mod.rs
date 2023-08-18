@@ -1,38 +1,23 @@
 use termion::event::Event;
 
-mod inner;
-mod window;
-mod bar;
-mod inputline;
-mod menu;
-mod prompt;
+//mod inner;
+//mod window;
+//mod bar;
+//mod inputline;
+//mod menu;
+//mod prompt;
 
-pub use inner::{InnerWidget, InnerWidgetBody};
-pub use window::Window;
-pub use bar::{HorizBar, VertBar};
-pub use inputline::InputLine;
-pub use menu::Menu;
-pub use prompt::Prompt;
+//pub use inner::{InnerWidget, InnerWidgetBody};
+//pub use window::Window;
+//pub use bar::{HorizBar, VertBar};
+//pub use inputline::InputLine;
+//pub use menu::Menu;
+//pub use prompt::Prompt;
+
+use crate::{Area, screen::Buffer};
 
 pub trait Widget {
-    fn share_inner(&self) -> InnerWidget;
-
-    // TODO: These could be maybe moved directly to InnerWidget.
-
-    fn set_zindex(&mut self, index: u16)
-    {
-        self.share_inner().borrow_mut().z_index = index;
-    }
-
-    fn hide(&mut self)
-    {
-        self.share_inner().borrow_mut().hidden = true;
-    }
-
-    fn show(&mut self)
-    {
-        self.share_inner().borrow_mut().hidden = false;
-    }
+    fn render(&self, buf: &mut Buffer, area: Area);
 }
 
 pub trait InteractiveWidget : Widget {
