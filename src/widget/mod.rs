@@ -1,12 +1,10 @@
 use termion::event::Event;
 
-mod window;
-mod bar;
-mod inputline;
-mod menu;
-mod prompt;
+pub mod bar;
+pub mod inputline;
+pub mod menu;
+pub mod prompt;
 
-pub use window::Window;
 pub use bar::{HorizBar, VertBar};
 pub use inputline::InputLine;
 pub use menu::Menu;
