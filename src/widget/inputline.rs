@@ -62,7 +62,7 @@ impl InputLine {
     {
         self.theme = Theme {
             blank_c: blank_c.into(),
-            input_style: input_style.into(),
+            input_style,
         };
 
         self

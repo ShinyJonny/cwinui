@@ -19,12 +19,10 @@ impl SliceByChars<Range<usize>> for str {
     #[inline]
     fn slice_by_chars(&self, index: Range<usize>) -> &str
     {
-        let s = self.as_ref();
+        let start_bytes = bytes_until(index.start, self);
+        let end_bytes = bytes_until(index.end, self);
 
-        let start_bytes = bytes_until(index.start, s);
-        let end_bytes = bytes_until(index.end, s);
-
-        &s[start_bytes..end_bytes]
+        &self[start_bytes..end_bytes]
     }
 }
 
@@ -32,12 +30,10 @@ impl SliceByCharsMut<Range<usize>> for str {
     #[inline]
     fn slice_by_chars_mut(&mut self, index: Range<usize>) -> &mut str
     {
-        let s = self.as_mut();
+        let start_bytes = bytes_until(index.start, self);
+        let end_bytes = bytes_until(index.end, self);
 
-        let start_bytes = bytes_until(index.start, s);
-        let end_bytes = bytes_until(index.end, s);
-
-        &mut s[start_bytes..end_bytes]
+        &mut self[start_bytes..end_bytes]
     }
 }
 
@@ -45,11 +41,9 @@ impl SliceByChars<RangeFrom<usize>> for str {
     #[inline]
     fn slice_by_chars(&self, index: RangeFrom<usize>) -> &str
     {
-        let s = self.as_ref();
+        let start_bytes = bytes_until(index.start, self);
 
-        let start_bytes = bytes_until(index.start, s);
-
-        &s[start_bytes..]
+        &self[start_bytes..]
     }
 }
 
@@ -57,11 +51,9 @@ impl SliceByCharsMut<RangeFrom<usize>> for str {
     #[inline]
     fn slice_by_chars_mut(&mut self, index: RangeFrom<usize>) -> &mut str
     {
-        let s = self.as_mut();
+        let start_bytes = bytes_until(index.start, self);
 
-        let start_bytes = bytes_until(index.start, s);
-
-        &mut s[start_bytes..]
+        &mut self[start_bytes..]
     }
 }
 
@@ -69,11 +61,9 @@ impl SliceByChars<RangeTo<usize>> for str {
     #[inline]
     fn slice_by_chars(&self, index: RangeTo<usize>) -> &str
     {
-        let s = self.as_ref();
+        let end_bytes = bytes_until(index.end, self);
 
-        let end_bytes = bytes_until(index.end, s);
-
-        &s[..end_bytes]
+        &self[..end_bytes]
     }
 }
 
@@ -81,11 +71,9 @@ impl SliceByCharsMut<RangeTo<usize>> for str {
     #[inline]
     fn slice_by_chars_mut(&mut self, index: RangeTo<usize>) -> &mut str
     {
-        let s = self.as_mut();
+        let end_bytes = bytes_until(index.end, self);
 
-        let end_bytes = bytes_until(index.end, s);
-
-        &mut s[..end_bytes]
+        &mut self[..end_bytes]
     }
 }
 

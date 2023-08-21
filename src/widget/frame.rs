@@ -45,14 +45,14 @@ impl<T: Widget> Frame<T> {
 
     pub fn theme<C>(
         mut self,
-        top_left: StyledChar,
-        top_right: StyledChar,
-        bottom_right: StyledChar,
-        bottom_left: StyledChar,
-        top: StyledChar,
-        right: StyledChar,
-        bottom: StyledChar,
-        left: StyledChar,
+        top_left: C,
+        top_right: C,
+        bottom_right: C,
+        bottom_left: C,
+        top: C,
+        right: C,
+        bottom: C,
+        left: C,
     ) -> Self
     where
         C: Into<StyledChar>

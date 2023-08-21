@@ -53,7 +53,7 @@ impl Prompt {
     {
         self.theme = Theme {
             sep: StyledString::from(sep),
-            input_style: input_style.into(),
+            input_style,
             input_blank_c: input_blank_c.into(),
         };
 

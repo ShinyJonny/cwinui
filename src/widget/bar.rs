@@ -5,25 +5,32 @@ use super::Widget;
 use crate::layout::Area;
 use crate::style::StyledChar;
 
-struct Theme {
-    beg: StyledChar,
-    end: StyledChar,
-    body: StyledChar,
+pub struct Theme {
+    pub beg: StyledChar,
+    pub end: StyledChar,
+    pub body: StyledChar,
+}
+
+impl Default for Theme {
+    fn default() -> Self
+    {
+        Self {
+            beg: '\0'.styled(),
+            end: '\0'.styled(),
+            body: '\0'.styled(),
+        }
+    }
 }
 
 pub struct HorizBar {
-    theme: Theme,
+    pub theme: Theme,
 }
 
 impl HorizBar {
     pub fn new() -> Self
     {
         Self {
-            theme: Theme {
-                beg: '\0'.styled(),
-                end: '\0'.styled(),
-                body: '\0'.styled(),
-            },
+            theme: Theme::default(),
         }
     }
 
@@ -36,25 +43,13 @@ impl HorizBar {
     where
         C: Into<StyledChar>
     {
-        self.set_theme(beg, end, body);
-
-        self
-    }
-
-    pub fn set_theme<C>(
-        &mut self,
-        beg: C,
-        end: C,
-        body: C,
-    )
-    where
-        C: Into<StyledChar>
-    {
         self.theme = Theme {
             beg: beg.into(),
             end: end.into(),
             body: body.into(),
         };
+
+        self
     }
 }
 
@@ -74,7 +69,7 @@ impl Widget for HorizBar {
 }
 
 pub struct VertBar {
-    theme: Theme,
+    pub theme: Theme,
 }
 
 impl VertBar {
@@ -98,25 +93,13 @@ impl VertBar {
     where
         C: Into<StyledChar>
     {
-        self.set_theme(beg, end, body);
-
-        self
-    }
-
-    pub fn set_theme<C>(
-        &mut self,
-        beg: C,
-        end: C,
-        body: C,
-    )
-    where
-        C: Into<StyledChar>
-    {
         self.theme = Theme {
             beg: beg.into(),
             end: end.into(),
             body: body.into(),
         };
+
+        self
     }
 }
 
