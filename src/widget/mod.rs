@@ -16,36 +16,10 @@ pub trait Widget {
     fn render(&mut self, buf: &mut Buffer, area: Area);
 }
 
-pub trait InteractiveWidget : Widget {
+pub trait InteractiveWidget {
     fn process_event(&mut self, e: Event);
 }
 
-pub trait OutputWidget<T> : Widget {
-    fn try_get_output(&self) -> Option<T>;
-    fn get_output(&self) -> Result<T, PoisonError<T>>;
-}
-
-// TODO: FIXME: rename this.
-pub struct PoisonError<T>(T);
-
-impl<T> PoisonError<T> {
-    pub fn new(i: T) -> Self
-    {
-        Self(i)
-    }
-
-    pub fn into_inner(self) -> T
-    {
-        self.0
-    }
-
-    pub fn get_ref(&self) -> &T
-    {
-        &self.0
-    }
-
-    pub fn get_mut(&mut self) -> &mut T
-    {
-        &mut self.0
-    }
+pub trait OutputtingWidget<T> : InteractiveWidget {
+    fn get_output(&self) -> Option<T>;
 }

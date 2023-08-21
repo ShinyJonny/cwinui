@@ -3,8 +3,7 @@ use termion::event::{Event, Key};
 use super::{
     Widget,
     InteractiveWidget,
-    OutputWidget,
-    PoisonError,
+    OutputtingWidget,
 };
 use crate::Pos;
 use crate::layout::Area;
@@ -150,24 +149,13 @@ impl InteractiveWidget for InputLine {
     }
 }
 
-impl OutputWidget<String> for InputLine {
-    fn try_get_output(&self) -> Option<String>
+impl OutputtingWidget<String> for InputLine {
+    fn get_output(&self) -> Option<String>
     {
         if self.output_ready {
             return Some(self.input.clone());
         }
 
         None
-    }
-
-    fn get_output(&self) -> Result<String, PoisonError<String>>
-    {
-        let output = self.input.clone();
-
-        if self.output_ready {
-            return Ok(output);
-        }
-
-        Err(PoisonError::new(output))
     }
 }

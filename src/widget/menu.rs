@@ -2,8 +2,7 @@ use crate::{style::StyledString, screen::Buffer, Dim};
 use super::{
     Widget,
     InteractiveWidget,
-    OutputWidget,
-    PoisonError,
+    OutputtingWidget,
 };
 use termion::event::{Event, Key};
 
@@ -139,19 +138,9 @@ impl InteractiveWidget for Menu {
     }
 }
 
-impl OutputWidget<usize> for Menu {
-    fn try_get_output(&self) -> Option<usize>
+impl OutputtingWidget<usize> for Menu {
+    fn get_output(&self) -> Option<usize>
     {
         self.output
-    }
-
-    fn get_output(&self) -> Result<usize, PoisonError<usize>>
-    {
-        if let Some(o) = self.output {
-            Ok(o)
-        } else {
-            // FIXME: is this really the correct way to do this???
-            Err(PoisonError::new(0))
-        }
     }
 }

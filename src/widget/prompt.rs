@@ -7,9 +7,8 @@ use crate::style::{StyledString, StyledStr, Style, StyledChar, WithStyle};
 use super::{
     Widget,
     InteractiveWidget,
-    OutputWidget,
+    OutputtingWidget,
     InputLine,
-    PoisonError,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -111,13 +110,8 @@ impl InteractiveWidget for Prompt {
     }
 }
 
-impl OutputWidget<String> for Prompt {
-    fn try_get_output(&self) -> Option<String>
-    {
-        self.inputline.try_get_output()
-    }
-
-    fn get_output(&self) -> Result<String, PoisonError<String>>
+impl OutputtingWidget<String> for Prompt {
+    fn get_output(&self) -> Option<String>
     {
         self.inputline.get_output()
     }
