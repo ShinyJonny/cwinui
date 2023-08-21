@@ -22,7 +22,6 @@ pub struct Theme {
 #[derive(Debug, Clone)]
 pub struct InputLine {
     pub theme: Theme,
-    last_width: u16,
     output_ready: bool,
     input: String,
     cursor_pos: u16,
@@ -33,7 +32,6 @@ impl InputLine {
     pub fn new() -> Self
     {
         Self {
-            last_width: 0,
             output_ready: false,
             input: String::with_capacity(INPUT_CAPACITY),
             cursor_pos: 0,
@@ -78,8 +76,6 @@ impl Widget for InputLine {
         if area.width == 0 || area.height == 0 {
             return;
         }
-
-        self.last_width = area.width;
 
         // Draw the input.
 

@@ -1,112 +1,113 @@
-use crate::style::StyledString;
+use crate::{style::StyledString, screen::Buffer, Dim};
 use super::{
     Widget,
     InteractiveWidget,
     OutputWidget,
-    InnerWidget,
-    Window,
     PoisonError,
 };
 use termion::event::{Event, Key};
 
-use crate::layout::Area;
-use crate::Pos;
+use crate::Area;
 
 type Transformer = fn(&str) -> StyledString;
 
-struct Theme {
-    normal: Transformer,
-    selected: Transformer,
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Theme {
+    pub normal: Transformer,
+    pub selected: Transformer,
 }
 
+impl Default for Theme {
+    fn default() -> Self
+    {
+        Self {
+            normal: |item| {
+                let mut line = StyledString::from("  ");
+                line.content.push_str(item);
+                line
+            },
+            selected: |item| {
+                let mut line = StyledString::from("* ");
+                line.content.push_str(item);
+                line
+            },
+        }
+    }
+}
+
+enum Location {
+    Above,
+    InView,
+    Below,
+}
+
+#[derive(Debug, Clone)]
 pub struct Menu {
-    win: Window,
+    pub theme: Theme,
     items: Vec<String>,
     output: Option<usize>,
-    active_item: usize,
+    active_idx: usize,
+    // FIXME: this is state related purely to rendering.
     scroll: usize,
-    theme: Theme,
 }
 
 impl Menu {
-    // TODO: create a *size* struct purely for `width` and `height`.
-    // Use it also in other widgets (check), mainly in `InnerWidget`.
-    pub fn new(pos: Pos, size: Option<(usize, usize)>, items: &[&str]) -> Self
+    pub fn new(items: &[&str]) -> Self
     {
-        let items: Vec<_> = items.iter().map(|it| String::from(*it)).collect();
-
-        let (width, height) = if let Some((width, height)) = size {
-            (width as u16, height as u16)
-        } else {
-            let item_lengths = items.iter().map(|it| it.len());
-            let longest = item_lengths
-                .reduce(|longest, it_len| std::cmp::max(longest, it_len))
-                .unwrap_or(0);
-            (longest as u16, items.len() as u16 + 3)
-        };
-
-        let mut menu = Self {
-            win: Window::new(Area { x: pos.x, y: pos.y, width, height }),
-            items,
+        Self {
+            items: items.iter()
+                .map(|it| it.to_string())
+                .collect(),
             output: None,
-            active_item: 0,
+            active_idx: 0,
             scroll: 0,
-            theme: Theme {
-                normal: |item| {
-                    let mut line = StyledString::from("  ");
-                    line.content.push_str(item);
-                    line
-                },
-                selected: |item| {
-                    let mut line = StyledString::from("* ");
-                    line.content.push_str(item);
-                    line
-                },
-            },
-        };
-        menu.redraw();
-
-        menu
-    }
-
-    pub fn set_theme(&mut self, normal: Transformer, selected: Transformer)
-    {
-        self.theme.normal = normal;
-        self.theme.selected = selected;
-
-        self.redraw();
-    }
-
-    fn redraw(&mut self)
-    {
-        self.win.clear();
-
-        let first_item = self.scroll;
-
-        let mut i = first_item;
-        while i < self.visible_count() {
-            let transform = if self.active_item == i {
-                self.theme.selected
-            } else {
-                self.theme.normal
-            };
-
-            let win_index = (i - first_item) as u16;
-            self.win.print(0, win_index, &transform(&self.items[i]));
-            i += 1;
+            theme: Theme::default(),
         }
     }
 
-    fn visible_count(&self) -> usize
+    #[inline]
+    fn visible_count(&self, height: u16) -> u16
     {
-        std::cmp::min(self.win.content_area().height as usize, self.items.len())
+        std::cmp::min(height as usize, self.items.len()) as u16
+    }
+
+    #[inline]
+    fn active_item_location(&self, dimensions: Dim) -> Location
+    {
+        if self.active_idx < self.scroll {
+            Location::Above
+        } else if self.active_idx < self.scroll + dimensions.height as usize {
+            Location::InView
+        } else {
+            Location::Below
+        }
     }
 }
 
 impl Widget for Menu {
-    fn share_inner(&self) -> InnerWidget
+    fn render(&mut self, buf: &mut Buffer, area: Area)
     {
-        self.win.share_inner()
+        if area.width == 0 || area.height == 0 {
+            return;
+        }
+
+        match self.active_item_location(area.dimensions()) {
+            Location::Above => self.scroll = self.active_idx,
+            Location::InView => {},
+            Location::Below => self.scroll = self.active_idx + area.height as usize - 1,
+        }
+
+        let start = self.scroll;
+        let end = self.scroll + self.visible_count(area.height) as usize;
+
+        for (i, item) in self.items[start..end].iter().enumerate() {
+            let item_i = start + i;
+
+            let transform = if self.active_idx == item_i
+                { self.theme.selected }
+                else { self.theme.normal };
+            buf.print(area.x, area.y + i as u16, &transform(item))
+        }
     }
 }
 
@@ -115,26 +116,18 @@ impl InteractiveWidget for Menu {
     {
         match e {
             Event::Key(Key::Up) => {
-                if self.active_item > 0 {
-                    self.active_item -= 1;
-                    if self.scroll > self.active_item {
-                        self.scroll -= 1;
-                    }
-                    self.redraw();
+                if self.active_idx > 0 {
+                    self.active_idx -= 1;
                 }
             },
             Event::Key(Key::Down) => {
-                if self.active_item + 1 < self.items.len() {
-                    self.active_item += 1;
-                    if self.scroll + self.visible_count() < self.active_item + 1 {
-                        self.scroll += 1;
-                    }
-                    self.redraw();
+                if self.active_idx + 1 < self.items.len() {
+                    self.active_idx += 1;
                 }
             },
             Event::Key(Key::Char('\n')) |
             Event::Key(Key::Char(' ')) => {
-                self.output = Some(self.active_item);
+                self.output = Some(self.active_idx);
             },
             Event::Key(Key::Esc) => {
                 // FIXME: cleaner implementation of exiting the menu.
