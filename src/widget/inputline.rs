@@ -13,22 +13,24 @@ use crate::style::{StyledChar, Style, WithStyle};
 
 const INPUT_CAPACITY: usize = 2048;
 
-struct Theme {
-    blank_c: StyledChar,
-    input_style: Style,
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Theme {
+    pub blank_c: StyledChar,
+    pub input_style: Style,
 }
 
+#[derive(Debug, Clone)]
 pub struct InputLine {
+    pub theme: Theme,
     last_width: u16,
     output_ready: bool,
     input: String,
     cursor_pos: u16,
-    theme: Theme,
     active: bool,
 }
 
 impl InputLine {
-    pub fn new(pos: Pos, length: u16) -> Self
+    pub fn new() -> Self
     {
         Self {
             last_width: 0,
@@ -43,12 +45,12 @@ impl InputLine {
         }
     }
 
-    pub fn activate(&mut self)
+    pub fn set_active(&mut self)
     {
         self.active = true;
     }
 
-    pub fn deactivate(&mut self)
+    pub fn set_inactive(&mut self)
     {
         self.active = false;
     }
@@ -61,23 +63,12 @@ impl InputLine {
     where
         C: Into<StyledChar>
     {
-        self.set_theme(blank_c, input_style);
-
-        self
-    }
-
-    pub fn set_theme<C>(
-        &mut self,
-        blank_c: C,
-        input_style: Style,
-    )
-    where
-        C: Into<StyledChar>
-    {
         self.theme = Theme {
             blank_c: blank_c.into(),
-            input_style,
+            input_style: input_style.into(),
         };
+
+        self
     }
 }
 

@@ -144,6 +144,46 @@ impl Area {
         }
     }
 
+    pub fn split_horiz_at(&self, x: u16) -> (Self, Self)
+    {
+        assert!(x <= self.width);
+
+        (
+            Self {
+                x: self.x,
+                y: self.y,
+                width: x,
+                height: self.height,
+            },
+            Self {
+                x: self.x + x,
+                y: self.y,
+                width: self.width - x,
+                height: self.height,
+            }
+        )
+    }
+
+    pub fn split_vert_at(&self, y: u16) -> (Self, Self)
+    {
+        assert!(y <= self.height);
+
+        (
+            Self {
+                x: self.x,
+                y: self.y,
+                width: self.width,
+                height: y,
+            },
+            Self {
+                x: self.x,
+                y: self.y + y,
+                width: self.width,
+                height: self.height - y,
+            }
+        )
+    }
+
     pub fn dimensions(&self) -> Dim
     {
         Dim { width: self.width, height: self.height }
