@@ -7,7 +7,6 @@ use super::{
     PoisonError,
 };
 use crate::Pos;
-use crate::misc::SliceByChars;
 use crate::layout::Area;
 use crate::screen::Buffer;
 use crate::style::{StyledChar, Style, WithStyle};
@@ -25,6 +24,7 @@ pub struct InputLine {
     input: String,
     cursor_pos: u16,
     theme: Theme,
+    active: bool,
 }
 
 impl InputLine {
@@ -39,7 +39,18 @@ impl InputLine {
                 blank_c: ' '.styled(),
                 input_style: Style::default(),
             },
+            active: true,
         }
+    }
+
+    pub fn activate(&mut self)
+    {
+        self.active = true;
+    }
+
+    pub fn deactivate(&mut self)
+    {
+        self.active = false;
     }
 
     pub fn theme<C>(
@@ -64,7 +75,7 @@ impl InputLine {
         C: Into<StyledChar>
     {
         self.theme = Theme {
-            blank_c: blank_c.styled(),
+            blank_c: blank_c.into(),
             input_style,
         };
     }
@@ -79,35 +90,45 @@ impl Widget for InputLine {
 
         self.last_width = area.width;
 
-        // FIXME: this needs a review, especially the cursor position and the
-        // text after the cursor (under).
-
         // Draw the input.
 
-        let input_len = self.input.chars().count();
-        let visible_input = if input_len + 1 < area.width as usize {
-            self.input.as_str()
-        } else {
-            self.input.slice_by_chars(
-                input_len + 1 - area.width as usize..input_len
-            )
-        };
+        let width = area.width as usize;
+        // TODO: utf8 support (graphemes).
+        let input_len = self.input.len();
+
+        buf.hfill(area.x, area.y, self.theme.blank_c, width);
+
+        let capped_input_len = std::cmp::min(input_len, width - 1);
+        let end = std::cmp::max(self.cursor_pos as usize, capped_input_len);
+        let start = end.saturating_sub(width - 1);
+        // TODO: utf8 support (graphemes).
+        let visible_input = &self.input[start..end];
+
         buf.print(area.x, area.y,
             visible_input.with_style(|_| self.theme.input_style));
 
-        // Draw the blanks.
-
-        if input_len + 1 < area.width as usize {
-            let blank_count = area.width as usize - 1 - input_len;
-            let first_blank_x = area.x + input_len as u16;
-            buf.hfill(first_blank_x, area.y, self.theme.blank_c,
-                 blank_count as usize);
+        let cursor_moved = (self.cursor_pos as usize) < input_len;
+        if cursor_moved && input_len >= width {
+            let Pos { x, y } = area.top_right().sub_x(1);
+            buf.putc(
+                x,
+                y,
+                // TODO: utf8 support (graphemes).
+                self.input.chars().nth(self.cursor_pos as usize + 1)
+                    .unwrap()
+                    .with_style(|_| self.theme.input_style),
+            );
         }
-        let Pos { x, y } = area.top_right().sub_x(1);
-        buf.putc(x, y, self.theme.blank_c);
 
-        // FIXME: this is wrong, as the cursor can be bigger.
-        buf.move_cursor(area.top_left().add_x(self.cursor_pos));
+        if self.active {
+            buf.move_cursor(Pos {
+                x: std::cmp::min(
+                    area.x + self.cursor_pos,
+                    area.x + area.width - 1,
+                ),
+                y: area.y
+            });
+        }
     }
 }
 
@@ -119,14 +140,19 @@ impl InteractiveWidget for InputLine {
                 self.output_ready = true;
             },
             Event::Key(Key::Char(c)) => {
-                if c.is_alphanumeric() || c.is_ascii_punctuation() || c == ' ' {
-                    self.input.push(c);
+                // TODO: utf8 support.
+                if c.is_ascii_alphanumeric()
+                    || c.is_ascii_punctuation()
+                    || c == ' '
+                {
+                    self.input.insert(self.cursor_pos as usize, c);
                     self.cursor_pos += 1;
                 }
             },
             Event::Key(Key::Backspace) => {
-                if !self.input.is_empty() {
-                    self.input.pop();
+                if self.cursor_pos > 0 {
+                // TODO: utf8 support.
+                    self.input.remove(self.cursor_pos as usize - 1);
                     self.cursor_pos -= 1;
                 }
             },
@@ -143,6 +169,7 @@ impl OutputWidget<String> for InputLine {
         if self.output_ready {
             return Some(self.input.clone());
         }
+
         None
     }
 
@@ -153,6 +180,7 @@ impl OutputWidget<String> for InputLine {
         if self.output_ready {
             return Ok(output);
         }
+
         Err(PoisonError::new(output))
     }
 }
