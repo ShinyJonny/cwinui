@@ -4,11 +4,13 @@ pub mod bar;
 pub mod inputline;
 pub mod menu;
 pub mod prompt;
+pub mod frame;
 
 pub use bar::{HorizBar, VertBar};
 pub use inputline::InputLine;
 pub use menu::Menu;
 pub use prompt::Prompt;
+pub use frame::Frame;
 
 use crate::{Area, screen::Buffer};
 

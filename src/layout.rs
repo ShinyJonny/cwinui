@@ -6,6 +6,7 @@ pub struct Pos {
 }
 
 impl Pos {
+    #[inline]
     pub fn saturating_add(self, rhs: Self) -> Self
     {
         Self {
@@ -14,6 +15,7 @@ impl Pos {
         }
     }
 
+    #[inline]
     pub fn saturating_sub(self, rhs: Self) -> Self
     {
         Self {
@@ -22,6 +24,7 @@ impl Pos {
         }
     }
 
+    #[inline]
     pub fn add_x(self, x: u16) -> Self
     {
         Self {
@@ -30,6 +33,7 @@ impl Pos {
         }
     }
 
+    #[inline]
     pub fn add_y(self, y: u16) -> Self
     {
         Self {
@@ -38,6 +42,7 @@ impl Pos {
         }
     }
 
+    #[inline]
     pub fn sub_x(self, x: u16) -> Self
     {
         Self {
@@ -46,6 +51,7 @@ impl Pos {
         }
     }
 
+    #[inline]
     pub fn sub_y(self, y: u16) -> Self
     {
         Self {
@@ -134,6 +140,7 @@ impl Area {
         }
     }
 
+    #[inline]
     pub fn inset(&self, count: u16) -> Self
     {
         Self {
@@ -144,6 +151,7 @@ impl Area {
         }
     }
 
+    #[inline]
     pub fn split_horiz_at(&self, x: u16) -> (Self, Self)
     {
         assert!(x <= self.width);
@@ -164,6 +172,7 @@ impl Area {
         )
     }
 
+    #[inline]
     pub fn split_vert_at(&self, y: u16) -> (Self, Self)
     {
         assert!(y <= self.height);
@@ -184,16 +193,19 @@ impl Area {
         )
     }
 
+    #[inline]
     pub fn dimensions(&self) -> Dim
     {
         Dim { width: self.width, height: self.height }
     }
 
+    #[inline]
     pub fn top_left(&self) -> Pos
     {
         Pos { x: self.x, y: self.y }
     }
 
+    #[inline]
     pub fn top_centre(&self) -> Pos
     {
         Pos {
@@ -202,6 +214,7 @@ impl Area {
         }
     }
 
+    #[inline]
     pub fn top_right(&self) -> Pos
     {
         Pos {
@@ -210,6 +223,7 @@ impl Area {
         }
     }
 
+    #[inline]
     pub fn centre_left(&self) -> Pos
     {
         Pos {
@@ -219,6 +233,7 @@ impl Area {
     }
 
     /// The coordinates of the centre of the area.
+    #[inline]
     pub fn centre(&self) -> Pos
     {
         Pos {
@@ -227,6 +242,7 @@ impl Area {
         }
     }
 
+    #[inline]
     pub fn centre_right(&self) -> Pos
     {
         Pos {
@@ -235,6 +251,7 @@ impl Area {
         }
     }
 
+    #[inline]
     pub fn bottom_left(&self) -> Pos
     {
         Pos {
@@ -243,6 +260,7 @@ impl Area {
         }
     }
 
+    #[inline]
     pub fn bottom_centre(&self) -> Pos
     {
         Pos {
@@ -251,6 +269,7 @@ impl Area {
         }
     }
 
+    #[inline]
     pub fn bottom_right(&self) -> Pos
     {
         Pos {
