@@ -1,7 +1,8 @@
 use crate::{style::StyledChar, screen::Buffer, Pos, Area};
 
-use super::Widget;
+use super::{Widget, NullWidget};
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Theme {
     pub top_left: StyledChar,
     pub top_right: StyledChar,
@@ -29,7 +30,8 @@ impl Default for Theme {
     }
 }
 
-pub struct Frame<T: Widget> {
+#[derive(Debug, Clone)]
+pub struct Frame<T: Widget = NullWidget> {
     pub theme: Theme,
     pub inner: T,
 }
@@ -69,6 +71,16 @@ impl<T: Widget> Frame<T> {
         };
 
         self
+    }
+}
+
+impl Frame<NullWidget> {
+    pub fn empty() -> Self
+    {
+        Self {
+            theme: Theme::default(),
+            inner: NullWidget,
+        }
     }
 }
 
