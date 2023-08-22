@@ -22,10 +22,6 @@ pub trait InteractiveWidget {
     fn process_event(&mut self, e: Event);
 }
 
-pub trait OutputtingWidget<T> : InteractiveWidget {
-    fn get_output(&self) -> Option<T>;
-}
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct NullWidget;
 
@@ -35,8 +31,4 @@ impl Widget for NullWidget {
 
 impl InteractiveWidget for NullWidget {
     fn process_event(&mut self, _e: Event) {}
-}
-
-impl OutputtingWidget<()> for NullWidget {
-    fn get_output(&self) -> Option<()> { None }
 }

@@ -3,7 +3,6 @@ use termion::event::{Event, Key};
 use super::{
     Widget,
     InteractiveWidget,
-    OutputtingWidget,
 };
 use crate::Pos;
 use crate::layout::Area;
@@ -21,8 +20,7 @@ pub struct Theme {
 #[derive(Debug, Clone)]
 pub struct InputLine {
     pub theme: Theme,
-    output_ready: bool,
-    input: String,
+    content: String,
     cursor_pos: u16,
     active: bool,
 }
@@ -31,8 +29,7 @@ impl InputLine {
     pub fn new() -> Self
     {
         Self {
-            output_ready: false,
-            input: String::with_capacity(INPUT_CAPACITY),
+            content: String::with_capacity(INPUT_CAPACITY),
             cursor_pos: 0,
             theme: Theme {
                 blank_c: ' '.styled(),
@@ -40,6 +37,11 @@ impl InputLine {
             },
             active: true,
         }
+    }
+
+    pub fn content(&self) -> &str
+    {
+        &self.content
     }
 
     pub fn set_active(&mut self)
@@ -80,7 +82,7 @@ impl Widget for InputLine {
 
         let width = area.width as usize;
         // TODO: utf8 support (graphemes).
-        let input_len = self.input.len();
+        let input_len = self.content.len();
 
         buf.hfill(area.x, area.y, self.theme.blank_c, width);
 
@@ -88,7 +90,7 @@ impl Widget for InputLine {
         let end = std::cmp::max(self.cursor_pos as usize, capped_input_len);
         let start = end.saturating_sub(width - 1);
         // TODO: utf8 support (graphemes).
-        let visible_input = &self.input[start..end];
+        let visible_input = &self.content[start..end];
 
         buf.print(area.x, area.y,
             visible_input.with_style(|_| self.theme.input_style));
@@ -100,7 +102,7 @@ impl Widget for InputLine {
                 x,
                 y,
                 // TODO: utf8 support (graphemes).
-                self.input.chars().nth(self.cursor_pos as usize + 1)
+                self.content.chars().nth(self.cursor_pos as usize + 1)
                     .unwrap()
                     .with_style(|_| self.theme.input_style),
             );
@@ -122,23 +124,20 @@ impl InteractiveWidget for InputLine {
     fn process_event(&mut self, e: Event)
     {
         match e {
-            Event::Key(Key::Char('\n')) => {
-                self.output_ready = true;
-            },
             Event::Key(Key::Char(c)) => {
                 // TODO: utf8 support.
                 if c.is_ascii_alphanumeric()
                     || c.is_ascii_punctuation()
                     || c == ' '
                 {
-                    self.input.insert(self.cursor_pos as usize, c);
+                    self.content.insert(self.cursor_pos as usize, c);
                     self.cursor_pos += 1;
                 }
             },
             Event::Key(Key::Backspace) => {
                 if self.cursor_pos > 0 {
                 // TODO: utf8 support.
-                    self.input.remove(self.cursor_pos as usize - 1);
+                    self.content.remove(self.cursor_pos as usize - 1);
                     self.cursor_pos -= 1;
                 }
             },
@@ -146,16 +145,5 @@ impl InteractiveWidget for InputLine {
             // TODO: Event::Key(Key::Delete) => {},
             _ => (),
         }
-    }
-}
-
-impl OutputtingWidget<String> for InputLine {
-    fn get_output(&self) -> Option<String>
-    {
-        if self.output_ready {
-            return Some(self.input.clone());
-        }
-
-        None
     }
 }

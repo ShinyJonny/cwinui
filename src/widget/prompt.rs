@@ -7,7 +7,6 @@ use crate::style::{StyledString, StyledStr, Style, StyledChar, WithStyle};
 use super::{
     Widget,
     InteractiveWidget,
-    OutputtingWidget,
     InputLine,
 };
 
@@ -39,6 +38,11 @@ impl Prompt {
                 input_blank_c: ' '.styled(),
             },
         }
+    }
+
+    pub fn content(&self) -> &str
+    {
+        self.inputline.content()
     }
 
     pub fn theme<'t, S, C>(
@@ -107,12 +111,5 @@ impl InteractiveWidget for Prompt {
     fn process_event(&mut self, e: Event)
     {
         self.inputline.process_event(e);
-    }
-}
-
-impl OutputtingWidget<String> for Prompt {
-    fn get_output(&self) -> Option<String>
-    {
-        self.inputline.get_output()
     }
 }

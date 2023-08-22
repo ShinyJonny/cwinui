@@ -2,7 +2,6 @@ use crate::{style::StyledString, screen::Buffer, Dim};
 use super::{
     Widget,
     InteractiveWidget,
-    OutputtingWidget,
 };
 use termion::event::{Event, Key};
 
@@ -44,7 +43,6 @@ enum Location {
 pub struct Menu {
     pub theme: Theme,
     items: Vec<String>,
-    output: Option<usize>,
     active_idx: usize,
     // FIXME: this is state related purely to rendering.
     scroll: usize,
@@ -57,11 +55,27 @@ impl Menu {
             items: items.iter()
                 .map(|it| it.to_string())
                 .collect(),
-            output: None,
             active_idx: 0,
             scroll: 0,
             theme: Theme::default(),
         }
+    }
+
+    pub fn selected(&self) -> &str
+    {
+        &self.items[self.active_idx]
+    }
+
+    pub fn theme(mut self, theme: Theme) -> Self
+    {
+        self.theme = theme;
+
+        self
+    }
+
+    pub fn items(&self) -> &[String]
+    {
+        &self.items
     }
 
     #[inline]
@@ -124,23 +138,8 @@ impl InteractiveWidget for Menu {
                     self.active_idx += 1;
                 }
             },
-            Event::Key(Key::Char('\n')) |
-            Event::Key(Key::Char(' ')) => {
-                self.output = Some(self.active_idx);
-            },
-            Event::Key(Key::Esc) => {
-                // FIXME: cleaner implementation of exiting the menu.
-                self.output = Some(self.items.len() - 1);
-            },
             // TODO: mouse support
             _ => (),
         }
-    }
-}
-
-impl OutputtingWidget<usize> for Menu {
-    fn get_output(&self) -> Option<usize>
-    {
-        self.output
     }
 }
