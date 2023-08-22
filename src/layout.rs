@@ -102,7 +102,7 @@ pub struct Area {
 }
 
 impl Area {
-    pub fn align_to(&self, anchor: Area, a: Align) -> Self
+    pub fn align_to(&self, anchor: Self, a: Align) -> Self
     {
         let top_left = match a {
             Align::TopLeft => anchor.top_left(),
@@ -137,6 +137,49 @@ impl Area {
             y: top_left.y,
             width: self.width,
             height: self.height,
+        }
+    }
+
+    /// Checks if `self` and `other` overlap.
+    #[inline]
+    pub fn overlaps(&self, other: Self) -> bool
+    {
+        let other_l = other.x;
+        let other_r = other.x + other.width;
+        let other_t = other.y;
+        let other_b = other.y + other.height;
+
+        let self_l = self.x;
+        let self_r = self.x + self.width;
+        let self_t = self.y;
+        let self_b = self.y + self.height;
+
+        let x_overlaps = other_l < self_r && other_r > self_l;
+        let y_overlaps = other_t < self_b && other_b > self_t;
+
+        x_overlaps && y_overlaps
+    }
+
+    /// Returns the area that corresponds to the intersection of `self` and
+    /// `other`.
+    ///
+    /// # Overflows
+    ///
+    /// When `self` and `other` do not overlap.
+    #[inline]
+    pub fn intersection(&self, other: Self) -> Self
+    {
+        let left_x = std::cmp::max(self.x, other.x);
+        let right_x = std::cmp::min(self.x + self.width, other.x + other.width);
+        let top_y = std::cmp::max(self.y, other.y);
+        let bottom_y
+            = std::cmp::min(self.y + self.height, other.y + other.height);
+
+        Self {
+            x: left_x,
+            y: top_y,
+            width: right_x - left_x,
+            height: bottom_y - top_y,
         }
     }
 
