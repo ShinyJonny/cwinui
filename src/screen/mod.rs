@@ -37,7 +37,7 @@ pub struct RenderContext<'b> {
 impl<'b> RenderContext<'b> {
     pub fn area(&self) -> Area
     {
-        let dim = self.buffer.dimensions();
+        let dim = self.buffer.area().dimensions();
 
         Area {
             x: 0,

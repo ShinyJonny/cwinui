@@ -1,5 +1,6 @@
-use crate::Pos;
-use crate::style::{StyledStr, StyledChar, Style};
+use crate::layout::Justify;
+use crate::{Pos, Area};
+use crate::style::{StyledStr, StyledChar, Style, WithStyle};
 use crate::util::offset;
 
 use super::{Cursor, InternalStyle};
@@ -34,13 +35,23 @@ impl<'b> Buffer<'b> {
         }
     }
 
+    #[inline]
+    pub fn area(&self) -> Area
+    {
+        Area {
+            x: 0,
+            y: 0,
+            width: self.width,
+            height: self.height,
+        }
+    }
+
     pub fn print<'s, T>(&mut self, x: u16, y: u16, text: T)
     where
         T: Into<StyledStr<'s>>
     {
         let x = x as usize;
         let y = y as usize;
-        let text: StyledStr<'_> = text.into();
 
         let width = self.width as usize;
         let height = self.height as usize;
@@ -49,43 +60,128 @@ impl<'b> Buffer<'b> {
             return;
         }
 
+        let text: StyledStr<'_> = text.into();
+
         // TODO: support printing with newlines (and other non-standard
         // whitespace).
         // FIXME: check for variable-length characters.
         // FIXME: check for non-printable characters.
 
-        let char_count = text.content.chars().count();
-        let print_len = if x + char_count > width {
-            width - x
-        } else {
-            char_count
-        };
+        // TODO: utf8 support.
+        let text_len = text.content.len();
+        let print_width = if x + text_len > width
+            { width - x }
+            else { text_len };
 
         let mut chars = text.content.chars();
-        for i in 0..print_len {
+        for i in 0..print_width {
             self.chars[offset!(x + i, y, width)] = chars.next().unwrap();
         }
 
         let style = self.style_to_internal_with_fallback(x as u16, y as u16, text.style);
-        for i in 0..print_len {
+        for i in 0..print_width {
             self.styles[offset!(x + i, y, width)] = style;
         }
+    }
+
+    pub fn printj<'s, S>(&mut self, text: S, j: Justify ,area: Area)
+    where
+        S: Into<StyledStr<'s>>
+    {
+        if !self.area().overlaps(area) {
+            return;
+        }
+        let area = self.area().intersection(area);
+
+        if area.width == 0 || area.height == 0 {
+            return;
+        }
+
+        let text: StyledStr = text.into();
+        // TODO: utf8 support.
+        let text_width = text.content.len();
+        // TODO: implement direct slicing of `StyledStr`.
+        let text
+            = text.content[..std::cmp::min(text_width, area.width as usize)]
+                .with_style(|_| text.style);
+
+        let Pos { x: rel_x, y: rel_y } = match j {
+            Justify::Left(y) => Pos {
+                x: 0,
+                y
+            },
+            Justify::HCentre(y) => Pos {
+                x: (area.width as usize - text_width) as u16 / 2,
+                y,
+            },
+            Justify::Right(y) => Pos {
+                x: (area.width as usize - text_width) as u16,
+                y,
+            },
+            Justify::Top(x) => Pos {
+                x,
+                y: 0,
+            },
+            Justify::VCentre(x) => Pos {
+                x,
+                y: area.height.saturating_sub(1) / 2,
+            },
+            Justify::Bottom(x) => Pos {
+                x,
+                y: area.height.saturating_sub(1),
+            },
+            Justify::TopLeft => Pos { x: 0, y: 0 },
+            Justify::TopCentre => Pos {
+                x: (area.width as usize - text_width) as u16 / 2,
+                y: 0,
+            },
+            Justify::TopRight => Pos {
+                x: (area.width as usize - text_width) as u16,
+                y: 0,
+            },
+            Justify::CentreLeft => Pos {
+                x: 0,
+                y: area.height.saturating_sub(1) / 2,
+            },
+            Justify::Centre => Pos {
+                x: (area.width as usize - text_width) as u16 / 2,
+                y: area.height.saturating_sub(1) / 2,
+            },
+            Justify::CentreRight => Pos {
+                x: (area.width as usize - text_width) as u16,
+                y: area.height.saturating_sub(1) / 2,
+            },
+            Justify::BottomLeft => Pos {
+                x: 0,
+                y: area.height.saturating_sub(1),
+            },
+            Justify::BottomCentre => Pos {
+                x: (area.width as usize - text_width) as u16 / 2,
+                y: area.height.saturating_sub(1),
+            },
+            Justify::BottomRight => Pos {
+                x: (area.width as usize - text_width) as u16,
+                y: area.height.saturating_sub(1),
+            },
+        };
+
+        self.print(area.x + rel_x, area.y + rel_y, text);
     }
 
     pub fn putc<T>(&mut self, x: u16, y: u16, c: T)
     where
         T: Into<StyledChar>
     {
-        let c = c.into();
-
         if x >= self.width || y >= self.height {
             return;
         }
 
+        let c = c.into();
+
         let w = self.width as usize;
-        let pos = offset!(x as usize, y as usize, w);
-        self.chars[pos] = c.content;
-        self.styles[pos] = self.style_to_internal_with_fallback(x, y, c.style);
+        let idx = offset!(x as usize, y as usize, w);
+        self.chars[idx] = c.content;
+        self.styles[idx] = self.style_to_internal_with_fallback(x, y, c.style);
     }
 
     pub fn hfill<T>(&mut self, x: u16, y: u16, c: T, len: usize)
