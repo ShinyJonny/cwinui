@@ -86,7 +86,7 @@ impl Widget for Prompt {
             { 1 }
             else { area.width as usize - prefix_len };
         let visible_prefix_len = area.width as usize - input_len;
-        let (_, input_area) = area.split_horiz_at(visible_prefix_len as u16);
+        let (_, input_area) = area.split_vert_at(area.x + visible_prefix_len as u16);
 
         self.inputline.render(buf, input_area);
 

@@ -11,7 +11,7 @@ impl Pos {
     {
         Self {
             x: self.x.saturating_add(rhs.x),
-            y: self.x.saturating_add(rhs.y),
+            y: self.y.saturating_add(rhs.y),
         }
     }
 
@@ -20,7 +20,7 @@ impl Pos {
     {
         Self {
             x: self.x.saturating_sub(rhs.x),
-            y: self.x.saturating_sub(rhs.y),
+            y: self.y.saturating_sub(rhs.y),
         }
     }
 
@@ -102,6 +102,16 @@ pub struct Area {
 }
 
 impl Area {
+    pub fn from_parts(pos: Pos, dimensions: Dim) -> Self
+    {
+        Self {
+            x: pos.x,
+            y: pos.y,
+            width: dimensions.width,
+            height: dimensions.height,
+        }
+    }
+
     pub fn align_to(&self, anchor: Self, a: Align) -> Self
     {
         let top_left = match a {
@@ -160,6 +170,21 @@ impl Area {
         x_overlaps && y_overlaps
     }
 
+    #[inline]
+    pub fn contains_pos(&self, pos: Pos) -> bool
+    {
+        pos.x >= self.x
+            && pos.x < self.x + self.width
+            && pos.y >= self.y
+            && pos.y < self.y + self.height
+    }
+
+    #[inline]
+    pub fn is_void(&self) -> bool
+    {
+        self.width == 0 || self.height == 0
+    }
+
     /// Returns the area that corresponds to the intersection of `self` and
     /// `other`.
     ///
@@ -195,43 +220,51 @@ impl Area {
     }
 
     #[inline]
-    pub fn split_horiz_at(&self, x: u16) -> (Self, Self)
+    pub fn split_horiz_at(&self, y: u16) -> (Self, Self)
     {
-        assert!(x <= self.width);
+        // FIXME: make these debug asserts.
+        assert!(y >= self.y);
+        assert!(y <= self.y + self.height);
+
+        let first_height = y - self.y;
 
         (
             Self {
                 x: self.x,
                 y: self.y,
-                width: x,
-                height: self.height,
+                width: self.width,
+                height: first_height,
             },
             Self {
-                x: self.x + x,
-                y: self.y,
-                width: self.width - x,
-                height: self.height,
+                x: self.x,
+                y,
+                width: self.width,
+                height: self.height - first_height,
             }
         )
     }
 
     #[inline]
-    pub fn split_vert_at(&self, y: u16) -> (Self, Self)
+    pub fn split_vert_at(&self, x: u16) -> (Self, Self)
     {
-        assert!(y <= self.height);
+        // FIXME: make these debug asserts.
+        assert!(x >= self.x);
+        assert!(x <= self.x + self.width);
+
+        let first_width = x - self.x;
 
         (
             Self {
                 x: self.x,
                 y: self.y,
-                width: self.width,
-                height: y,
+                width: first_width,
+                height: self.height,
             },
             Self {
-                x: self.x,
-                y: self.y + y,
-                width: self.width,
-                height: self.height - y,
+                x,
+                y: self.y,
+                width: self.width - first_width,
+                height: self.height,
             }
         )
     }
