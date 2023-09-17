@@ -15,7 +15,7 @@ pub use frame::Frame;
 use crate::{Area, screen::Buffer};
 
 pub trait Widget {
-    fn render(&mut self, buf: &mut Buffer, area: Area);
+    fn render(&self, buf: &mut Buffer, area: Area);
 }
 
 pub trait InteractiveWidget {
@@ -26,7 +26,7 @@ pub trait InteractiveWidget {
 pub struct NullWidget;
 
 impl Widget for NullWidget {
-    fn render(&mut self, _buf: &mut Buffer, _area: Area) {}
+    fn render(&self, _buf: &mut Buffer, _area: Area) {}
 }
 
 impl InteractiveWidget for NullWidget {

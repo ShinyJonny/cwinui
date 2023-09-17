@@ -37,17 +37,10 @@ pub struct RenderContext<'b> {
 impl<'b> RenderContext<'b> {
     pub fn area(&self) -> Area
     {
-        let dim = self.buffer.area().dimensions();
-
-        Area {
-            x: 0,
-            y: 0,
-            width: dim.width,
-            height: dim.height,
-        }
+        self.buffer.area()
     }
 
-    pub fn render_widget<W: Widget>(&mut self, widget: &mut W, area: Area)
+    pub fn render_widget<W: Widget>(&mut self, widget: &W, area: Area)
     {
         widget.render(&mut self.buffer, area);
     }

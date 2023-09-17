@@ -98,16 +98,23 @@ impl Menu {
 }
 
 impl Widget for Menu {
-    fn render(&mut self, buf: &mut Buffer, area: Area)
+    fn render(&self, buf: &mut Buffer, area: Area)
     {
-        if area.width == 0 || area.height == 0 {
+        if area.is_void() {
             return;
         }
 
-        match self.active_item_location(area.dimensions()) {
-            Location::Above => self.scroll = self.active_idx,
-            Location::InView => {},
-            Location::Below => self.scroll = self.active_idx + area.height as usize - 1,
+        // TODO: HACK: bypassinng the non-statefulness of `render`.
+        unsafe {
+
+            let mut_self = &mut *(self as *const Self as *mut Self);
+
+            match self.active_item_location(area.dimensions()) {
+                Location::Above => mut_self.scroll = mut_self.active_idx,
+                Location::InView => {},
+                Location::Below => mut_self.scroll
+                    = mut_self.active_idx - area.height as usize - 1,
+            }
         }
 
         let start = self.scroll;
