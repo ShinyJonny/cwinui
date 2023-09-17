@@ -83,7 +83,7 @@ impl Screen {
         Self {
             width: cols,
             height: rows,
-            char_buf: vec!['\0'; buf_size],
+            char_buf: vec![' '; buf_size],
             style_buf: vec![InternalStyle::default(); buf_size],
             stdout,
             cursor: Cursor { y: 0, x: 0, hidden: true },
