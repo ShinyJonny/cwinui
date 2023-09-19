@@ -92,6 +92,76 @@ pub struct Dim {
     pub height: u16,
 }
 
+impl Dim {
+    pub fn satisfy_geometry_max(&self, geometry: Geometry) -> Option<Self>
+    {
+        #[inline]
+        fn satisfy_max(available: u16, g: G) -> Option<u16>
+        {
+            match g {
+                G::Flexible => Some(available),
+                G::Fixed(req) => if available >= req
+                    { Some(req) }
+                    else { None },
+                G::To(to) => Some(std::cmp::min(to, available)),
+                G::From(from) => if available >= from
+                    { Some(available) }
+                    else { None },
+                G::Range(from, to) => if available >= from
+                    { Some(std::cmp::min(to, available)) }
+                    else { None },
+            }
+        }
+
+        Some(Self {
+            width: satisfy_max(self.width, geometry.horiz)?,
+            height: satisfy_max(self.height, geometry.vert)?,
+        })
+    }
+
+    pub fn satisfy_geometry_min(&self, geometry: Geometry) -> Option<Self>
+    {
+        #[inline]
+        fn satisfy_min(available: u16, g: G) -> Option<u16>
+        {
+            match g {
+                G::Flexible => Some(1),
+                G::Fixed(req) => if available >= req
+                    { Some(req) }
+                    else { None },
+                G::To(to) => Some(std::cmp::min(to, 1)),
+                G::From(from) => if available >= from
+                    { Some(from) }
+                    else { None },
+                G::Range(from, _to) => if available >= from
+                    { Some(from) }
+                    else { None },
+            }
+        }
+
+        Some(Self {
+            width: satisfy_min(self.width, geometry.horiz)?,
+            height: satisfy_min(self.height, geometry.vert)?,
+        })
+    }
+}
+
+#[derive(Debug, Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Geometry {
+    pub horiz: G,
+    pub vert: G,
+}
+
+#[derive(Debug, Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord)]
+pub enum G {
+    #[default]
+    Flexible,
+    Fixed(u16),
+    To(u16),
+    From(u16),
+    Range(u16, u16),
+}
+
 /// Rectangular area.
 #[derive(Debug, Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Area {
