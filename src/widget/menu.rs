@@ -112,8 +112,8 @@ impl Widget for Menu {
             match self.active_item_location(area.dimensions()) {
                 Location::Above => mut_self.scroll = mut_self.active_idx,
                 Location::InView => {},
-                Location::Below => mut_self.scroll
-                    = mut_self.active_idx - area.height as usize - 1,
+                Location::Below => mut_self.scroll = mut_self.active_idx
+                    .saturating_sub(area.height as usize + 1),
             }
         }
 
@@ -126,7 +126,15 @@ impl Widget for Menu {
             let transform = if self.active_idx == item_i
                 { self.theme.selected }
                 else { self.theme.normal };
-            buf.print(area.x, area.y + i as u16, &transform(item))
+            let item = transform(item);
+            // TODO: utf8.
+            let print_len
+                = std::cmp::min(item.content.len(), area.width as usize);
+            let to_print = StyledStr {
+                style: item.style,
+                content: &item.content[..print_len],
+            };
+            buf.print(area.x, area.y + i as u16, to_print);
         }
     }
 }
