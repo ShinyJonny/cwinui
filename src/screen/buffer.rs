@@ -3,7 +3,7 @@ use crate::{Pos, Area};
 use crate::style::{StyledStr, StyledChar, Style, WithStyle};
 use crate::util::offset;
 
-use super::{Cursor, InternalStyle};
+use super::Cursor;
 
 /// The target buffer, passed to `Widget::render`.
 #[derive(Debug)]
@@ -11,7 +11,7 @@ pub struct Buffer<'b> {
     width: u16,
     height: u16,
     chars: &'b mut Vec<char>,
-    styles: &'b mut Vec<InternalStyle>,
+    styles: &'b mut Vec<Style>,
     cursor: &'b mut Cursor,
 }
 
@@ -22,7 +22,7 @@ impl<'b> Buffer<'b> {
         width: u16,
         height: u16,
         chars: &'b mut Vec<char>,
-        styles: &'b mut Vec<InternalStyle>,
+        styles: &'b mut Vec<Style>,
         cursor: &'b mut Cursor,
     ) -> Self
     {
@@ -46,19 +46,27 @@ impl<'b> Buffer<'b> {
         }
     }
 
-    pub fn print<'s, T>(&mut self, x: u16, y: u16, text: T)
+    pub fn printa<'s, S>(&mut self, x: u16, y: u16, text: S, area: Area)
     where
-        T: Into<StyledStr<'s>>
+        S: Into<StyledStr<'s>>
     {
+        if !area.overlaps(self.area()) {
+            return;
+        }
+        let area = self.area().intersection(area);
+
+        if area.is_void() {
+            return;
+        }
+
+        if !area.contains_pos(Pos { x, y }) {
+            return;
+        }
+
         let x = x as usize;
         let y = y as usize;
 
-        let width = self.width as usize;
-        let height = self.height as usize;
-
-        if x >= width || y >= height {
-            return;
-        }
+        let area_right_end = area.x as usize + area.width as usize;
 
         let text: StyledStr<'_> = text.into();
 
@@ -69,19 +77,25 @@ impl<'b> Buffer<'b> {
 
         // TODO: utf8 support.
         let text_len = text.content.len();
-        let print_width = if x + text_len > width
-            { width - x }
+        let print_width = if x + text_len > area_right_end
+            { area_right_end - x }
             else { text_len };
 
         let mut chars = text.content.chars();
-        for i in 0..print_width {
-            self.chars[offset!(x + i, y, width)] = chars.next().unwrap();
-        }
 
-        let style = self.style_to_internal_with_fallback(x as u16, y as u16, text.style);
         for i in 0..print_width {
-            self.styles[offset!(x + i, y, width)] = style;
+            let offset = offset!(x + i, y, self.width as usize);
+
+            self.chars[offset] = chars.next().unwrap();
+            self.set_cell_style(offset, text.style)
         }
+    }
+
+    pub fn print<'s, T>(&mut self, x: u16, y: u16, text: T)
+    where
+        T: Into<StyledStr<'s>>
+    {
+        self.printa(x, y, text, self.area());
     }
 
     pub fn printj<'s, S>(&mut self, text: S, j: Justify ,area: Area)
@@ -93,7 +107,7 @@ impl<'b> Buffer<'b> {
         }
         let area = self.area().intersection(area);
 
-        if area.width == 0 || area.height == 0 {
+        if area.is_void() {
             return;
         }
 
@@ -181,7 +195,7 @@ impl<'b> Buffer<'b> {
         let w = self.width as usize;
         let idx = offset!(x as usize, y as usize, w);
         self.chars[idx] = c.content;
-        self.styles[idx] = self.style_to_internal_with_fallback(x, y, c.style);
+        self.set_cell_style(idx, c.style);
     }
 
     pub fn hfill<T>(&mut self, x: u16, y: u16, c: T, len: usize)
@@ -202,13 +216,10 @@ impl<'b> Buffer<'b> {
         let fill_len = if x + len > width { width - x } else { len };
 
         for i in 0..fill_len {
-            self.chars[offset!(x + i, y, width)] = c.content;
-        }
+            let offset = offset!(x + i, y, width);
 
-        let style
-            = self.style_to_internal_with_fallback(x as u16, y as u16, c.style);
-        for i in 0..fill_len {
-            self.styles[offset!(x + i, y, width)] = style;
+            self.chars[offset] = c.content;
+            self.set_cell_style(offset, c.style);
         }
     }
 
@@ -232,20 +243,17 @@ impl<'b> Buffer<'b> {
             else { len };
 
         for i in 0..fill_len {
-            self.chars[offset!(x, y + i, width)] = c.content;
-        }
+            let offset = offset!(x, y + i, width);
 
-        let style
-            = self.style_to_internal_with_fallback(x as u16, y as u16, c.style);
-        for i in 0..fill_len {
-            self.styles[offset!(x, y + i, width)] = style;
+            self.chars[offset] = c.content;
+            self.set_cell_style(offset, c.style);
         }
     }
 
     pub fn clear(&mut self)
     {
-        self.chars.fill('\0');
-        self.styles.fill(InternalStyle::default());
+        self.chars.fill(' ');
+        self.styles.fill(Style::default().clean());
     }
 
     pub fn show_cursor(&mut self)
@@ -281,30 +289,21 @@ impl<'b> Buffer<'b> {
         self.cursor.x = (self.cursor.x as i16 + steps) as u16;
     }
 
-    /// Converts `style` to `InternalStyle`
-    ///
-    /// If a component of `Style` is missing, the style at the offset just
-    /// before the one specified by `x` and `y` is used; or `Default::default`.
-    ///
-    /// **NOTE**: doesn't check the bounds.
     #[inline]
-    fn style_to_internal_with_fallback(
-        &self,
-        start_x: u16,
-        start_y: u16,
-        style: Style
-    ) -> InternalStyle
+    fn set_cell_style(&mut self, offset: usize, style: Style)
     {
-        let start_idx
-            = offset!(start_x as usize, start_y as usize, self.width as usize);
-        let fallb_style = if start_idx > 0
-            { self.styles[start_idx - 1] }
-            else { InternalStyle::default() };
+        let cell = &mut self.styles[offset];
 
-        InternalStyle {
-            fg_color: style.fg_color.unwrap_or(fallb_style.fg_color),
-            bg_color: style.bg_color.unwrap_or(fallb_style.bg_color),
-            text_style: style.text_style.unwrap_or(fallb_style.text_style),
+        let Style { text_style, fg_color, bg_color } = style;
+
+        if let Some(ts) = text_style {
+            cell.text_style = Some(ts);
+        }
+        if let Some(fg) = fg_color {
+            cell.fg_color = Some(fg);
+        }
+        if let Some(bg) = bg_color {
+            cell.bg_color = Some(bg);
         }
     }
 }

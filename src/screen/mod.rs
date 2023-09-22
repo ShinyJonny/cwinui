@@ -5,29 +5,11 @@ use termion::raw::{RawTerminal, IntoRawMode};
 use termion::input::MouseTerminal;
 
 use crate::Area;
-use crate::style::{Color, TextStyle};
+use crate::style::{Color, TextStyle, Style};
 use crate::util::offset;
 use crate::widget::Widget;
 
 pub use buffer::Buffer;
-
-#[derive(Debug, Clone, Copy)]
-struct InternalStyle {
-    fg_color: Color,
-    bg_color: Color,
-    text_style: TextStyle,
-}
-
-impl Default for InternalStyle {
-    fn default() -> Self
-    {
-        Self {
-            fg_color: Color::Normal,
-            bg_color: Color::Normal,
-            text_style: TextStyle::NORMAL,
-        }
-    }
-}
 
 #[derive(Debug)]
 pub struct RenderContext<'b> {
@@ -58,7 +40,7 @@ pub struct Screen {
     pub height: u16,
     cursor: Cursor,
     char_buf: Vec<char>,
-    style_buf: Vec<InternalStyle>,
+    style_buf: Vec<Style>,
     stdout: RawTerminal<MouseTerminal<Stdout>>,
 }
 
@@ -84,7 +66,7 @@ impl Screen {
             width: cols,
             height: rows,
             char_buf: vec![' '; buf_size],
-            style_buf: vec![InternalStyle::default(); buf_size],
+            style_buf: vec![Style::default().clean(); buf_size],
             stdout,
             cursor: Cursor { y: 0, x: 0, hidden: true },
         }
@@ -103,6 +85,8 @@ impl Screen {
                 &mut self.cursor,
             )
         };
+
+        ctx.buffer.clear();
 
         ui(&mut ctx);
     }
@@ -160,9 +144,9 @@ impl Screen {
 
         // FIXME: optimise.
 
-        let mut saved_fg = styles[0].fg_color;
-        let mut saved_bg = styles[0].bg_color;
-        let mut saved_ts = styles[0].text_style;
+        let mut saved_fg = styles[0].fg_color.unwrap_or_default();
+        let mut saved_bg = styles[0].bg_color.unwrap_or_default();
+        let mut saved_ts = styles[0].text_style.unwrap_or_default();
         // The first char of every line is always set with colors and style.
         console::set_fg_color(&mut self.stdout, saved_fg)
             .expect("failed to set fg color");
@@ -177,20 +161,24 @@ impl Screen {
             let cur_style = &styles[x];
             let cur_char = &chars[x];
 
-            if saved_fg != cur_style.fg_color {
-                console::set_fg_color(&mut self.stdout, cur_style.fg_color)
+            let text_style = cur_style.text_style.unwrap_or_default();
+            let fg_color = cur_style.fg_color.unwrap_or_default();
+            let bg_color = cur_style.bg_color.unwrap_or_default();
+
+            if saved_fg != fg_color {
+                console::set_fg_color(&mut self.stdout, fg_color)
                     .expect("failed to set fg color");
-                saved_fg = cur_style.fg_color;
+                saved_fg = fg_color;
             }
-            if saved_bg != cur_style.bg_color {
-                console::set_bg_color(&mut self.stdout, cur_style.bg_color)
+            if saved_bg != bg_color {
+                console::set_bg_color(&mut self.stdout, bg_color)
                     .expect("failed to set bg color");
-                saved_bg = cur_style.bg_color;
+                saved_bg = bg_color;
             }
-            if saved_ts != cur_style.text_style {
-                console::set_text_style(&mut self.stdout, cur_style.text_style)
+            if saved_ts != text_style {
+                console::set_text_style(&mut self.stdout, text_style)
                     .expect("failed to set text style");
-                saved_ts = cur_style.text_style;
+                saved_ts = text_style;
             }
 
             console::write_char(&mut self.stdout, *cur_char)

@@ -61,8 +61,16 @@ bitflags! {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+impl Default for TextStyle {
+    fn default() -> Self
+    {
+        Self::NORMAL
+    }
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub enum Color {
+    #[default]
     Normal,
     Black,
     Red,
