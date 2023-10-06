@@ -87,7 +87,8 @@ impl<'b> Buffer<'b> {
             let offset = offset!(x + i, y, self.width as usize);
 
             self.chars[offset] = chars.next().unwrap();
-            self.set_cell_style(offset, text.style)
+            let style = &mut self.styles[offset];
+            *style = style.merge(text.style);
         }
     }
 
@@ -195,7 +196,8 @@ impl<'b> Buffer<'b> {
         let w = self.width as usize;
         let idx = offset!(x as usize, y as usize, w);
         self.chars[idx] = c.content;
-        self.set_cell_style(idx, c.style);
+        let style = &mut self.styles[idx];
+        *style = style.merge(c.style);
     }
 
     pub fn hfill<T>(&mut self, x: u16, y: u16, c: T, len: usize)
@@ -219,7 +221,8 @@ impl<'b> Buffer<'b> {
             let offset = offset!(x + i, y, width);
 
             self.chars[offset] = c.content;
-            self.set_cell_style(offset, c.style);
+            let style = &mut self.styles[offset];
+            *style = style.merge(c.style);
         }
     }
 
@@ -246,7 +249,8 @@ impl<'b> Buffer<'b> {
             let offset = offset!(x, y + i, width);
 
             self.chars[offset] = c.content;
-            self.set_cell_style(offset, c.style);
+            let style = &mut self.styles[offset];
+            *style = style.merge(c.style);
         }
     }
 
@@ -254,6 +258,7 @@ impl<'b> Buffer<'b> {
     {
         self.chars.fill(' ');
         self.styles.fill(Style::default().clean());
+        *self.cursor = Cursor { x: 0, y: 0, hidden: true };
     }
 
     pub fn show_cursor(&mut self)
@@ -287,23 +292,5 @@ impl<'b> Buffer<'b> {
         }
 
         self.cursor.x = (self.cursor.x as i16 + steps) as u16;
-    }
-
-    #[inline]
-    fn set_cell_style(&mut self, offset: usize, style: Style)
-    {
-        let cell = &mut self.styles[offset];
-
-        let Style { text_style, fg_color, bg_color } = style;
-
-        if let Some(ts) = text_style {
-            cell.text_style = Some(ts);
-        }
-        if let Some(fg) = fg_color {
-            cell.fg_color = Some(fg);
-        }
-        if let Some(bg) = bg_color {
-            cell.bg_color = Some(bg);
-        }
     }
 }

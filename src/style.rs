@@ -48,6 +48,24 @@ impl Style {
 
         self
     }
+
+    #[inline]
+    pub fn merge(&self, other: Self) -> Self
+    {
+        let mut ret = self.clone();
+
+        if other.text_style.is_some() {
+            ret.text_style = other.text_style;
+        }
+        if other.fg_color.is_some() {
+            ret.fg_color = other.fg_color;
+        }
+        if other.bg_color.is_some() {
+            ret.bg_color = other.bg_color;
+        }
+
+        ret
+    }
 }
 
 bitflags! {
