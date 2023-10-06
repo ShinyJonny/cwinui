@@ -1,4 +1,6 @@
-use crate::{style::StyledString, screen::Buffer, Dim};
+use std::cell::Cell;
+
+use crate::{style::{StyledString, StyledStr}, screen::Buffer, Dim};
 use super::{
     Widget,
     InteractiveWidget,
@@ -7,7 +9,7 @@ use termion::event::{Event, Key};
 
 use crate::Area;
 
-type Transformer = fn(&str) -> StyledString;
+pub type Transformer = fn(&str) -> StyledString;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Theme {
@@ -44,8 +46,8 @@ pub struct Menu {
     pub theme: Theme,
     items: Vec<String>,
     active_idx: usize,
-    // FIXME: this is state related purely to rendering.
-    scroll: usize,
+    // HACK: FIXME: this is state related purely to rendering.
+    scroll: Cell<usize>,
 }
 
 impl Menu {
@@ -56,7 +58,7 @@ impl Menu {
                 .map(|it| it.to_string())
                 .collect(),
             active_idx: 0,
-            scroll: 0,
+            scroll: Cell::new(0),
             theme: Theme::default(),
         }
     }
@@ -64,6 +66,11 @@ impl Menu {
     pub fn selected(&self) -> &str
     {
         &self.items[self.active_idx]
+    }
+
+    pub fn selected_idx(&self) -> usize
+    {
+        self.active_idx
     }
 
     pub fn theme(mut self, theme: Theme) -> Self
@@ -87,9 +94,9 @@ impl Menu {
     #[inline]
     fn active_item_location(&self, dimensions: Dim) -> Location
     {
-        if self.active_idx < self.scroll {
+        if self.active_idx < self.scroll.get() {
             Location::Above
-        } else if self.active_idx < self.scroll + dimensions.height as usize {
+        } else if self.active_idx < self.scroll.get() + dimensions.height as usize {
             Location::InView
         } else {
             Location::Below
@@ -104,21 +111,15 @@ impl Widget for Menu {
             return;
         }
 
-        // TODO: HACK: bypassinng the non-statefulness of `render`.
-        unsafe {
-
-            let mut_self = &mut *(self as *const Self as *mut Self);
-
-            match self.active_item_location(area.dimensions()) {
-                Location::Above => mut_self.scroll = mut_self.active_idx,
-                Location::InView => {},
-                Location::Below => mut_self.scroll = mut_self.active_idx
-                    .saturating_sub(area.height as usize + 1),
-            }
+        match self.active_item_location(area.dimensions()) {
+            Location::Above => self.scroll.set(self.active_idx),
+            Location::InView => {},
+            Location::Below => self.scroll.set(self.active_idx
+                .saturating_sub(area.height as usize + 1)),
         }
 
-        let start = self.scroll;
-        let end = self.scroll + self.visible_count(area.height) as usize;
+        let start = self.scroll.get();
+        let end = self.scroll.get() + self.visible_count(area.height) as usize;
 
         for (i, item) in self.items[start..end].iter().enumerate() {
             let item_i = start + i;
