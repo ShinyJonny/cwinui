@@ -142,18 +142,18 @@ impl Screen {
         let chars = &self.char_buf[line_offset..line_offset + width];
         let styles = &self.style_buf[line_offset..line_offset + width];
 
-        // FIXME: optimise.
-
+        let mut saved_ts = styles[0].text_style.unwrap_or_default();
         let mut saved_fg = styles[0].fg_color.unwrap_or_default();
         let mut saved_bg = styles[0].bg_color.unwrap_or_default();
-        let mut saved_ts = styles[0].text_style.unwrap_or_default();
         // The first char of every line is always set with colors and style.
+        console::reset(&mut self.stdout)
+            .expect("failed to reset style");
+        console::set_text_style(&mut self.stdout, saved_ts)
+            .expect("failed to set text style");
         console::set_fg_color(&mut self.stdout, saved_fg)
             .expect("failed to set fg color");
         console::set_bg_color(&mut self.stdout, saved_bg)
             .expect("failed to set bg color");
-        console::set_text_style(&mut self.stdout, saved_ts)
-            .expect("failed to set text style");
         console::write_char(&mut self.stdout, chars[0])
             .expect("failed to write a char to the screen");
 
@@ -165,20 +165,24 @@ impl Screen {
             let fg_color = cur_style.fg_color.unwrap_or_default();
             let bg_color = cur_style.bg_color.unwrap_or_default();
 
-            if saved_fg != fg_color {
+            let ts_changed = saved_ts != text_style;
+            if ts_changed {
+                console::reset(&mut self.stdout)
+                    .expect("failed to reset style");
+                console::add_text_style(&mut self.stdout, text_style)
+                    .expect("failed to set text style");
+                saved_ts = text_style;
+            }
+
+            if saved_fg != fg_color || ts_changed {
                 console::set_fg_color(&mut self.stdout, fg_color)
                     .expect("failed to set fg color");
                 saved_fg = fg_color;
             }
-            if saved_bg != bg_color {
+            if saved_bg != bg_color || ts_changed {
                 console::set_bg_color(&mut self.stdout, bg_color)
                     .expect("failed to set bg color");
                 saved_bg = bg_color;
-            }
-            if saved_ts != text_style {
-                console::set_text_style(&mut self.stdout, text_style)
-                    .expect("failed to set text style");
-                saved_ts = text_style;
             }
 
             console::write_char(&mut self.stdout, *cur_char)
@@ -258,6 +262,12 @@ mod console {
     }
 
     #[inline]
+    pub fn reset<W: Write>(writer: &mut W) -> Result<(), std::io::Error>
+    {
+        write!(writer, "{}", termion::style::Reset)
+    }
+
+    #[inline]
     pub fn set_fg_color<W: Write>(writer: &mut W, color: Color) -> Result<(), std::io::Error>
     {
         match color {
@@ -285,7 +295,8 @@ mod console {
         Ok(())
     }
 
-    // FIXME: couldn't find a way to avoid duplication without `Box`ing the color code. Macros?
+    // FIXME: couldn't find a way to avoid duplication without `Box`ing the
+    // color code. Macros?
 
     #[inline]
     pub fn set_bg_color<W: Write>(writer: &mut W, color: Color) -> Result<(), std::io::Error>
@@ -377,6 +388,11 @@ mod console {
         Ok(())
     }
 
+    /// BUG: doesn't work for all attributes, mainly `TextStyle::BOLD`.
+    ///
+    /// This function should be completelty deprecated, as not all of these are
+    /// supported universally. In such cases, the only way to undo a style is to
+    /// do a full reset, which affects colors too.
     #[inline]
     pub fn subtract_text_style<W: Write>(writer: &mut W, ts: TextStyle) -> Result<(), std::io::Error>
     {
