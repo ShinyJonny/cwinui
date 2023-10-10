@@ -46,6 +46,8 @@ impl<'b> Buffer<'b> {
         }
     }
 
+    /// Prints `text` relative to the specified `area`, potentially truncating
+    /// its contents.
     pub fn printa<'s, S>(&mut self, x: u16, y: u16, text: S, area: Area)
     where
         S: Into<StyledStr<'s>>
@@ -59,14 +61,14 @@ impl<'b> Buffer<'b> {
             return;
         }
 
-        if !area.contains_pos(Pos { x, y }) {
+        if x >= area.width || y >= area.height {
             return;
         }
 
-        let x = x as usize;
-        let y = y as usize;
+        let abs_x = (area.x + x) as usize;
+        let abs_y = (area.y + y) as usize;
 
-        let area_right_end = area.x as usize + area.width as usize;
+        let area_right_end = (area.x + area.width) as usize;
 
         let text: StyledStr<'_> = text.into();
 
@@ -77,14 +79,14 @@ impl<'b> Buffer<'b> {
 
         // TODO: utf8 support.
         let text_len = text.content.len();
-        let print_width = if x + text_len > area_right_end
-            { area_right_end - x }
+        let print_width = if abs_x + text_len > area_right_end
+            { area_right_end - abs_x }
             else { text_len };
 
         let mut chars = text.content.chars();
 
         for i in 0..print_width {
-            let offset = offset!(x + i, y, self.width as usize);
+            let offset = offset!(abs_x + i, abs_y, self.width as usize);
 
             self.chars[offset] = chars.next().unwrap();
             let style = &mut self.styles[offset];
@@ -257,7 +259,7 @@ impl<'b> Buffer<'b> {
     pub fn clear(&mut self)
     {
         self.chars.fill(' ');
-        self.styles.fill(Style::default().clean());
+        self.styles.fill(Style::default());
         *self.cursor = Cursor { x: 0, y: 0, hidden: true };
     }
 
