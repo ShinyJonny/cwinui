@@ -293,6 +293,50 @@ impl Area {
     pub fn split_horiz_at(&self, y: u16) -> (Self, Self)
     {
         // FIXME: make these debug asserts.
+        assert!(y <= self.height);
+
+        (
+            Self {
+                x: self.x,
+                y: self.y,
+                width: self.width,
+                height: y,
+            },
+            Self {
+                x: self.x,
+                y: self.y + y,
+                width: self.width,
+                height: self.height - y,
+            }
+        )
+    }
+
+    #[inline]
+    pub fn split_vert_at(&self, x: u16) -> (Self, Self)
+    {
+        // FIXME: make these debug asserts.
+        assert!(x <= self.width);
+
+        (
+            Self {
+                x: self.x,
+                y: self.y,
+                width: x,
+                height: self.height,
+            },
+            Self {
+                x: self.x + x,
+                y: self.y,
+                width: self.width - x,
+                height: self.height,
+            }
+        )
+    }
+
+    #[inline]
+    pub fn split_horiz_at_abs(&self, y: u16) -> (Self, Self)
+    {
+        // FIXME: make these debug asserts.
         assert!(y >= self.y);
         assert!(y <= self.y + self.height);
 
@@ -315,7 +359,7 @@ impl Area {
     }
 
     #[inline]
-    pub fn split_vert_at(&self, x: u16) -> (Self, Self)
+    pub fn split_vert_at_abs(&self, x: u16) -> (Self, Self)
     {
         // FIXME: make these debug asserts.
         assert!(x >= self.x);
