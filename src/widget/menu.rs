@@ -128,14 +128,7 @@ impl Widget for Menu {
                 { self.theme.selected }
                 else { self.theme.normal };
             let item = transform(item);
-            // TODO: utf8.
-            let print_len
-                = std::cmp::min(item.content.len(), area.width as usize);
-            let to_print = StyledStr {
-                style: item.style,
-                content: &item.content[..print_len],
-            };
-            buf.print(area.x, area.y + i as u16, to_print);
+            buf.printa(0, i as u16, &item, area);
         }
     }
 }

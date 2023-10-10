@@ -2,7 +2,7 @@ use termion::event::Event;
 
 use crate::layout::Area;
 use crate::screen::Buffer;
-use crate::style::{StyledString, StyledStr, Style, StyledChar, WithStyle};
+use crate::style::{StyledString, StyledStr, Style, StyledChar};
 
 use super::{
     Widget,
@@ -77,33 +77,26 @@ impl Widget for Prompt {
         }
 
         // TODO: utf8 support.
-        let sep_len = self.theme.sep.content.len();
-        // TODO: utf8 support.
         let label_len = self.label.content.len();
-        let prefix_len = sep_len + label_len;
+        // TODO: utf8 support.
+        let sep_len = self.theme.sep.content.len();
 
-        let input_len = if prefix_len >= area.width as usize
-            { 1 }
-            else { area.width as usize - prefix_len };
-        let visible_prefix_len = area.width as usize - input_len;
-        let (_, input_area) = area.split_vert_at(visible_prefix_len as u16);
+        let (label_area, sep_and_input_area) = area.split_vert_at(
+            std::cmp::min(
+                label_len,
+                area.width as usize
+            ) as u16
+        );
+        let (sep_area, input_area) = sep_and_input_area.split_vert_at(
+            std::cmp::min(
+                sep_len,
+                sep_and_input_area.width as usize
+            ) as u16
+        );
 
+        buf.printa(0, 0, &self.label, label_area);
+        buf.printa(0, 0, &self.theme.sep, sep_area);
         self.inputline.render(buf, input_area);
-
-        // TODO: implement direct slicing of `StyledStr`.
-        // TODO: utf8 support.
-        let to_print_lab = self.label.content[
-            ..std::cmp::min(label_len, visible_prefix_len)
-        ].with_style(|_| self.label.style);
-        buf.print(area.x, area.y, to_print_lab);
-
-        // TODO: utf8 support.
-        let to_print_sep = self.theme.sep.content[
-            ..visible_prefix_len.saturating_sub(label_len)
-        ].with_style(|_| self.theme.sep.style);
-        if to_print_sep.content.len() > 0 {
-            buf.print(area.x + label_len as u16, area.y, to_print_sep);
-        }
     }
 }
 

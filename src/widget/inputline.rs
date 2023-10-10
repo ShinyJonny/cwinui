@@ -92,8 +92,8 @@ impl Widget for InputLine {
         // TODO: utf8 support (graphemes).
         let visible_input = &self.content[start..end];
 
-        buf.print(area.x, area.y,
-            visible_input.with_style(|_| self.theme.input_style));
+        buf.printa(0, 0,
+            visible_input.with_style(|_| self.theme.input_style), area);
 
         let cursor_moved = (self.cursor_pos as usize) < input_len;
         if cursor_moved && input_len >= width {
