@@ -10,17 +10,23 @@ use super::{
     InputLine,
 };
 
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Theme {
     pub sep: StyledString,
     pub input_style: Style,
-    pub input_blank_c: StyledChar,
+    pub blank_c: StyledChar,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct ITheme {
+    sep: StyledString,
 }
 
 #[derive(Debug, Clone)]
 pub struct Prompt {
     pub label: StyledString,
-    pub theme: Theme,
+    theme: ITheme,
     inputline: InputLine,
 }
 
@@ -32,10 +38,8 @@ impl Prompt {
         Self {
             label: label.into().to_owned(),
             inputline: InputLine::new(),
-            theme: Theme {
+            theme: ITheme {
                 sep: StyledString::from(": "),
-                input_style: Style::default(),
-                input_blank_c: ' '.styled(),
             },
         }
     }
@@ -49,24 +53,43 @@ impl Prompt {
         mut self,
         sep: S,
         input_style: Style,
-        input_blank_c: C
+        blank_c: C
     ) -> Self
     where
         S: Into<StyledStr<'t>>,
         C: Into<StyledChar>
     {
-        self.theme = Theme {
-            sep: StyledString::from(sep),
-            input_style,
-            input_blank_c: input_blank_c.into(),
+        self.theme = ITheme {
+            sep: StyledString::from(sep)
+        };
+        self.inputline.theme = super::inputline::Theme {
+            input_style: input_style.into(),
+            blank_c: blank_c.into(),
         };
 
         self
     }
 
-    // TODO: is_active
-    // TODO: set_active
-    // TODO: set_inactive
+    pub fn set_theme(&mut self, theme: Theme)
+    {
+        let Theme { sep, input_style, blank_c } = theme;
+
+        self.theme = ITheme { sep };
+        self.inputline.theme = super::inputline::Theme {
+            input_style,
+            blank_c,
+        };
+    }
+
+    pub fn set_active(&mut self)
+    {
+        self.inputline.set_active();
+    }
+
+    pub fn set_inactive(&mut self)
+    {
+        self.inputline.set_inactive();
+    }
 }
 
 impl Widget for Prompt {

@@ -35,7 +35,7 @@ impl InputLine {
                 blank_c: ' '.styled(),
                 input_style: Style::default(),
             },
-            active: true,
+            active: false,
         }
     }
 
@@ -116,6 +116,7 @@ impl Widget for InputLine {
                 ),
                 y: area.y
             });
+            buf.show_cursor()
         }
     }
 }
