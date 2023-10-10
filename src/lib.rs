@@ -6,6 +6,7 @@ pub mod style;
 mod util;
 mod misc;
 
+pub use widget::{Widget, InteractiveWidget};
 pub use layout::{
     Pos,
     Dim,

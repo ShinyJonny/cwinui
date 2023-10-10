@@ -1,5 +1,5 @@
 /// Position coordinates.
-#[derive(Debug, Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Copy, Clone, Default, PartialEq, Eq)]
 pub struct Pos {
     pub x: u16,
     pub y: u16,
@@ -86,7 +86,7 @@ impl std::ops::Sub for Pos {
 }
 
 /// Area dimensions.
-#[derive(Debug, Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Copy, Clone, Default, PartialEq, Eq)]
 pub struct Dim {
     pub width: u16,
     pub height: u16,
@@ -146,13 +146,13 @@ impl Dim {
     }
 }
 
-#[derive(Debug, Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Copy, Clone, Default, PartialEq, Eq)]
 pub struct Geometry {
     pub horiz: G,
     pub vert: G,
 }
 
-#[derive(Debug, Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Copy, Clone, Default, PartialEq, Eq)]
 pub enum G {
     #[default]
     Flexible,
@@ -163,7 +163,7 @@ pub enum G {
 }
 
 /// Rectangular area.
-#[derive(Debug, Copy, Clone, Default, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Copy, Clone, Default, PartialEq, Eq)]
 pub struct Area {
     pub x: u16,
     pub y: u16,
@@ -469,7 +469,9 @@ impl Area {
     }
 }
 
+#[derive(Debug, Copy, Clone, Default, PartialEq, Eq)]
 pub enum Align {
+    #[default]
     TopLeft,
     TopCentre,
     TopRight,
@@ -481,6 +483,7 @@ pub enum Align {
     BottomRight,
 }
 
+#[derive(Debug, Copy, Clone, Default, PartialEq, Eq)]
 pub enum Justify {
     HCentre(u16),
     VCentre(u16),
@@ -488,6 +491,7 @@ pub enum Justify {
     Right(u16),
     Top(u16),
     Bottom(u16),
+    #[default]
     TopLeft,
     TopCentre,
     TopRight,
