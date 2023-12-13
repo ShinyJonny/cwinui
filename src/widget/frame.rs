@@ -1,6 +1,8 @@
-use crate::{style::StyledChar, screen::Buffer, Pos, Area};
+use crate::style::StyledChar;
+use crate::paint::Paint;
+use crate::{Pos, Area,};
 
-use super::{Widget, NullWidget};
+use super::{Widget, Dummy};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Theme {
@@ -31,7 +33,7 @@ impl Default for Theme {
 }
 
 #[derive(Debug, Clone)]
-pub struct Frame<T: Widget = NullWidget> {
+pub struct Frame<T: Widget = Dummy> {
     pub theme: Theme,
     pub inner: T,
 }
@@ -74,18 +76,18 @@ impl<T: Widget> Frame<T> {
     }
 }
 
-impl Frame<NullWidget> {
+impl Frame<Dummy> {
     pub fn empty() -> Self
     {
         Self {
             theme: Theme::default(),
-            inner: NullWidget,
+            inner: Dummy,
         }
     }
 }
 
 impl<T: Widget> Widget for Frame<T> {
-    fn render(&self, buf: &mut Buffer, area: Area)
+    fn render(&self, buf: &mut impl Paint, area: Area)
     {
         if area.width == 0 || area.height == 0 {
             return;
@@ -93,31 +95,22 @@ impl<T: Widget> Widget for Frame<T> {
 
         // Sides
 
-        let Pos { x, y } = area.top_left();
-        buf.hfill(x, y, self.theme.top, area.width as usize);
+        let top_left = area.top_left();
+        let top_right = area.top_right().sub_x(1);
+        let bottom_left = area.bottom_left().sub_y(1);
+        let bottom_right = area.bottom_right() - Pos { x: 1, y: 1 };
 
-        let Pos { x, y } = area.top_right().sub_x(1);
-        buf.vfill(x, y, self.theme.right, area.width as usize);
-
-        let Pos { x, y } = area.bottom_left().sub_y(1);
-        buf.hfill(x, y, self.theme.bottom, area.width as usize);
-
-        let Pos { x, y } = area.top_left();
-        buf.vfill(x, y, self.theme.left, area.height as usize);
+        buf.hfill(top_left, self.theme.top, area.width as usize);
+        buf.vfill(top_right, self.theme.right, area.width as usize);
+        buf.hfill(bottom_left, self.theme.bottom, area.width as usize);
+        buf.vfill(top_left, self.theme.left, area.height as usize);
 
         // Corners
 
-        let Pos { x, y } = area.top_left();
-        buf.putc(x, y, self.theme.top_left);
-
-        let Pos { x, y } = area.top_right().sub_x(1);
-        buf.putc(x, y, self.theme.top_right);
-
-        let Pos { x, y } = area.bottom_right() - Pos { x:1, y: 1 };
-        buf.putc(x, y, self.theme.bottom_right);
-
-        let Pos { x, y } = area.bottom_left().sub_y(1);
-        buf.putc(x, y, self.theme.bottom_left);
+        buf.putc(top_left, self.theme.top_left);
+        buf.putc(top_right, self.theme.top_right);
+        buf.putc(bottom_left, self.theme.bottom_left);
+        buf.putc(bottom_right, self.theme.bottom_right);
 
         // Inner
 

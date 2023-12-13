@@ -6,7 +6,7 @@ use super::{
 };
 use crate::Pos;
 use crate::layout::Area;
-use crate::screen::Buffer;
+use crate::paint::Paint;
 use crate::style::{StyledChar, Style, WithStyle};
 
 const INPUT_CAPACITY: usize = 2048;
@@ -72,7 +72,7 @@ impl InputLine {
 }
 
 impl Widget for InputLine {
-    fn render(&self, buf: &mut Buffer, area: Area)
+    fn render(&self, buf: &mut impl Paint, area: Area)
     {
         if area.width == 0 || area.height == 0 {
             return;
@@ -84,7 +84,7 @@ impl Widget for InputLine {
         // TODO: utf8 support (graphemes).
         let input_len = self.content.len();
 
-        buf.hfill(area.x, area.y, self.theme.blank_c, width);
+        buf.hfill(area.top_left(), self.theme.blank_c, width);
 
         let capped_input_len = std::cmp::min(input_len, width - 1);
         let end = std::cmp::max(self.cursor_pos as usize, capped_input_len);
@@ -92,15 +92,13 @@ impl Widget for InputLine {
         // TODO: utf8 support (graphemes).
         let visible_input = &self.content[start..end];
 
-        buf.printa(0, 0,
+        buf.print(Pos::ZERO,
             visible_input.with_style(|_| self.theme.input_style), area);
 
         let cursor_moved = (self.cursor_pos as usize) < input_len;
         if cursor_moved && input_len >= width {
-            let Pos { x, y } = area.top_right().sub_x(1);
             buf.putc(
-                x,
-                y,
+                area.top_right().sub_x(1),
                 // TODO: utf8 support (graphemes).
                 self.content.chars().nth(self.cursor_pos as usize + 1)
                     .unwrap()

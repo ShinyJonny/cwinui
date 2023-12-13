@@ -1,19 +1,17 @@
-mod buffer;
-
 use std::io::{Stdout, Write};
 use termion::raw::{RawTerminal, IntoRawMode};
 use termion::input::MouseTerminal;
 
 use crate::Area;
-use crate::style::{Color, TextStyle, Style};
+use crate::buffer::Buffer;
+use crate::paint::Paint;
+use crate::style::{Color, TextStyle};
 use crate::util::offset;
 use crate::widget::Widget;
 
-pub use buffer::Buffer;
-
 #[derive(Debug)]
 pub struct RenderContext<'b> {
-    buffer: Buffer<'b>,
+    buffer: &'b mut Buffer,
 }
 
 impl<'b> RenderContext<'b> {
@@ -24,23 +22,14 @@ impl<'b> RenderContext<'b> {
 
     pub fn render_widget<W: Widget>(&mut self, widget: &W, area: Area)
     {
-        widget.render(&mut self.buffer, area);
+        widget.render(self.buffer, area);
     }
-}
-
-#[derive(Debug)]
-struct Cursor {
-    x: u16,
-    y: u16,
-    hidden: bool,
 }
 
 pub struct Screen {
     pub width: u16,
     pub height: u16,
-    cursor: Cursor,
-    char_buf: Vec<char>,
-    style_buf: Vec<Style>,
+    buffer: Buffer,
     stdout: RawTerminal<MouseTerminal<Stdout>>,
 }
 
@@ -60,15 +49,11 @@ impl Screen {
 
         console::hide_cursor(&mut stdout).unwrap();
 
-        let buf_size = cols as usize * rows as usize;
-
         Self {
             width: cols,
             height: rows,
-            char_buf: vec![' '; buf_size],
-            style_buf: vec![Style::default().clean(); buf_size],
+            buffer: Buffer::new(cols, rows),
             stdout,
-            cursor: Cursor { y: 0, x: 0, hidden: true },
         }
     }
 
@@ -77,13 +62,7 @@ impl Screen {
         F: FnOnce(&mut RenderContext)
     {
         let mut ctx = RenderContext {
-            buffer: Buffer::from_raw_parts(
-                self.width,
-                self.height,
-                &mut self.char_buf,
-                &mut self.style_buf,
-                &mut self.cursor,
-            )
+            buffer: &mut self.buffer,
         };
 
         ctx.buffer.clear();
@@ -104,20 +83,20 @@ impl Screen {
         console::move_cursor(&mut self.stdout, -(self.height as isize - 1), 0).unwrap();
 
         // TODO: implement cursor with a real cursor.
-        if !self.cursor.hidden {
+        if !self.buffer.cursor.hidden {
             // Move the cursor to the its position.
             console::move_cursor(
                 &mut self.stdout,
-                self.cursor.y as isize,
-                self.cursor.x as isize
+                self.buffer.cursor.y as isize,
+                self.buffer.cursor.x as isize
             ).unwrap();
             // char printing
             console::add_text_style(&mut self.stdout, TextStyle::INVERT).unwrap();
             console::write_char(
                 &mut self.stdout,
-                self.char_buf[offset!(
-                    self.cursor.x as usize,
-                    self.cursor.y as usize,
+                self.buffer.chars[offset!(
+                    self.buffer.cursor.x as usize,
+                    self.buffer.cursor.y as usize,
                     self.width as usize
                 )]
             ).unwrap();
@@ -126,8 +105,8 @@ impl Screen {
             // Move the cursor back to the top left of the screen.
             console::move_cursor(
                 &mut self.stdout,
-                -(self.cursor.y as isize),
-                -(self.cursor.x as isize)
+                -(self.buffer.cursor.y as isize),
+                -(self.buffer.cursor.x as isize)
             ).unwrap();
         }
 
@@ -139,8 +118,8 @@ impl Screen {
     {
         let width = self.width as usize;
         let line_offset = offset!(0, y as usize, width);
-        let chars = &self.char_buf[line_offset..line_offset + width];
-        let styles = &self.style_buf[line_offset..line_offset + width];
+        let chars = &self.buffer.chars[line_offset..line_offset + width];
+        let styles = &self.buffer.styles[line_offset..line_offset + width];
 
         let mut saved_ts = styles[0].text_style.unwrap_or_default();
         let mut saved_fg = styles[0].fg_color.unwrap_or_default();
@@ -204,7 +183,6 @@ impl Drop for Screen {
     }
 }
 
-#[allow(dead_code)]
 mod console {
     use std::io::Write;
     use termion::color::{Bg, Fg};
@@ -212,13 +190,15 @@ mod console {
     use crate::style::{Color, TextStyle};
 
     #[inline]
-    pub fn write_char<W: Write>(writer: &mut W, c: char) -> Result<(), std::io::Error>
+    pub fn write_char<W: Write>(writer: &mut W, c: char)
+        -> Result<(), std::io::Error>
     {
         write!(writer, "{}", c)
     }
 
     #[inline]
-    pub fn write_str<W: Write>(writer: &mut W, s: &str) -> Result<(), std::io::Error>
+    pub fn write_str<W: Write>(writer: &mut W, s: &str)
+        -> Result<(), std::io::Error>
     {
         write!(writer, "{}", s)
     }
@@ -236,7 +216,8 @@ mod console {
     }
 
     #[inline]
-    pub fn move_cursor<W: Write>(writer: &mut W, y: isize, x: isize) -> Result<(), std::io::Error>
+    pub fn move_cursor<W: Write>(writer: &mut W, y: isize, x: isize)
+        -> Result<(), std::io::Error>
     {
         // NOTE: it has to be checked for zero values, as supplying 0 to the termion's cursor
         // movement functions will result in the cursor being moved by one position.

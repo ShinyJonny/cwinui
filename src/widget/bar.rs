@@ -1,5 +1,4 @@
-use crate::Pos;
-use crate::screen::Buffer;
+use crate::paint::Paint;
 use crate::style::WithStyle;
 use super::Widget;
 use crate::layout::Area;
@@ -54,17 +53,16 @@ impl HorizBar {
 }
 
 impl Widget for HorizBar {
-    fn render(&self, buf: &mut Buffer, area: Area)
+    fn render(&self, buf: &mut impl Paint, area: Area)
     {
         if area.width == 0 || area.height == 0 {
             return;
         }
 
-        let Pos {x, y} = area.top_left();
-        buf.vfill(x, y, self.theme.body, area.width as usize);
-        buf.putc(x, y, self.theme.beg);
-        let Pos {x, y} = area.top_right().sub_x(1);
-        buf.putc(x, y, self.theme.end);
+        let top_left = area.top_left();
+        buf.vfill(top_left, self.theme.body, area.width as usize);
+        buf.putc(top_left, self.theme.beg);
+        buf.putc(area.top_right().sub_x(1), self.theme.end);
     }
 }
 
@@ -104,16 +102,15 @@ impl VertBar {
 }
 
 impl Widget for VertBar {
-    fn render(&self, buf: &mut Buffer, area: Area)
+    fn render(&self, buf: &mut impl Paint, area: Area)
     {
         if area.width == 0 || area.height == 0 {
             return;
         }
 
-        let Pos {x, y} = area.top_left();
-        buf.hfill(x, y, self.theme.body, area.height as usize);
-        buf.putc(x, y, self.theme.beg);
-        let Pos {x, y} = area.bottom_left().sub_y(1);
-        buf.putc(x, y, self.theme.end);
+        let top_left = area.top_left();
+        buf.hfill(top_left, self.theme.body, area.height as usize);
+        buf.putc(top_left, self.theme.beg);
+        buf.putc(area.bottom_left().sub_y(1), self.theme.end);
     }
 }

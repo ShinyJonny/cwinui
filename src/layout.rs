@@ -6,6 +6,8 @@ pub struct Pos {
 }
 
 impl Pos {
+    pub const ZERO: Self = Pos { x: 0, y: 0 };
+
     #[inline]
     pub fn saturating_add(self, rhs: Self) -> Self
     {

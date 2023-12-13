@@ -12,23 +12,25 @@ pub use menu::Menu;
 pub use prompt::Prompt;
 pub use frame::Frame;
 
-use crate::{Area, screen::Buffer};
+use crate::Area;
+use crate::paint::Paint;
 
 pub trait Widget {
-    fn render(&self, buf: &mut Buffer, area: Area);
+    fn render(&self, buf: &mut impl Paint, area: Area);
 }
 
 pub trait InteractiveWidget {
     fn process_event(&mut self, e: Event);
 }
 
+/// A dummy widget that does nothing.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct NullWidget;
+pub struct Dummy;
 
-impl Widget for NullWidget {
-    fn render(&self, _buf: &mut Buffer, _area: Area) {}
+impl Widget for Dummy {
+    fn render(&self, _buf: &mut impl Paint, _area: Area) {}
 }
 
-impl InteractiveWidget for NullWidget {
+impl InteractiveWidget for Dummy {
     fn process_event(&mut self, _e: Event) {}
 }

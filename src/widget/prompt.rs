@@ -1,7 +1,8 @@
 use termion::event::Event;
 
+use crate::Pos;
 use crate::layout::Area;
-use crate::screen::Buffer;
+use crate::paint::Paint;
 use crate::style::{StyledString, StyledStr, Style, StyledChar};
 
 use super::{
@@ -93,7 +94,7 @@ impl Prompt {
 }
 
 impl Widget for Prompt {
-    fn render(&self, buf: &mut Buffer, area: Area)
+    fn render(&self, buf: &mut impl Paint, area: Area)
     {
         if area.width == 0 || area.height == 0 {
             return;
@@ -117,8 +118,8 @@ impl Widget for Prompt {
             ) as u16
         );
 
-        buf.printa(0, 0, &self.label, label_area);
-        buf.printa(0, 0, &self.theme.sep, sep_area);
+        buf.print(Pos::ZERO, &self.label, label_area);
+        buf.print(Pos::ZERO, &self.theme.sep, sep_area);
         self.inputline.render(buf, input_area);
     }
 }

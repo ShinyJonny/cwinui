@@ -1,6 +1,8 @@
 use std::cell::Cell;
 
-use crate::{style::{StyledString, StyledStr}, screen::Buffer, Dim};
+use crate::{style::StyledString, Pos};
+use crate::Dim;
+use crate::paint::Paint;
 use super::{
     Widget,
     InteractiveWidget,
@@ -105,7 +107,7 @@ impl Menu {
 }
 
 impl Widget for Menu {
-    fn render(&self, buf: &mut Buffer, area: Area)
+    fn render(&self, buf: &mut impl Paint, area: Area)
     {
         if area.is_void() {
             return;
@@ -128,7 +130,7 @@ impl Widget for Menu {
                 { self.theme.selected }
                 else { self.theme.normal };
             let item = transform(item);
-            buf.printa(0, i as u16, &item, area);
+            buf.print(Pos{x:0, y:i as u16}, &item, area);
         }
     }
 }
