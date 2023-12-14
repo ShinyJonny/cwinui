@@ -1,3 +1,4 @@
+use crate::layout::{Proportional, Proportions};
 use crate::style::WithStyle;
 use crate::util::offset;
 use crate::{Dim, Widget, Area, Pos};
@@ -43,5 +44,17 @@ impl Widget for Canvas {
         }
 
         // NOTE: we ignore cursors.
+    }
+}
+
+impl Proportional for Canvas {
+    fn proportions(&self) -> Proportions
+    {
+        use crate::layout::G;
+
+        Proportions {
+            horiz: G::Fixed(self.buffer.width),
+            vert: G::Fixed(self.buffer.height),
+        }
     }
 }

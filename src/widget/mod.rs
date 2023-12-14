@@ -6,6 +6,7 @@ pub mod menu;
 pub mod prompt;
 pub mod frame;
 pub mod canvas;
+pub mod layout;
 
 pub use bar::{HorizBar, VertBar};
 pub use inputline::InputLine;

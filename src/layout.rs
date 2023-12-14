@@ -95,73 +95,156 @@ pub struct Dim {
 }
 
 impl Dim {
-    pub fn satisfy_geometry_max(&self, geometry: Geometry) -> Option<Self>
+    /// Return `Dim` that satisfies `proportions`.
+    ///
+    /// This method will always yield as large dimensions as `proportions`
+    /// allow.
+    pub fn satisfy(self, proportions: Proportions) -> Result<Self, Self>
     {
-        #[inline]
-        fn satisfy_max(available: u16, g: G) -> Option<u16>
-        {
-            match g {
-                G::Flexible => Some(available),
-                G::Fixed(req) => if available >= req
-                    { Some(req) }
-                    else { None },
-                G::To(to) => Some(std::cmp::min(to, available)),
-                G::From(from) => if available >= from
-                    { Some(available) }
-                    else { None },
-                G::Range(from, to) => if available >= from
-                    { Some(std::cmp::min(to, available)) }
-                    else { None },
-            }
-        }
+        let width = Self::satisfy_g(self.width, proportions.horiz);
+        let height = Self::satisfy_g(self.height, proportions.vert);
 
-        Some(Self {
-            width: satisfy_max(self.width, geometry.horiz)?,
-            height: satisfy_max(self.height, geometry.vert)?,
-        })
+        match (width, height) {
+            (None,        None        ) => Err(self),
+            (None,        Some(height)) => Err(Self { width: self.width, height }),
+            (Some(width), None        ) => Err(Self { width, height: self.height }),
+            (Some(width), Some(height)) => Ok(Self { width, height }),
+        }
     }
 
-    pub fn satisfy_geometry_min(&self, geometry: Geometry) -> Option<Self>
+    fn satisfy_g(available: u16, g: G) -> Option<u16>
     {
-        #[inline]
-        fn satisfy_min(available: u16, g: G) -> Option<u16>
-        {
-            match g {
-                G::Flexible => Some(1),
-                G::Fixed(req) => if available >= req
-                    { Some(req) }
-                    else { None },
-                G::To(to) => Some(std::cmp::min(to, 1)),
-                G::From(from) => if available >= from
-                    { Some(from) }
-                    else { None },
-                G::Range(from, _to) => if available >= from
-                    { Some(from) }
-                    else { None },
-            }
+        match g {
+            G::Flexible        => Some(available),
+            G::Fixed(v)        => (available >= v).then_some(v),
+            G::To(v)           => Some(std::cmp::min(v, available)),
+            G::From(v)         => (available >= v).then_some(available),
+            G::Range(min, max) => (available >= min)
+                .then_some(std::cmp::min(max, available)),
+            G::Max             => Some(available),
         }
-
-        Some(Self {
-            width: satisfy_min(self.width, geometry.horiz)?,
-            height: satisfy_min(self.height, geometry.vert)?,
-        })
     }
 }
 
 #[derive(Debug, Copy, Clone, Default, PartialEq, Eq)]
-pub struct Geometry {
+pub struct Proportions {
     pub horiz: G,
     pub vert: G,
 }
 
+impl Proportions {
+    /// Collapse all dimensions to minimum fixed values.
+    pub fn min(self) -> Self
+    {
+        Self {
+            horiz: self.horiz.min(),
+            vert: self.vert.min(),
+        }
+    }
+
+    /// Raise all dimensions to maximum fixed values.
+    pub fn max(self) -> Self
+    {
+        Self {
+            horiz: self.horiz.max(),
+            vert: self.vert.max(),
+        }
+    }
+
+    /// Make the upper ends of all dimensions flexible.
+    ///
+    /// This creates a geometry that can contain the previous value but can also
+    /// grow flexibly.
+    pub fn expand(self) -> Self
+    {
+        Self {
+            horiz: self.horiz.expand(),
+            vert: self.vert.expand(),
+        }
+    }
+}
+
+/// Geometry of a single dimension in `Proportions`.
+///
+/// NOTE: since a widget can always go as small as it wants to but the max size
+/// is the limiting factor, we always assume that the widget wants to be as
+/// large as it can (within its specified range).
 #[derive(Debug, Copy, Clone, Default, PartialEq, Eq)]
 pub enum G {
+    /// Fully flexible.
     #[default]
     Flexible,
+    /// Fixed size.
     Fixed(u16),
+    /// Flexible, with a fixed maximum.
+    ///
+    /// NOTE: inclusive
     To(u16),
+    /// Flexible, with a fixed minimum.
     From(u16),
+    /// Flexible, with a fixed minimum and maximum.
+    ///
+    /// NOTE: inclusive
     Range(u16, u16),
+    /// The maximum available value.
+    ///
+    /// This value is to be treated as a fixed value of the maximum possible
+    /// value.
+    Max,
+}
+
+impl G {
+    /// Collapse to minimum fixed values.
+    #[inline]
+    pub fn min(self) -> Self
+    {
+        match self {
+            G::Flexible      => G::Fixed(0),
+            G::Fixed(v)      => G::Fixed(v),
+            G::To(_)         => G::Fixed(0),
+            G::From(v)       => G::Fixed(v),
+            G::Range(min, _) => G::Fixed(min),
+            G::Max           => G::Max,
+        }
+    }
+
+    /// Raise to maximum fixed values.
+    #[inline]
+    pub fn max(self) -> Self
+    {
+        match self {
+            G::Flexible      => G::Max,
+            G::Fixed(v)      => G::Fixed(v),
+            G::To(v)         => G::Fixed(v),
+            G::From(_)       => G::Max,
+            G::Range(_, max) => G::Fixed(max),
+            G::Max           => G::Max,
+        }
+    }
+
+    /// Make the upper end flexible.
+    ///
+    /// This creates a geometry that can contain the previous value but can also
+    /// grow flexibly.
+    #[inline]
+    pub fn expand(self) -> Self
+    {
+        match self {
+            G::Flexible      => G::Flexible,
+            G::Fixed(v)      => G::From(v),
+            G::To(_)         => G::Flexible,
+            G::From(v)       => G::From(v),
+            G::Range(min, _) => G::From(min),
+            G::Max           => G::Max,
+        }
+    }
+}
+
+/// Objects that have proportions.
+///
+/// Types can implement this trait to define their proportion requirements.
+pub trait Proportional {
+    fn proportions(&self) -> Proportions;
 }
 
 /// Rectangular area.
@@ -184,33 +267,42 @@ impl Area {
         }
     }
 
-    pub fn align_to(&self, anchor: Self, a: Align) -> Self
+    #[inline]
+    pub fn parts(self) -> (Pos, Dim)
+    {
+        (
+            Pos { x: self.x, y: self.y },
+            Dim { width: self.width, height: self.height }
+        )
+    }
+
+    pub fn align_to(&self, anchor: Self, a: Alignment) -> Self
     {
         let top_left = match a {
-            Align::TopLeft => anchor.top_left(),
-            Align::TopCentre => Pos {
+            Alignment::TopLeft => anchor.top_left(),
+            Alignment::TopCentre => Pos {
                 x: anchor.centre().x.saturating_sub(self.width / 2),
                 y: anchor.y,
             },
-            Align::TopRight => Pos {
+            Alignment::TopRight => Pos {
                 x: anchor.top_right().x.saturating_sub(self.width),
                 y: anchor.y,
             },
-            Align::CentreLeft => Pos {
+            Alignment::CentreLeft => Pos {
                 x: anchor.x,
                 y: anchor.centre_left().y.saturating_sub(self.height / 2),
             },
-            Align::Centre => anchor.centre()
+            Alignment::Centre => anchor.centre()
                 .saturating_sub(Pos { x: self.width / 2, y: self.height / 2 }),
-            Align::CentreRight => anchor.centre_right()
+            Alignment::CentreRight => anchor.centre_right()
                 .saturating_sub(Pos { x: self.width, y: self.height / 2 }),
-            Align::BottomLeft => Pos {
+            Alignment::BottomLeft => Pos {
                 x: anchor.x,
                 y: anchor.bottom_left().y.saturating_sub(self.height / 2),
             },
-            Align::BottomCentre => anchor.bottom_centre()
+            Alignment::BottomCentre => anchor.bottom_centre()
                 .saturating_sub(Pos { x: self.width / 2, y: self.height }),
-            Align::BottomRight => anchor.bottom_right()
+            Alignment::BottomRight => anchor.bottom_right()
                 .saturating_sub(Pos { x: self.width, y: self.height }),
         };
 
@@ -472,7 +564,7 @@ impl Area {
 }
 
 #[derive(Debug, Copy, Clone, Default, PartialEq, Eq)]
-pub enum Align {
+pub enum Alignment {
     #[default]
     TopLeft,
     TopCentre,
