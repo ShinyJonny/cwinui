@@ -1,4 +1,5 @@
-use crate::style::{StyledStr, StyledChar, WithStyle};
+use crate::Dim;
+use crate::style::{StyledStr, StyledChar};
 use crate::layout::{Area, Pos, Justify};
 
 // FIXME: all methods should take a limiting area.
@@ -10,24 +11,23 @@ use crate::layout::{Area, Pos, Justify};
 pub trait Paint {
     fn area(&self) -> Area;
 
-    /// Print in an area.
+    /// Paint a `StyledStr`.
     ///
-    /// The position is relative and `text` is truncated to fit `area`.
-    fn print<'s, S>(&mut self, pos: Pos, text: S, area: Area)
+    /// # Panics
+    ///
+    /// When out of bounds.
+    fn paint_str<'s, S>(&mut self, pos: Pos, text: S)
     where
         S: Into<StyledStr<'s>>;
 
-    fn putc<T>(&mut self, pos: Pos, c: T)
+    /// Paint a `StyledChar`.
+    ///
+    /// # Panics
+    ///
+    /// When out of bounds.
+    fn paint_char<'s, C>(&mut self, pos: Pos, c: C)
     where
-        T: Into<StyledChar>;
-
-    fn hfill<T>(&mut self, pos: Pos, c: T, len: usize)
-    where
-        T: Into<StyledChar>;
-
-    fn vfill<T>(&mut self, pos: Pos, c: T, len: usize)
-    where
-        T: Into<StyledChar>;
+        C: Into<StyledChar>;
 
     fn clear(&mut self);
 
@@ -39,14 +39,124 @@ pub trait Paint {
 
     // Helper methods.
 
-    /// Print absolute.
-    ///
-    /// Same as `print` but the area is the painter's full area.
+    #[inline]
+    fn dimensions(&self) -> Dim
+    {
+        self.area().dimensions()
+    }
+
+    fn hfill<T>(&mut self, pos: Pos, c: T, len: usize)
+    where
+        T: Into<StyledChar>
+    {
+        let dim = self.dimensions();
+
+        if pos.x >= dim.width || pos.y >= dim.height {
+            return;
+        }
+
+        let fill_len = std::cmp::min((dim.width - pos.x) as usize, len);
+        let c = c.into();
+
+        for i in 0..fill_len {
+            self.paint_char(pos.add_x(i as u16), c);
+        }
+    }
+
+    fn vfill<T>(&mut self, pos: Pos, c: T, len: usize)
+    where
+        T: Into<StyledChar>
+    {
+        let dim = self.dimensions();
+
+        if pos.x >= dim.width || pos.y >= dim.height {
+            return;
+        }
+
+        let fill_len = std::cmp::min((dim.width - pos.x) as usize, len);
+        let c = c.into();
+
+        for i in 0..fill_len {
+            self.paint_char(pos.add_y(i as u16), c);
+        }
+    }
+
     fn print_abs<'s, S>(&mut self, pos: Pos, text: S)
     where
         S: Into<StyledStr<'s>>
     {
-        self.print(pos, text, self.area());
+        let area = self.area();
+
+        if pos.x >= area.width || pos.y >= area.height {
+            return;
+        }
+
+        let text: StyledStr<'_> = text.into();
+
+        // TODO: utf8 support.
+        let print_width = std::cmp::min(
+            text.content.len(),
+            area.width as usize - pos.x as usize
+        );
+
+        self.paint_str(pos, text.slice(..print_width));
+    }
+
+    fn putc_abs<T>(&mut self, pos: Pos, c: T)
+    where
+        T: Into<StyledChar>
+    {
+        let area = self.area();
+
+        if pos.x >= area.width || pos.y >= area.height {
+            return;
+        }
+
+        self.paint_char(pos, c);
+    }
+
+    fn print<'s, S>(&mut self, pos: Pos, text: S, area: Area)
+    where
+        S: Into<StyledStr<'s>>
+    {
+        if !self.area().overlaps(area) {
+            return;
+        }
+        let area = self.area().intersection(area);
+
+        let abs_x = area.x + pos.x;
+        let abs_y = area.y + pos.y;
+
+        if abs_x >= area.x + area.width || abs_y >= area.y + area.height {
+            return;
+        }
+
+        let text: StyledStr<'_> = text.into();
+        let right_max  = area.x as usize + area.width as usize;
+
+        // TODO: utf8 support.
+        let print_width = std::cmp::min(
+            text.content.len(),
+            right_max - abs_x as usize
+        );
+
+        self.paint_str(Pos{x:abs_x,y:abs_y}, text.slice(..print_width));
+    }
+
+    fn putc<T>(&mut self, pos: Pos, c: T, area: Area)
+    where
+        T: Into<StyledChar>
+    {
+        if !self.area().overlaps(area) {
+            return;
+        }
+        let area = self.area().intersection(area);
+
+        if pos.x >= area.width || pos.y >= area.height {
+            return;
+        }
+
+        self.paint_char(pos + area.top_left(), c);
     }
 
     /// Print justified in an area.
@@ -65,11 +175,7 @@ pub trait Paint {
 
         let text: StyledStr = text.into();
         // TODO: utf8 support.
-        let text_width = text.content.len();
-        // TODO: implement direct slicing of `StyledStr`.
-        let text
-            = text.content[..std::cmp::min(text_width, area.width as usize)]
-                .with_style(|_| text.style);
+        let text_width = std::cmp::min(text.content.len(), area.width as usize);
 
         let pos = match j {
             Justify::Left(y) => Pos {
@@ -131,6 +237,6 @@ pub trait Paint {
             },
         };
 
-        self.print(pos, text, area);
+        self.print(pos, text.slice(..text_width), area);
     }
 }

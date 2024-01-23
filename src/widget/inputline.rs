@@ -97,7 +97,7 @@ impl Widget for InputLine {
 
         let cursor_moved = (self.cursor_pos as usize) < input_len;
         if cursor_moved && input_len >= width {
-            buf.putc(
+            buf.putc_abs(
                 area.top_right().sub_x(1),
                 // TODO: utf8 support (graphemes).
                 self.content.chars().nth(self.cursor_pos as usize + 1)

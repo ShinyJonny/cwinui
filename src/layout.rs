@@ -112,24 +112,24 @@ impl Dim {
         }
     }
 
-    fn satisfy_g(available: u16, g: G) -> Option<u16>
+    fn satisfy_g(available: u16, g: P) -> Option<u16>
     {
         match g {
-            G::Flexible        => Some(available),
-            G::Fixed(v)        => (available >= v).then_some(v),
-            G::To(v)           => Some(std::cmp::min(v, available)),
-            G::From(v)         => (available >= v).then_some(available),
-            G::Range(min, max) => (available >= min)
+            P::Flexible        => Some(available),
+            P::Fixed(v)        => (available >= v).then_some(v),
+            P::To(v)           => Some(std::cmp::min(v, available)),
+            P::From(v)         => (available >= v).then_some(available),
+            P::Range(min, max) => (available >= min)
                 .then_some(std::cmp::min(max, available)),
-            G::Max             => Some(available),
+            P::Max             => Some(available),
         }
     }
 }
 
 #[derive(Debug, Copy, Clone, Default, PartialEq, Eq)]
 pub struct Proportions {
-    pub horiz: G,
-    pub vert: G,
+    pub horiz: P,
+    pub vert: P,
 }
 
 impl Proportions {
@@ -164,13 +164,13 @@ impl Proportions {
     }
 }
 
-/// Geometry of a single dimension in `Proportions`.
+/// A single proportion.
 ///
 /// NOTE: since a widget can always go as small as it wants to but the max size
 /// is the limiting factor, we always assume that the widget wants to be as
 /// large as it can (within its specified range).
 #[derive(Debug, Copy, Clone, Default, PartialEq, Eq)]
-pub enum G {
+pub enum P {
     /// Fully flexible.
     #[default]
     Flexible,
@@ -193,18 +193,18 @@ pub enum G {
     Max,
 }
 
-impl G {
+impl P {
     /// Collapse to minimum fixed values.
     #[inline]
     pub fn min(self) -> Self
     {
         match self {
-            G::Flexible      => G::Fixed(0),
-            G::Fixed(v)      => G::Fixed(v),
-            G::To(_)         => G::Fixed(0),
-            G::From(v)       => G::Fixed(v),
-            G::Range(min, _) => G::Fixed(min),
-            G::Max           => G::Max,
+            P::Flexible      => P::Fixed(0),
+            P::Fixed(v)      => P::Fixed(v),
+            P::To(_)         => P::Fixed(0),
+            P::From(v)       => P::Fixed(v),
+            P::Range(min, _) => P::Fixed(min),
+            P::Max           => P::Max,
         }
     }
 
@@ -213,12 +213,12 @@ impl G {
     pub fn max(self) -> Self
     {
         match self {
-            G::Flexible      => G::Max,
-            G::Fixed(v)      => G::Fixed(v),
-            G::To(v)         => G::Fixed(v),
-            G::From(_)       => G::Max,
-            G::Range(_, max) => G::Fixed(max),
-            G::Max           => G::Max,
+            P::Flexible      => P::Max,
+            P::Fixed(v)      => P::Fixed(v),
+            P::To(v)         => P::Fixed(v),
+            P::From(_)       => P::Max,
+            P::Range(_, max) => P::Fixed(max),
+            P::Max           => P::Max,
         }
     }
 
@@ -230,12 +230,12 @@ impl G {
     pub fn expand(self) -> Self
     {
         match self {
-            G::Flexible      => G::Flexible,
-            G::Fixed(v)      => G::From(v),
-            G::To(_)         => G::Flexible,
-            G::From(v)       => G::From(v),
-            G::Range(min, _) => G::From(min),
-            G::Max           => G::Max,
+            P::Flexible      => P::Flexible,
+            P::Fixed(v)      => P::From(v),
+            P::To(_)         => P::Flexible,
+            P::From(v)       => P::From(v),
+            P::Range(min, _) => P::From(min),
+            P::Max           => P::Max,
         }
     }
 }
@@ -483,12 +483,14 @@ impl Area {
         Dim { width: self.width, height: self.height }
     }
 
+    /// Position of the top left corner.
     #[inline]
     pub fn top_left(&self) -> Pos
     {
         Pos { x: self.x, y: self.y }
     }
 
+    /// Position of the midpoint of the top side.
     #[inline]
     pub fn top_centre(&self) -> Pos
     {
@@ -498,6 +500,9 @@ impl Area {
         }
     }
 
+    /// Position of the top right corner.
+    ///
+    /// NOTE: the x coordinate is non-inclusive.
     #[inline]
     pub fn top_right(&self) -> Pos
     {
@@ -507,6 +512,7 @@ impl Area {
         }
     }
 
+    /// Position of the midpoint of the left side.
     #[inline]
     pub fn centre_left(&self) -> Pos
     {
@@ -516,7 +522,7 @@ impl Area {
         }
     }
 
-    /// The coordinates of the centre of the area.
+    /// Position of the centre.
     #[inline]
     pub fn centre(&self) -> Pos
     {
@@ -526,6 +532,9 @@ impl Area {
         }
     }
 
+    /// Position of the midpoint of the right side.
+    ///
+    /// NOTE: the x coordinate is non-inclusive.
     #[inline]
     pub fn centre_right(&self) -> Pos
     {
@@ -535,6 +544,9 @@ impl Area {
         }
     }
 
+    /// Position of the bottom left corner.
+    ///
+    /// NOTE: the y coordinate is non-inclusive.
     #[inline]
     pub fn bottom_left(&self) -> Pos
     {
@@ -544,6 +556,9 @@ impl Area {
         }
     }
 
+    /// Position of the midpoint of the bottom side.
+    ///
+    /// NOTE: the y coordinate is non-inclusive.
     #[inline]
     pub fn bottom_centre(&self) -> Pos
     {
@@ -553,6 +568,9 @@ impl Area {
         }
     }
 
+    /// Position of the bottom right corner.
+    ///
+    /// NOTE: both coordinates are non-inclusive.
     #[inline]
     pub fn bottom_right(&self) -> Pos
     {

@@ -2,7 +2,7 @@ use std::io::{Stdout, Write};
 use termion::raw::{RawTerminal, IntoRawMode};
 use termion::input::MouseTerminal;
 
-use crate::Area;
+use crate::{Area, Dim};
 use crate::buffer::Buffer;
 use crate::paint::Paint;
 use crate::style::{Color, TextStyle};
@@ -18,6 +18,11 @@ impl<'b> RenderContext<'b> {
     pub fn area(&self) -> Area
     {
         self.buffer.area()
+    }
+
+    pub fn dimensions(&self) -> Dim
+    {
+        self.buffer.dimensions()
     }
 
     pub fn render_widget<W: Widget>(&mut self, widget: &W, area: Area)

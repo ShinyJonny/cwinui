@@ -111,8 +111,6 @@ pub enum Color {
     Rgb(u8, u8, u8),
 }
 
-// TODO: implement slicing.
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct StyledStr<'s> {
     pub content: &'s str,
@@ -120,9 +118,22 @@ pub struct StyledStr<'s> {
 }
 
 impl<'s> StyledStr<'s> {
+    // FIXME: properly implement `Borrow` and `ToOwned`.
     pub fn to_owned(&self) -> StyledString
     {
         StyledString::from(*self)
+    }
+
+    #[inline]
+    pub fn slice<T>(&self, index: T) -> Self
+    where
+        T: std::slice::SliceIndex<str>,
+        T::Output: AsRef<str> + 's,
+    {
+        Self {
+            content: self.content[index].as_ref(),
+            style: self.style,
+        }
     }
 }
 

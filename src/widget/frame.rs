@@ -107,10 +107,10 @@ impl<T: Widget> Widget for Frame<T> {
 
         // Corners
 
-        buf.putc(top_left, self.theme.top_left);
-        buf.putc(top_right, self.theme.top_right);
-        buf.putc(bottom_left, self.theme.bottom_left);
-        buf.putc(bottom_right, self.theme.bottom_right);
+        buf.putc_abs(top_left, self.theme.top_left);
+        buf.putc_abs(top_right, self.theme.top_right);
+        buf.putc_abs(bottom_left, self.theme.bottom_left);
+        buf.putc_abs(bottom_right, self.theme.bottom_right);
 
         // Inner
 

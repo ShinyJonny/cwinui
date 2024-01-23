@@ -38,8 +38,7 @@ impl Widget for Canvas {
                     self.buffer.width as usize);
                 let c = self.buffer.chars[offset]
                     .with_style(|_| self.buffer.styles[offset]);
-                let pos = Pos { x: area.x + x, y: area.y + y };
-                buf.putc(pos, c);
+                buf.paint_char(Pos { x: x + area.x, y: y + area.y }, c);
             }
         }
 
@@ -50,11 +49,11 @@ impl Widget for Canvas {
 impl Proportional for Canvas {
     fn proportions(&self) -> Proportions
     {
-        use crate::layout::G;
+        use crate::layout::P;
 
         Proportions {
-            horiz: G::Fixed(self.buffer.width),
-            vert: G::Fixed(self.buffer.height),
+            horiz: P::Fixed(self.buffer.width),
+            vert: P::Fixed(self.buffer.height),
         }
     }
 }

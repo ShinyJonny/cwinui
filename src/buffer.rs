@@ -37,6 +37,7 @@ impl Buffer {
 }
 
 impl Paint for Buffer {
+    #[inline]
     fn area(&self) -> Area
     {
         Area {
@@ -49,29 +50,13 @@ impl Paint for Buffer {
 
     /// Prints `text` relative to the specified `area`, potentially truncating
     /// its contents.
-    fn print<'s, S>(&mut self, pos: Pos, text: S, area: Area)
+    fn paint_str<'s, S>(&mut self, pos: Pos, text: S)
     where
         S: Into<StyledStr<'s>>
     {
-        let Pos {x, y} = pos;
-
-        if !area.overlaps(self.area()) {
-            return;
-        }
-        let area = self.area().intersection(area);
-
-        if area.is_void() {
-            return;
-        }
-
-        if x >= area.width || y >= area.height {
-            return;
-        }
-
-        let abs_x = (area.x + x) as usize;
-        let abs_y = (area.y + y) as usize;
-
-        let area_right_end = (area.x + area.width) as usize;
+        let x = pos.x as usize;
+        let y = pos.y as usize;
+        let w = self.width as usize;
 
         let text: StyledStr<'_> = text.into();
 
@@ -81,15 +66,11 @@ impl Paint for Buffer {
         // FIXME: check for non-printable characters.
 
         // TODO: utf8 support.
-        let text_len = text.content.len();
-        let print_width = if abs_x + text_len > area_right_end
-            { area_right_end - abs_x }
-            else { text_len };
 
         let mut chars = text.content.chars();
 
-        for i in 0..print_width {
-            let offset = offset!(abs_x + i, abs_y, self.width as usize);
+        for i in 0..text.content.len() {
+            let offset = offset!(x + i, y, w);
 
             self.chars[offset] = chars.next().unwrap();
             let style = &mut self.styles[offset];
@@ -97,76 +78,16 @@ impl Paint for Buffer {
         }
     }
 
-    fn putc<T>(&mut self, pos: Pos, c: T)
+    fn paint_char<T>(&mut self, pos: Pos, c: T)
     where
         T: Into<StyledChar>
     {
-        let Pos {x, y} = pos;
-        if x >= self.width || y >= self.height {
-            return;
-        }
-
         let c = c.into();
 
-        let w = self.width as usize;
-        let idx = offset!(x as usize, y as usize, w);
+        let idx = offset!(pos.x as usize, pos.y as usize, self.width as usize);
         self.chars[idx] = c.content;
         let style = &mut self.styles[idx];
         *style = style.merge(c.style);
-    }
-
-    fn hfill<T>(&mut self, pos: Pos, c: T, len: usize)
-    where
-        T: Into<StyledChar>
-    {
-        let x = pos.x as usize;
-        let y = pos.y as usize;
-        let c = c.into();
-
-        let width = self.width as usize;
-        let height = self.height as usize;
-
-        if x >= width || y >= height {
-            return;
-        }
-
-        let fill_len = if x + len > width { width - x } else { len };
-
-        for i in 0..fill_len {
-            let offset = offset!(x + i, y, width);
-
-            self.chars[offset] = c.content;
-            let style = &mut self.styles[offset];
-            *style = style.merge(c.style);
-        }
-    }
-
-    fn vfill<T>(&mut self, pos: Pos, c: T, len: usize)
-    where
-        T: Into<StyledChar>
-    {
-        let x = pos.x as usize;
-        let y = pos.y as usize;
-        let c = c.into();
-
-        let width = self.width as usize;
-        let height = self.height as usize;
-
-        if x >= width || y >= height {
-            return;
-        }
-
-        let fill_len = if y + len > height
-            { height - y }
-            else { len };
-
-        for i in 0..fill_len {
-            let offset = offset!(x, y + i, width);
-
-            self.chars[offset] = c.content;
-            let style = &mut self.styles[offset];
-            *style = style.merge(c.style);
-        }
     }
 
     fn clear(&mut self)
