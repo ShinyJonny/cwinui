@@ -95,24 +95,26 @@ pub struct Dim {
 }
 
 impl Dim {
-    /// Return `Dim` that satisfies `proportions`.
+    /// Return [`Dim`] that satisfies `proportions`.
     ///
-    /// This method will always yield as large dimensions as `proportions`
-    /// allow.
+    /// This method will always attempt to yield as large dimensions as
+    /// `proportions` allow. If the dimensions can't satisfy the proportions,
+    /// the `Err` value is returned with the best possible attempt at satisfying
+    /// the dimensions.
     pub fn satisfy(self, proportions: Proportions) -> Result<Self, Self>
     {
-        let width = Self::satisfy_g(self.width, proportions.horiz);
-        let height = Self::satisfy_g(self.height, proportions.vert);
+        let width  = Self::satisfy_p(self.width, proportions.horiz);
+        let height = Self::satisfy_p(self.height, proportions.vert);
 
         match (width, height) {
-            (None,        None        ) => Err(self),
-            (None,        Some(height)) => Err(Self { width: self.width, height }),
-            (Some(width), None        ) => Err(Self { width, height: self.height }),
             (Some(width), Some(height)) => Ok(Self { width, height }),
+            (Some(width), None        ) => Err(Self { width, height: self.height }),
+            (None,        Some(height)) => Err(Self { width: self.width, height }),
+            (None,        None        ) => Err(self),
         }
     }
 
-    fn satisfy_g(available: u16, g: P) -> Option<u16>
+    fn satisfy_p(available: u16, g: P) -> Option<u16>
     {
         match g {
             P::Flexible        => Some(available),
@@ -153,8 +155,8 @@ impl Proportions {
 
     /// Make the upper ends of all dimensions flexible.
     ///
-    /// This creates a geometry that can contain the previous value but can also
-    /// grow flexibly.
+    /// This creates proportions that can contain the previous value but can
+    /// also grow flexibly.
     pub fn expand(self) -> Self
     {
         Self {
@@ -165,6 +167,9 @@ impl Proportions {
 }
 
 /// A single proportion.
+///
+/// This structure defines the **inclusive** ranges that a single dimension of a
+/// widget can have.
 ///
 /// NOTE: since a widget can always go as small as it wants to but the max size
 /// is the limiting factor, we always assume that the widget wants to be as
@@ -178,18 +183,20 @@ pub enum P {
     Fixed(u16),
     /// Flexible, with a fixed maximum.
     ///
-    /// NOTE: inclusive
+    /// NOTE: inclusive.
     To(u16),
     /// Flexible, with a fixed minimum.
+    ///
+    /// NOTE: inclusive.
     From(u16),
     /// Flexible, with a fixed minimum and maximum.
     ///
-    /// NOTE: inclusive
+    /// NOTE: inclusive.
     Range(u16, u16),
     /// The maximum available value.
     ///
-    /// This value is to be treated as a fixed value of the maximum possible
-    /// value.
+    /// This value is to be treated as a *fixed* value of the maximum available
+    /// value. It can be viewed as the opposite to [`P::Flexible(0)`].
     Max,
 }
 
@@ -224,7 +231,7 @@ impl P {
 
     /// Make the upper end flexible.
     ///
-    /// This creates a geometry that can contain the previous value but can also
+    /// This creates proportions that can contain the original ones but can also
     /// grow flexibly.
     #[inline]
     pub fn expand(self) -> Self
@@ -242,8 +249,8 @@ impl P {
 
 /// Objects that have proportions.
 ///
-/// Types can implement this trait to define their proportion requirements.
-pub trait Proportional {
+/// Types can implement this trait to define their layout requirements.
+pub trait Layout {
     fn proportions(&self) -> Proportions;
 }
 
@@ -276,9 +283,9 @@ impl Area {
         )
     }
 
-    pub fn align_to(&self, anchor: Self, a: Alignment) -> Self
+    pub fn align_to(&self, anchor: Self, alignment: Alignment) -> Self
     {
-        let top_left = match a {
+        let top_left = match alignment {
             Alignment::TopLeft => anchor.top_left(),
             Alignment::TopCentre => Pos {
                 x: anchor.centre().x.saturating_sub(self.width / 2),
@@ -343,6 +350,7 @@ impl Area {
             && pos.y < self.y + self.height
     }
 
+    /// Checks if either of the dimensions is `0`.
     #[inline]
     pub fn is_void(&self) -> bool
     {

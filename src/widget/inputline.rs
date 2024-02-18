@@ -90,10 +90,10 @@ impl Widget for InputLine {
         let end = std::cmp::max(self.cursor_pos as usize, capped_input_len);
         let start = end.saturating_sub(width - 1);
         // TODO: utf8 support (graphemes).
-        let visible_input = &self.content[start..end];
+        let visible_input = self.content[start..end]
+            .with_style(|_| self.theme.input_style);
 
-        buf.print(Pos::ZERO,
-            visible_input.with_style(|_| self.theme.input_style), area);
+        buf.print(Pos::ZERO, visible_input, area);
 
         let cursor_moved = (self.cursor_pos as usize) < input_len;
         if cursor_moved && input_len >= width {
