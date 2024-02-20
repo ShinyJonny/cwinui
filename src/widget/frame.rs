@@ -47,6 +47,7 @@ impl<T: Widget> Frame<T> {
         }
     }
 
+    #[inline]
     pub fn theme<C>(
         mut self,
         top_left: C,

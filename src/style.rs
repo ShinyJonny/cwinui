@@ -19,6 +19,7 @@ impl Default for Style {
 }
 
 impl Style {
+    #[inline]
     pub fn clean(mut self) -> Self
     {
         self.text_style = Some(TextStyle::NORMAL);
@@ -28,6 +29,7 @@ impl Style {
         self
     }
 
+    #[inline]
     pub fn text_style(mut self, new_ts: TextStyle) -> Self
     {
         self.text_style = Some(new_ts);
@@ -35,6 +37,7 @@ impl Style {
         self
     }
 
+    #[inline]
     pub fn fg(mut self, color: Color) -> Self
     {
         self.fg_color = Some(color);
@@ -42,6 +45,7 @@ impl Style {
         self
     }
 
+    #[inline]
     pub fn bg(mut self, color: Color) -> Self
     {
         self.bg_color = Some(color);
@@ -119,6 +123,7 @@ pub struct StyledStr<'s> {
 
 impl<'s> StyledStr<'s> {
     // FIXME: properly implement `Borrow` and `ToOwned`.
+    #[inline]
     pub fn to_owned(&self) -> StyledString
     {
         StyledString::from(*self)
@@ -210,6 +215,7 @@ impl<T> WithStyle<StyledChar> for T
 where
     T: Into<StyledChar>
 {
+    #[inline]
     fn with_style<F>(self, f: F) -> StyledChar
     where
         F: FnOnce(Style) -> Style
@@ -220,6 +226,7 @@ where
         new
     }
 
+    #[inline]
     fn styled(self) -> StyledChar
     {
         self.into()
@@ -230,6 +237,7 @@ impl<'s, T> WithStyle<StyledStr<'s>> for T
 where
     T: Into<StyledStr<'s>>
 {
+    #[inline]
     fn with_style<F>(self, f: F) -> StyledStr<'s>
     where
         F: FnOnce(Style) -> Style
@@ -240,6 +248,7 @@ where
         new
     }
 
+    #[inline]
     fn styled(self) -> StyledStr<'s>
     {
         self.into()

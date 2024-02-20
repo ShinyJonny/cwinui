@@ -2,7 +2,6 @@ use crate::Dim;
 use crate::style::{StyledStr, StyledChar};
 use crate::layout::{Area, Pos, Justify};
 
-// FIXME: all methods should take a limiting area.
 
 /// Painting rendered widgets.
 ///
@@ -45,6 +44,7 @@ pub trait Paint {
         self.area().dimensions()
     }
 
+    #[inline]
     fn hfill<T>(&mut self, pos: Pos, c: T, len: usize)
     where
         T: Into<StyledChar>
@@ -63,6 +63,7 @@ pub trait Paint {
         }
     }
 
+    #[inline]
     fn vfill<T>(&mut self, pos: Pos, c: T, len: usize)
     where
         T: Into<StyledChar>
@@ -81,6 +82,7 @@ pub trait Paint {
         }
     }
 
+    #[inline]
     fn print_abs<'s, S>(&mut self, pos: Pos, text: S)
     where
         S: Into<StyledStr<'s>>
@@ -102,6 +104,7 @@ pub trait Paint {
         self.paint_str(pos, text.slice(..print_width));
     }
 
+    #[inline]
     fn putc_abs<T>(&mut self, pos: Pos, c: T)
     where
         T: Into<StyledChar>
@@ -115,6 +118,7 @@ pub trait Paint {
         self.paint_char(pos, c);
     }
 
+    #[inline]
     fn print<'s, S>(&mut self, pos: Pos, text: S, area: Area)
     where
         S: Into<StyledStr<'s>>
@@ -143,6 +147,7 @@ pub trait Paint {
         self.paint_str(Pos{x:abs_x,y:abs_y}, text.slice(..print_width));
     }
 
+    #[inline]
     fn putc<T>(&mut self, pos: Pos, c: T, area: Area)
     where
         T: Into<StyledChar>
@@ -160,6 +165,7 @@ pub trait Paint {
     }
 
     /// Print justified in an area.
+    #[inline]
     fn printj<'s, S>(&mut self, text: S, j: Justify, area: Area)
     where
         S: Into<StyledStr<'s>>

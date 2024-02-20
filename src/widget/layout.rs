@@ -11,6 +11,7 @@ pub struct Max<T: Widget + Layout>(pub T);
 impl<T: Widget + Layout> Widget for Max<T> {
 
     fn render(&self, buf: &mut impl Paint, area: Area)
+    #[inline]
     {
         let Dim { width, height } = area.dimensions()
             .satisfy(self.proportions())
@@ -29,6 +30,7 @@ impl<T: Widget + Layout> Widget for Max<T> {
 }
 
 impl<T: Widget + Layout> Layout for Max<T> {
+    #[inline]
     fn proportions(&self) -> Proportions
     {
         self.0.proportions().max()
@@ -43,6 +45,7 @@ pub struct Min<T: Widget + Layout>(pub T);
 impl<T: Widget + Layout> Widget for Min<T> {
 
     fn render(&self, buf: &mut impl Paint, area: Area)
+    #[inline]
     {
         let Dim { width, height } = area.dimensions()
             .satisfy(self.proportions())
@@ -61,6 +64,7 @@ impl<T: Widget + Layout> Widget for Min<T> {
 }
 
 impl<T: Widget + Layout> Layout for Min<T> {
+    #[inline]
     fn proportions(&self) -> Proportions
     {
         self.0.proportions().min()
@@ -101,6 +105,7 @@ impl<T: Widget + Layout> Align<T> {
 
 impl<T: Widget + Layout> Widget for Align<T> {
     fn render(&self, buf: &mut impl Paint, area: Area)
+    #[inline]
     {
         let inner_dim = area.dimensions()
             .satisfy(self.inner.proportions())
@@ -140,6 +145,7 @@ impl<T: Widget + Layout> Widget for Align<T> {
 }
 
 impl<T: Widget + Layout> Layout for Align<T> {
+    #[inline]
     fn proportions(&self) -> Proportions
     {
         self.inner.proportions().expand()
@@ -169,6 +175,7 @@ macro_rules! def_static_align {
                 let inner_area = Area::from_parts(crate::layout::Pos::ZERO, inner_dim)
                     .align_to(area, Alignment::$al);
                 self.0.render(buf, inner_area);
+            #[inline]
             }
         }
     }

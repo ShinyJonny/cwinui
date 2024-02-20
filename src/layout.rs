@@ -66,6 +66,7 @@ impl Pos {
 impl std::ops::Add for Pos {
     type Output = Self;
 
+    #[inline]
     fn add(self, rhs: Self) -> Self::Output
     {
         Self {
@@ -78,6 +79,7 @@ impl std::ops::Add for Pos {
 impl std::ops::Sub for Pos {
     type Output = Self;
 
+    #[inline]
     fn sub(self, rhs: Self) -> Self::Output
     {
         Self {
@@ -101,7 +103,8 @@ impl Dim {
     /// `proportions` allow. If the dimensions can't satisfy the proportions,
     /// the `Err` value is returned with the best possible attempt at satisfying
     /// the dimensions.
-    pub fn satisfy(self, proportions: Proportions) -> Result<Self, Self>
+    #[inline]
+    pub fn satisfy(self, proportions: Proportions) -> Result<Dim, Dim>
     {
         let width  = Self::satisfy_p(self.width, proportions.horiz);
         let height = Self::satisfy_p(self.height, proportions.vert);
@@ -114,6 +117,7 @@ impl Dim {
         }
     }
 
+    #[inline]
     fn satisfy_p(available: u16, g: P) -> Option<u16>
     {
         match g {
@@ -136,6 +140,7 @@ pub struct Proportions {
 
 impl Proportions {
     /// Collapse all dimensions to minimum fixed values.
+    #[inline]
     pub fn min(self) -> Self
     {
         Self {
@@ -145,6 +150,7 @@ impl Proportions {
     }
 
     /// Raise all dimensions to maximum fixed values.
+    #[inline]
     pub fn max(self) -> Self
     {
         Self {
@@ -157,6 +163,7 @@ impl Proportions {
     ///
     /// This creates proportions that can contain the previous value but can
     /// also grow flexibly.
+    #[inline]
     pub fn expand(self) -> Self
     {
         Self {
@@ -264,6 +271,7 @@ pub struct Area {
 }
 
 impl Area {
+    #[inline]
     pub fn from_parts(pos: Pos, dimensions: Dim) -> Self
     {
         Self {
@@ -283,6 +291,7 @@ impl Area {
         )
     }
 
+    #[inline]
     pub fn align_to(&self, anchor: Self, alignment: Alignment) -> Self
     {
         let top_left = match alignment {
@@ -322,7 +331,6 @@ impl Area {
     }
 
     /// Checks if `self` and `other` overlap.
-    #[inline]
     pub fn overlaps(&self, other: Self) -> bool
     {
         let other_l = other.x;

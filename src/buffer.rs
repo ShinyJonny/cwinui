@@ -50,6 +50,7 @@ impl Paint for Buffer {
 
     /// Prints `text` relative to the specified `area`, potentially truncating
     /// its contents.
+    #[inline]
     fn paint_str<'s, S>(&mut self, pos: Pos, text: S)
     where
         S: Into<StyledStr<'s>>
@@ -78,6 +79,7 @@ impl Paint for Buffer {
         }
     }
 
+    #[inline]
     fn paint_char<T>(&mut self, pos: Pos, c: T)
     where
         T: Into<StyledChar>
@@ -90,6 +92,7 @@ impl Paint for Buffer {
         *style = style.merge(c.style);
     }
 
+    #[inline]
     fn clear(&mut self)
     {
         self.chars.fill(' ');
@@ -97,16 +100,19 @@ impl Paint for Buffer {
         self.cursor = Cursor { x: 0, y: 0, hidden: true };
     }
 
+    #[inline]
     fn show_cursor(&mut self)
     {
         self.cursor.hidden = false;
     }
 
+    #[inline]
     fn hide_cursor(&mut self)
     {
         self.cursor.hidden = true;
     }
 
+    #[inline]
     fn move_cursor(&mut self, pos: Pos)
     {
         if pos.x >= self.width || pos.y >= self.height {

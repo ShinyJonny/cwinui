@@ -33,6 +33,7 @@ impl HorizBar {
         }
     }
 
+    #[inline]
     pub fn theme<C>(
         mut self,
         beg: C,
@@ -82,6 +83,7 @@ impl VertBar {
         }
     }
 
+    #[inline]
     pub fn theme<C>(
         mut self,
         beg: C,

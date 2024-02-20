@@ -39,21 +39,25 @@ impl InputLine {
         }
     }
 
+    #[inline]
     pub fn content(&self) -> &str
     {
         &self.content
     }
 
+    #[inline]
     pub fn set_active(&mut self)
     {
         self.active = true;
     }
 
+    #[inline]
     pub fn set_inactive(&mut self)
     {
         self.active = false;
     }
 
+    #[inline]
     pub fn theme<C>(
         mut self,
         blank_c: C,

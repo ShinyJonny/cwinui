@@ -15,19 +15,23 @@ pub struct RenderContext<'b> {
 }
 
 impl<'b> RenderContext<'b> {
+    #[inline]
     pub fn area(&self) -> Area
     {
         self.buffer.area()
     }
 
+    #[inline]
     pub fn dimensions(&self) -> Dim
     {
         self.buffer.dimensions()
     }
 
+    #[inline]
     pub fn render_widget<W: Widget>(&mut self, widget: &W, area: Area)
     {
-        widget.render(self.buffer, area);
+        // FIXME: proper error handling.
+        widget.render(self.buffer, area).unwrap();
     }
 }
 

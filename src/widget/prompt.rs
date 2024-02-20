@@ -45,11 +45,13 @@ impl Prompt {
         }
     }
 
+    #[inline]
     pub fn content(&self) -> &str
     {
         self.inputline.content()
     }
 
+    #[inline]
     pub fn theme<'t, S, C>(
         mut self,
         sep: S,
@@ -71,6 +73,7 @@ impl Prompt {
         self
     }
 
+    #[inline]
     pub fn set_theme(&mut self, theme: Theme)
     {
         let Theme { sep, input_style, blank_c } = theme;
@@ -82,11 +85,13 @@ impl Prompt {
         };
     }
 
+    #[inline]
     pub fn set_active(&mut self)
     {
         self.inputline.set_active();
     }
 
+    #[inline]
     pub fn set_inactive(&mut self)
     {
         self.inputline.set_inactive();

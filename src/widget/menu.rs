@@ -65,16 +65,19 @@ impl Menu {
         }
     }
 
+    #[inline]
     pub fn selected(&self) -> &str
     {
         &self.items[self.active_idx]
     }
 
+    #[inline]
     pub fn selected_idx(&self) -> usize
     {
         self.active_idx
     }
 
+    #[inline]
     pub fn theme(mut self, theme: Theme) -> Self
     {
         self.theme = theme;
@@ -82,6 +85,7 @@ impl Menu {
         self
     }
 
+    #[inline]
     pub fn items(&self) -> &[String]
     {
         &self.items

@@ -17,6 +17,7 @@ impl Canvas {
         }
     }
 
+    #[inline]
     pub fn painter(&mut self) -> &mut impl Paint
     {
         &mut self.buffer
@@ -47,6 +48,7 @@ impl Widget for Canvas {
 }
 
 impl Layout for Canvas {
+    #[inline]
     fn proportions(&self) -> Proportions
     {
         use crate::layout::P;
