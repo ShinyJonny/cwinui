@@ -1,27 +1,26 @@
 use super::Widget;
 use crate::{Pos, Area};
-use crate::layout::{Layout, Proportions, Alignment};
+use crate::layout::{Proportional, Proportions, Alignment};
 use crate::paint::Paint;
 
 
 /// Renders the wrapped widget in the smallest area possible.
 #[derive(Debug)]
-pub struct Min<T: Widget + Layout>(pub T);
+pub struct Min<T: Widget + Proportional>(pub T);
 
-impl<T: Widget + Layout> Widget for Min<T> {
+impl<T: Widget + Proportional> Widget for Min<T> {
     #[inline]
     fn render(&self, buf: &mut impl Paint, area: Area)
     {
         let dim = area.dimensions()
             .satisfy(self.proportions())
-            // TODO: error handling of insufficient dimensions.
             .unwrap_or_else(|d| d);
 
         self.0.render(buf, Area::from_parts(area.top_left(), dim));
     }
 }
 
-impl<T: Widget + Layout> Layout for Min<T> {
+impl<T: Widget + Proportional> Proportional for Min<T> {
     #[inline]
     fn proportions(&self) -> Proportions
     {
@@ -32,8 +31,8 @@ impl<T: Widget + Layout> Layout for Min<T> {
 
 /// Align the contained widget dynamically, based on `alignment`.
 #[derive(Debug)]
-pub struct Align<T: Widget + Layout> {
-    pub inner: T,
+pub struct Align<T: Widget + Proportional> {
+    pub inner:     T,
     pub alignment: Alignment,
 }
 
@@ -49,7 +48,7 @@ macro_rules! align_method {
     }
 }
 
-impl<T: Widget + Layout> Align<T> {
+impl<T: Widget + Proportional> Align<T> {
     align_method!(top_left,      TopLeft);
     align_method!(top_center,    TopCenter);
     align_method!(top_right,     TopRight);
@@ -61,13 +60,12 @@ impl<T: Widget + Layout> Align<T> {
     align_method!(bottom_right,  BottomRight);
 }
 
-impl<T: Widget + Layout> Widget for Align<T> {
+impl<T: Widget + Proportional> Widget for Align<T> {
     #[inline]
     fn render(&self, buf: &mut impl Paint, area: Area)
     {
         let dim = area.dimensions()
             .satisfy(self.proportions())
-            // TODO: error handling of insufficient dimensions.
             .unwrap_or_else(|d| d);
 
         let pos = match self.alignment {
@@ -98,7 +96,7 @@ impl<T: Widget + Layout> Widget for Align<T> {
     }
 }
 
-impl<T: Widget + Layout> Layout for Align<T> {
+impl<T: Widget + Proportional> Proportional for Align<T> {
     #[inline]
     fn proportions(&self) -> Proportions
     {
@@ -112,14 +110,13 @@ macro_rules! def_static_align {
         #[doc = "Align the contained widget to"]
         #[doc = concat!("[`Alignment::", stringify!($al), "`]")]
         #[doc = "."]
-        pub struct $al<T: Widget + Layout>(pub T);
+        pub struct $al<T: Widget + Proportional>(pub T);
 
-        impl<T: Widget + Layout> Widget for $al<T> {
+        impl<T: Widget + Proportional> Widget for $al<T> {
             fn render(&self, buf: &mut impl Paint, area: Area)
             {
                 let dim = area.dimensions()
                     .satisfy(self.0.proportions())
-                    // TODO: error handling of insufficient dimensions.
                     .unwrap_or_else(|d| d);
 
                 let inner_area = Area::from_parts(Pos::ZERO, dim)
@@ -129,7 +126,7 @@ macro_rules! def_static_align {
             }
         }
 
-        impl<T: Widget + Layout> Layout for $al<T> {
+        impl<T: Widget + Proportional> Proportional for $al<T> {
             #[inline]
             fn proportions(&self) -> Proportions
             {
@@ -149,3 +146,83 @@ def_static_align!(CenterRight);
 def_static_align!(BottomLeft);
 def_static_align!(BottomCenter);
 def_static_align!(BottomRight);
+
+
+/// Adds padding to the contained widget.
+pub struct Pad<T: Widget> {
+    pub inner:  T,
+    pub top:    u16,
+    pub right:  u16,
+    pub bottom: u16,
+    pub left:   u16,
+}
+
+impl<T: Widget> Pad<T> {
+    pub const fn new(inner: T) -> Self
+    {
+        Self {
+            inner,
+            top:    0,
+            right:  0,
+            bottom: 0,
+            left:   0,
+        }
+    }
+
+    pub const fn top(mut self,    val: u16) -> Self { self.top    = val; self }
+    pub const fn right(mut self,  val: u16) -> Self { self.right  = val; self }
+    pub const fn bottom(mut self, val: u16) -> Self { self.bottom = val; self }
+    pub const fn left(mut self,   val: u16) -> Self { self.left   = val; self }
+}
+
+impl<T: Widget> Widget for Pad<T> {
+    #[inline]
+    fn render(&self, buf: &mut impl Paint, area: Area)
+    {
+        let horiz_pad = self.left + self.right;
+        let vert_pad  = self.top  + self.bottom;
+
+        if area.width.saturating_sub(horiz_pad) == 0
+            || area.height.saturating_sub(vert_pad) == 0
+        {
+            return;
+        }
+
+        let area = Area {
+            x:      area.x + self.left,
+            y:      area.y + self.top,
+            width:  area.width  - horiz_pad,
+            height: area.height - vert_pad,
+        };
+
+        self.inner.render(buf, area);
+    }
+}
+
+impl<T: Widget> Proportional for Pad<T>
+where
+    T: Proportional
+{
+    fn proportions(&self) -> Proportions {
+        use crate::layout::P;
+
+        #[inline]
+        pub fn pad_p(initial: P, pad: u16) -> P
+        {
+            match initial {
+                P::Flexible        => P::From(pad),
+                P::Fixed(v)        => P::Fixed(v + pad),
+                P::To(max)         => P::Range(pad, max + pad),
+                P::From(min)       => P::From(min + pad),
+                P::Range(min, max) => P::Range(min + pad, max + pad),
+            }
+        }
+
+        let inner_prop = self.inner.proportions();
+
+        Proportions {
+            horiz: pad_p(inner_prop.horiz, self.left + self.right),
+            vert:  pad_p(inner_prop.vert,  self.top  + self.bottom),
+        }
+    }
+}

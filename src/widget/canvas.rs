@@ -1,4 +1,4 @@
-use crate::layout::{Layout, Proportions};
+use crate::layout::{Proportional, Proportions};
 use crate::style::WithStyle;
 use crate::util::offset;
 use crate::{Dim, Widget, Area, Pos};
@@ -47,7 +47,7 @@ impl Widget for Canvas {
     }
 }
 
-impl Layout for Canvas {
+impl Proportional for Canvas {
     #[inline]
     fn proportions(&self) -> Proportions
     {

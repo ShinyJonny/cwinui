@@ -232,7 +232,7 @@ impl P {
 /// Objects that have proportions.
 ///
 /// Types can implement this trait to define their layout requirements.
-pub trait Layout {
+pub trait Proportional {
     fn proportions(&self) -> Proportions;
 }
 
