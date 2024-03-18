@@ -30,8 +30,7 @@ impl<'b> RenderContext<'b> {
     #[inline]
     pub fn render_widget<W: Widget>(&mut self, widget: &W, area: Area)
     {
-        // FIXME: proper error handling.
-        widget.render(self.buffer, area).unwrap();
+        widget.render(self.buffer, area);
     }
 }
 

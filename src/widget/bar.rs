@@ -56,7 +56,7 @@ impl HorizBar {
 impl Widget for HorizBar {
     fn render(&self, buf: &mut impl Paint, area: Area)
     {
-        if area.width == 0 || area.height == 0 {
+        if area.is_void() {
             return;
         }
 
@@ -106,7 +106,7 @@ impl VertBar {
 impl Widget for VertBar {
     fn render(&self, buf: &mut impl Paint, area: Area)
     {
-        if area.width == 0 || area.height == 0 {
+        if area.is_void() {
             return;
         }
 

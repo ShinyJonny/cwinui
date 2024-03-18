@@ -1,5 +1,5 @@
 use super::Widget;
-use crate::{Area, Dim};
+use crate::{Pos, Area};
 use crate::layout::{Layout, Proportions, Alignment};
 use crate::paint::Paint;
 
@@ -9,23 +9,15 @@ use crate::paint::Paint;
 pub struct Max<T: Widget + Layout>(pub T);
 
 impl<T: Widget + Layout> Widget for Max<T> {
-
-    fn render(&self, buf: &mut impl Paint, area: Area)
     #[inline]
+    fn render(&self, buf: &mut impl Paint, area: Area)
     {
-        let Dim { width, height } = area.dimensions()
+        let dim = area.dimensions()
             .satisfy(self.proportions())
-            // TODO: error handling.
-            .unwrap_or_else(|e| e);
+            // TODO: error handling of insufficient dimensions.
+            .unwrap_or_else(|d| d);
 
-        let inner_area = Area {
-            x: area.x,
-            y: area.y,
-            width,
-            height,
-        };
-
-        self.0.render(buf, inner_area);
+        self.0.render(buf, Area::from_parts(area.top_left(), dim));
     }
 }
 
@@ -43,23 +35,15 @@ impl<T: Widget + Layout> Layout for Max<T> {
 pub struct Min<T: Widget + Layout>(pub T);
 
 impl<T: Widget + Layout> Widget for Min<T> {
-
-    fn render(&self, buf: &mut impl Paint, area: Area)
     #[inline]
+    fn render(&self, buf: &mut impl Paint, area: Area)
     {
-        let Dim { width, height } = area.dimensions()
+        let dim = area.dimensions()
             .satisfy(self.proportions())
-            // TODO: error handling.
-            .unwrap_or_else(|e| e);
+            // TODO: error handling of insufficient dimensions.
+            .unwrap_or_else(|d| d);
 
-        let inner_area = Area {
-            x: area.x,
-            y: area.y,
-            width,
-            height,
-        };
-
-        self.0.render(buf, inner_area);
+        self.0.render(buf, Area::from_parts(area.top_left(), dim));
     }
 }
 
@@ -93,54 +77,50 @@ macro_rules! align_method {
 
 impl<T: Widget + Layout> Align<T> {
     align_method!(top_left, TopLeft);
-    align_method!(top_centre, TopCentre);
+    align_method!(top_center, TopCenter);
     align_method!(top_right, TopRight);
-    align_method!(centre_left, CentreLeft);
-    align_method!(centre, Centre);
-    align_method!(centre_right, CentreRight);
+    align_method!(center_left, CenterLeft);
+    align_method!(center, Center);
+    align_method!(center_right, CenterRight);
     align_method!(bottom_left, BottomLeft);
-    align_method!(bottom_centre, BottomCentre);
+    align_method!(bottom_center, BottomCenter);
     align_method!(bottom_right, BottomRight);
 }
 
 impl<T: Widget + Layout> Widget for Align<T> {
-    fn render(&self, buf: &mut impl Paint, area: Area)
     #[inline]
+    fn render(&self, buf: &mut impl Paint, area: Area)
     {
-        let inner_dim = area.dimensions()
-            .satisfy(self.inner.proportions())
-            // TODO: handle errors.
-            .unwrap_or_else(|e| e);
-
-        if inner_dim.width == 0 || inner_dim.height == 0 {
-            return;
-        }
+        let dim = area.dimensions()
+            .satisfy(self.proportions())
+            // TODO: error handling of insufficient dimensions.
+            .unwrap_or_else(|d| d);
 
         let pos = match self.alignment {
             Alignment::TopLeft => area.top_left(),
-            Alignment::TopCentre => area.top_left()
-                .add_x((area.width - inner_dim.width) / 2),
+            Alignment::TopCenter => area.top_left()
+                .add_x((area.width - dim.width) / 2),
             Alignment::TopRight => area.top_right()
-                .sub_x(inner_dim.width),
-            Alignment::CentreLeft => area.top_left()
-                .add_y((area.height - inner_dim.height) / 2),
-            Alignment::Centre => area.top_left()
-                .add_x((area.width - inner_dim.width) / 2)
-                .add_y((area.height - inner_dim.height) / 2),
-            Alignment::CentreRight => area.top_right()
-                .sub_x(inner_dim.width)
-                .add_y((area.height - inner_dim.height) / 2),
+                .sub_x(dim.width),
+            Alignment::CenterLeft => area.top_left()
+                .add_y((area.height - dim.height) / 2),
+            Alignment::Center => area.top_left()
+                .add_x((area.width - dim.width) / 2)
+                .add_y((area.height - dim.height) / 2),
+            Alignment::CenterRight => area.top_right()
+                .sub_x(dim.width)
+                .add_y((area.height - dim.height) / 2),
             Alignment::BottomLeft => area.bottom_left()
-                .sub_y(inner_dim.height),
-            Alignment::BottomCentre => area.bottom_left()
-                .add_x((area.width - inner_dim.width) / 2)
-                .sub_y(inner_dim.height),
+                .sub_y(dim.height),
+            Alignment::BottomCenter => area.bottom_left()
+                .add_x((area.width - dim.width) / 2)
+                .sub_y(dim.height),
             Alignment::BottomRight => area.bottom_right()
-                .sub_x(inner_dim.width)
-                .sub_y(inner_dim.height),
+                .sub_x(dim.width)
+                .sub_y(dim.height),
         };
 
-        self.inner.render(buf, Area::from_parts(pos, inner_dim));
+        self.inner.render(buf, Area::from_parts(pos, dim));
     }
 }
 
@@ -163,19 +143,23 @@ macro_rules! def_static_align {
         impl<T: Widget + Layout> Widget for $al<T> {
             fn render(&self, buf: &mut impl Paint, area: Area)
             {
-                let inner_dim = area.dimensions()
+                let dim = area.dimensions()
                     .satisfy(self.0.proportions())
-                    // TODO: handle errors.
-                    .unwrap_or_else(|e| e);
+                    // TODO: error handling of insufficient dimensions.
+                    .unwrap_or_else(|d| d);
 
-                if inner_dim.width == 0 || inner_dim.height == 0 {
-                    return;
-                }
-
-                let inner_area = Area::from_parts(crate::layout::Pos::ZERO, inner_dim)
+                let inner_area = Area::from_parts(Pos::ZERO, dim)
                     .align_to(area, Alignment::$al);
+
                 self.0.render(buf, inner_area);
+            }
+        }
+
+        impl<T: Widget + Layout> Layout for $al<T> {
             #[inline]
+            fn proportions(&self) -> Proportions
+            {
+                self.0.proportions().expand()
             }
         }
     }
@@ -183,11 +167,11 @@ macro_rules! def_static_align {
 
 
 def_static_align!(TopLeft);
-def_static_align!(TopCentre);
+def_static_align!(TopCenter);
 def_static_align!(TopRight);
-def_static_align!(CentreLeft);
-def_static_align!(Centre);
-def_static_align!(CentreRight);
+def_static_align!(CenterLeft);
+def_static_align!(Center);
+def_static_align!(CenterRight);
 def_static_align!(BottomLeft);
-def_static_align!(BottomCentre);
+def_static_align!(BottomCenter);
 def_static_align!(BottomRight);

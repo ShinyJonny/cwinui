@@ -101,7 +101,7 @@ impl Prompt {
 impl Widget for Prompt {
     fn render(&self, buf: &mut impl Paint, area: Area)
     {
-        if area.width == 0 || area.height == 0 {
+        if area.is_void() {
             return;
         }
 

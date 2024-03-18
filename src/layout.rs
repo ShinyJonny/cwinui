@@ -97,6 +97,13 @@ pub struct Dim {
 }
 
 impl Dim {
+    /// Check if either of the dimensions is `0`.
+    #[inline]
+    pub fn is_void(&self) -> bool
+    {
+        self.width == 0 || self.height == 0
+    }
+
     /// Return [`Dim`] that satisfies `proportions`.
     ///
     /// This method will always attempt to yield as large dimensions as
@@ -296,27 +303,27 @@ impl Area {
     {
         let top_left = match alignment {
             Alignment::TopLeft => anchor.top_left(),
-            Alignment::TopCentre => Pos {
-                x: anchor.centre().x.saturating_sub(self.width / 2),
+            Alignment::TopCenter => Pos {
+                x: anchor.center().x.saturating_sub(self.width / 2),
                 y: anchor.y,
             },
             Alignment::TopRight => Pos {
                 x: anchor.top_right().x.saturating_sub(self.width),
                 y: anchor.y,
             },
-            Alignment::CentreLeft => Pos {
+            Alignment::CenterLeft => Pos {
                 x: anchor.x,
-                y: anchor.centre_left().y.saturating_sub(self.height / 2),
+                y: anchor.center_left().y.saturating_sub(self.height / 2),
             },
-            Alignment::Centre => anchor.centre()
+            Alignment::Center => anchor.center()
                 .saturating_sub(Pos { x: self.width / 2, y: self.height / 2 }),
-            Alignment::CentreRight => anchor.centre_right()
+            Alignment::CenterRight => anchor.center_right()
                 .saturating_sub(Pos { x: self.width, y: self.height / 2 }),
             Alignment::BottomLeft => Pos {
                 x: anchor.x,
                 y: anchor.bottom_left().y.saturating_sub(self.height / 2),
             },
-            Alignment::BottomCentre => anchor.bottom_centre()
+            Alignment::BottomCenter => anchor.bottom_center()
                 .saturating_sub(Pos { x: self.width / 2, y: self.height }),
             Alignment::BottomRight => anchor.bottom_right()
                 .saturating_sub(Pos { x: self.width, y: self.height }),
@@ -508,7 +515,7 @@ impl Area {
 
     /// Position of the midpoint of the top side.
     #[inline]
-    pub fn top_centre(&self) -> Pos
+    pub fn top_center(&self) -> Pos
     {
         Pos {
             x: self.x + self.width / 2,
@@ -530,7 +537,7 @@ impl Area {
 
     /// Position of the midpoint of the left side.
     #[inline]
-    pub fn centre_left(&self) -> Pos
+    pub fn center_left(&self) -> Pos
     {
         Pos {
             x: self.x,
@@ -538,9 +545,9 @@ impl Area {
         }
     }
 
-    /// Position of the centre.
+    /// Position of the center.
     #[inline]
-    pub fn centre(&self) -> Pos
+    pub fn center(&self) -> Pos
     {
         Pos {
             x: self.x + self.width / 2,
@@ -552,7 +559,7 @@ impl Area {
     ///
     /// NOTE: the x coordinate is non-inclusive.
     #[inline]
-    pub fn centre_right(&self) -> Pos
+    pub fn center_right(&self) -> Pos
     {
         Pos {
             x: self.x + self.width,
@@ -576,7 +583,7 @@ impl Area {
     ///
     /// NOTE: the y coordinate is non-inclusive.
     #[inline]
-    pub fn bottom_centre(&self) -> Pos
+    pub fn bottom_center(&self) -> Pos
     {
         Pos {
             x: self.x + self.width / 2,
@@ -601,32 +608,32 @@ impl Area {
 pub enum Alignment {
     #[default]
     TopLeft,
-    TopCentre,
+    TopCenter,
     TopRight,
-    CentreLeft,
-    Centre,
-    CentreRight,
+    CenterLeft,
+    Center,
+    CenterRight,
     BottomLeft,
-    BottomCentre,
+    BottomCenter,
     BottomRight,
 }
 
 #[derive(Debug, Copy, Clone, Default, PartialEq, Eq)]
 pub enum Justify {
-    HCentre(u16),
-    VCentre(u16),
+    HCenter(u16),
+    VCenter(u16),
     Left(u16),
     Right(u16),
     Top(u16),
     Bottom(u16),
     #[default]
     TopLeft,
-    TopCentre,
+    TopCenter,
     TopRight,
-    CentreLeft,
-    Centre,
-    CentreRight,
+    CenterLeft,
+    Center,
+    CenterRight,
     BottomLeft,
-    BottomCentre,
+    BottomCenter,
     BottomRight,
 }

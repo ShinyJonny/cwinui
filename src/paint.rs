@@ -188,7 +188,7 @@ pub trait Paint {
                 x: 0,
                 y
             },
-            Justify::HCentre(y) => Pos {
+            Justify::HCenter(y) => Pos {
                 x: (area.width as usize - text_width) as u16 / 2,
                 y,
             },
@@ -200,7 +200,7 @@ pub trait Paint {
                 x,
                 y: 0,
             },
-            Justify::VCentre(x) => Pos {
+            Justify::VCenter(x) => Pos {
                 x,
                 y: area.height.saturating_sub(1) / 2,
             },
@@ -209,7 +209,7 @@ pub trait Paint {
                 y: area.height.saturating_sub(1),
             },
             Justify::TopLeft => Pos::ZERO,
-            Justify::TopCentre => Pos {
+            Justify::TopCenter => Pos {
                 x: (area.width as usize - text_width) as u16 / 2,
                 y: 0,
             },
@@ -217,15 +217,15 @@ pub trait Paint {
                 x: (area.width as usize - text_width) as u16,
                 y: 0,
             },
-            Justify::CentreLeft => Pos {
+            Justify::CenterLeft => Pos {
                 x: 0,
                 y: area.height.saturating_sub(1) / 2,
             },
-            Justify::Centre => Pos {
+            Justify::Center => Pos {
                 x: (area.width as usize - text_width) as u16 / 2,
                 y: area.height.saturating_sub(1) / 2,
             },
-            Justify::CentreRight => Pos {
+            Justify::CenterRight => Pos {
                 x: (area.width as usize - text_width) as u16,
                 y: area.height.saturating_sub(1) / 2,
             },
@@ -233,7 +233,7 @@ pub trait Paint {
                 x: 0,
                 y: area.height.saturating_sub(1),
             },
-            Justify::BottomCentre => Pos {
+            Justify::BottomCenter => Pos {
                 x: (area.width as usize - text_width) as u16 / 2,
                 y: area.height.saturating_sub(1),
             },
