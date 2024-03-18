@@ -4,32 +4,6 @@ use crate::layout::{Layout, Proportions, Alignment};
 use crate::paint::Paint;
 
 
-/// Renders the wrapped widget in the largest area possible.
-#[derive(Debug)]
-pub struct Max<T: Widget + Layout>(pub T);
-
-impl<T: Widget + Layout> Widget for Max<T> {
-    #[inline]
-    fn render(&self, buf: &mut impl Paint, area: Area)
-    {
-        let dim = area.dimensions()
-            .satisfy(self.proportions())
-            // TODO: error handling of insufficient dimensions.
-            .unwrap_or_else(|d| d);
-
-        self.0.render(buf, Area::from_parts(area.top_left(), dim));
-    }
-}
-
-impl<T: Widget + Layout> Layout for Max<T> {
-    #[inline]
-    fn proportions(&self) -> Proportions
-    {
-        self.0.proportions().max()
-    }
-}
-
-
 /// Renders the wrapped widget in the smallest area possible.
 #[derive(Debug)]
 pub struct Min<T: Widget + Layout>(pub T);
@@ -51,7 +25,7 @@ impl<T: Widget + Layout> Layout for Min<T> {
     #[inline]
     fn proportions(&self) -> Proportions
     {
-        self.0.proportions().min()
+        self.0.proportions().collapse()
     }
 }
 
@@ -65,7 +39,7 @@ pub struct Align<T: Widget + Layout> {
 
 macro_rules! align_method {
     ($name:ident, $al:ident) => {
-        pub fn $name(inner: T) -> Self
+        pub const fn $name(inner: T) -> Self
         {
             Self {
                 inner,
@@ -76,15 +50,15 @@ macro_rules! align_method {
 }
 
 impl<T: Widget + Layout> Align<T> {
-    align_method!(top_left, TopLeft);
-    align_method!(top_center, TopCenter);
-    align_method!(top_right, TopRight);
-    align_method!(center_left, CenterLeft);
-    align_method!(center, Center);
-    align_method!(center_right, CenterRight);
-    align_method!(bottom_left, BottomLeft);
+    align_method!(top_left,      TopLeft);
+    align_method!(top_center,    TopCenter);
+    align_method!(top_right,     TopRight);
+    align_method!(center_left,   CenterLeft);
+    align_method!(center,        Center);
+    align_method!(center_right,  CenterRight);
+    align_method!(bottom_left,   BottomLeft);
     align_method!(bottom_center, BottomCenter);
-    align_method!(bottom_right, BottomRight);
+    align_method!(bottom_right,  BottomRight);
 }
 
 impl<T: Widget + Layout> Widget for Align<T> {

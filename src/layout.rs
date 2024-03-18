@@ -117,9 +117,9 @@ impl Dim {
         let height = Self::satisfy_p(self.height, proportions.vert);
 
         match (width, height) {
-            (Some(width), Some(height)) => Ok(Self { width, height }),
-            (Some(width), None        ) => Err(Self { width, height: self.height }),
-            (None,        Some(height)) => Err(Self { width: self.width, height }),
+            (Some(width), Some(height)) => Ok(Self  { width,             height              }),
+            (Some(width), None        ) => Err(Self { width,             height: self.height }),
+            (None,        Some(height)) => Err(Self { width: self.width, height              }),
             (None,        None        ) => Err(self),
         }
     }
@@ -134,7 +134,6 @@ impl Dim {
             P::From(v)         => (available >= v).then_some(available),
             P::Range(min, max) => (available >= min)
                 .then_some(std::cmp::min(max, available)),
-            P::Max             => Some(available),
         }
     }
 }
@@ -148,21 +147,11 @@ pub struct Proportions {
 impl Proportions {
     /// Collapse all dimensions to minimum fixed values.
     #[inline]
-    pub fn min(self) -> Self
+    pub fn collapse(self) -> Self
     {
         Self {
-            horiz: self.horiz.min(),
-            vert: self.vert.min(),
-        }
-    }
-
-    /// Raise all dimensions to maximum fixed values.
-    #[inline]
-    pub fn max(self) -> Self
-    {
-        Self {
-            horiz: self.horiz.max(),
-            vert: self.vert.max(),
+            horiz: self.horiz.collapse(),
+            vert: self.vert.collapse(),
         }
     }
 
@@ -207,17 +196,12 @@ pub enum P {
     ///
     /// NOTE: inclusive.
     Range(u16, u16),
-    /// The maximum available value.
-    ///
-    /// This value is to be treated as a *fixed* value of the maximum available
-    /// value. It can be viewed as the opposite to [`P::Flexible(0)`].
-    Max,
 }
 
 impl P {
     /// Collapse to minimum fixed values.
     #[inline]
-    pub fn min(self) -> Self
+    pub fn collapse(self) -> Self
     {
         match self {
             P::Flexible      => P::Fixed(0),
@@ -225,21 +209,6 @@ impl P {
             P::To(_)         => P::Fixed(0),
             P::From(v)       => P::Fixed(v),
             P::Range(min, _) => P::Fixed(min),
-            P::Max           => P::Max,
-        }
-    }
-
-    /// Raise to maximum fixed values.
-    #[inline]
-    pub fn max(self) -> Self
-    {
-        match self {
-            P::Flexible      => P::Max,
-            P::Fixed(v)      => P::Fixed(v),
-            P::To(v)         => P::Fixed(v),
-            P::From(_)       => P::Max,
-            P::Range(_, max) => P::Fixed(max),
-            P::Max           => P::Max,
         }
     }
 
@@ -256,7 +225,6 @@ impl P {
             P::To(_)         => P::Flexible,
             P::From(v)       => P::From(v),
             P::Range(min, _) => P::From(min),
-            P::Max           => P::Max,
         }
     }
 }
