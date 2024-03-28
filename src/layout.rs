@@ -167,6 +167,22 @@ impl Proportions {
             vert: self.vert.expand(),
         }
     }
+
+    /// Computes the resulting proportions of 
+    ///
+    /// Put simply, the resulting proportions express the minimum and maximum
+    /// bounds of the original addends. 
+    ///
+    /// It can be used to express the resulting proportions of 2
+    /// [`Proportional`] objects placed next to each other.
+    #[inline]
+    pub fn add(self, other: Self) -> Self
+    {
+        Self {
+            horiz: self.horiz.add(other.horiz),
+            vert:  self.vert.add(other.vert),
+        }
+    }
 }
 
 /// A single proportion.
@@ -199,17 +215,37 @@ pub enum P {
 }
 
 impl P {
+    /// Get the lower bound.
+    #[inline]
+    pub fn min(self) -> u16
+    {
+        match self {
+            P::Flexible      => 0,
+            P::Fixed(v)      => v,
+            P::To(_)         => 0,
+            P::From(v)       => v,
+            P::Range(min, _) => min,
+        }
+    }
+
+    /// Get the upper bound (inclusive).
+    #[inline]
+    pub fn max(self) -> Option<u16>
+    {
+        match self {
+            P::Flexible     => None,
+            P::Fixed(v)     => Some(v),
+            P::To(to)       => Some(to),
+            P::From(_)      => None,
+            P::Range(_, to) => Some(to),
+        }
+    }
+
     /// Collapse to minimum fixed values.
     #[inline]
     pub fn collapse(self) -> Self
     {
-        match self {
-            P::Flexible      => P::Fixed(0),
-            P::Fixed(v)      => P::Fixed(v),
-            P::To(_)         => P::Fixed(0),
-            P::From(v)       => P::Fixed(v),
-            P::Range(min, _) => P::Fixed(min),
-        }
+        P::Fixed(self.min())
     }
 
     /// Make the upper end flexible.
@@ -225,6 +261,99 @@ impl P {
             P::To(_)         => P::Flexible,
             P::From(v)       => P::From(v),
             P::Range(min, _) => P::From(min),
+        }
+    }
+
+    /// Add the minimum requirements and maximum growth potential.
+    ///
+    /// Put simply, the resulting proportion expresses the minimum and maximum
+    /// bounds of the original addends. 
+    ///
+    /// It can be used to express the resulting proportions of 2 other
+    /// proportions placed next to each other.
+    ///
+    /// ```
+    /// use cwinui::layout::P;
+    ///
+    /// let a = P::Flexible;
+    /// let b = P::Range(3, 45);
+    /// assert_eq!(a.add(b).collapse(), P::Fixed(a.min() + b.min()));
+    /// assert_eq!(P::From(3).add(P::Fixed(44)).max(), None);
+    /// assert_eq!(P::To(3).add(P::Fixed(32)).max(), Some(35));
+    /// ```
+    #[inline]
+    pub fn add(self, other: Self) -> Self
+    {
+        //let mut start = 0;
+        //let mut end   = None;
+
+        //#[inline(always)]
+        //fn update_bounds(v: P, start: &mut u16, end: &mut Option<u16>)
+        //{
+        //    match v {
+        //        P::Flexible => { *end = None; },
+        //        P::Fixed(v) => {
+        //            *start += v;
+
+        //            if let Some(end) = end.as_mut() {
+        //                *end += v;
+        //            }
+        //        },
+        //        P::To(to) => {
+        //            if let Some(end) = end.as_mut() {
+        //                *end += to;
+        //            }
+        //        },
+        //        P::From(from) => {
+        //            *start += from;
+        //            *end = None;
+        //        },
+        //        P::Range(from, to) => {
+        //            *start += from;
+        //            if let Some(end) = end.as_mut() {
+        //                *end += to;
+        //            }
+        //        },
+        //    }
+        //}
+
+        //update_bounds(self,  &mut start, &mut end);
+        //update_bounds(other, &mut start, &mut end);
+
+        //match (start, end) {
+        //    (0,    None    )               => P::Flexible,
+        //    (0,    Some(to))               => P::To(to),
+        //    (from, None    )               => P::From(from),
+        //    (from, Some(to)) if from == to => P::Fixed(to),
+        //    (from, Some(to))               => P::Range(from, to),
+        //}
+
+
+        match (self, other) {
+            (P::Flexible,            P::Flexible)            => P::Flexible,
+            (P::Fixed(a),            P::Fixed(b))            => P::Fixed(a + b),
+            (P::To(a),               P::To(b))               => P::To(a + b),
+            (P::From(a),             P::From(b))             => P::From(a + b),
+            (P::Range(a_from, a_to), P::Range(b_from, b_to)) => {
+                let from = a_from + b_from;
+                let to = a_to + b_to;
+
+                if from == to {
+                    P::Fixed(to)
+                } else {
+                    P::Range(from, to)
+                }
+            },
+            (P::Flexible,   P::To(_))               | (P::To(_),               P::Flexible)    => P::Flexible,
+            (P::Flexible,   P::Fixed(v))            | (P::Fixed(v),            P::Flexible)    => P::From(v),
+            (P::Flexible,   P::From(from))          | (P::From(from),          P::Flexible)    => P::From(from),
+            (P::Flexible,   P::Range(from, _))      | (P::Range(from, _),      P::Flexible)    => P::From(from),
+            (P::Fixed(v),   P::From(from))          | (P::From(from),          P::Fixed(v))    => P::From(from + v),
+            (P::To(_),      P::From(from))          | (P::From(from),          P::To(_))       => P::From(from),
+            (P::From(from), P::Range(o_from, _))    | (P::Range(o_from, _),    P::From(from))  => P::From(from + o_from),
+            (P::Fixed(v),   P::To(to))              | (P::To(to),              P::Fixed(v))    => P::Range(v, v + to),
+            (P::Fixed(v),   P::Range(from, to))     | (P::Range(from, to),     P::Fixed(v))    => P::Range(v + from, v + to),
+            (P::To(to),     P::Range(o_from, o_to)) | (P::Range(o_from, o_to), P::To(to))      => P::Range(o_from, to + o_to),
         }
     }
 }
