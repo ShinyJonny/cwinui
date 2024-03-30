@@ -5,8 +5,7 @@ use crate::layout::{Area, Pos, Justify};
 
 /// Painting rendered widgets.
 ///
-/// Types can implement this trait to signify that widgets can be painted onto
-/// them.
+/// Types can implement this trait to allow widgets to be painted onto them.
 pub trait Paint {
     fn area(&self) -> Area;
 

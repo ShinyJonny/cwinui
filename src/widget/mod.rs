@@ -20,8 +20,8 @@ pub use frame::Frame;
 pub use canvas::Canvas;
 
 
-pub trait Widget {
-    fn render(&self, buf: &mut impl Paint, area: Area);
+pub trait Widget<P: Paint> {
+    fn render(&self, buf: &mut P, area: Area);
 }
 
 
@@ -34,8 +34,8 @@ pub trait InteractiveWidget {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Dummy;
 
-impl Widget for Dummy {
-    fn render(&self, _buf: &mut impl Paint, _area: Area) {}
+impl<P: Paint> Widget<P> for Dummy {
+    fn render(&self, _buf: &mut P, _area: Area) {}
 }
 
 

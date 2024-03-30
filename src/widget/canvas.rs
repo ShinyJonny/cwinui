@@ -24,8 +24,8 @@ impl Canvas {
     }
 }
 
-impl Widget for Canvas {
-    fn render(&self, buf: &mut impl Paint, area: Area)
+impl<P: Paint> Widget<P> for Canvas {
+    fn render(&self, buf: &mut P, area: Area)
     {
         let width = std::cmp::min(area.width, self.buffer.width);
         let height = std::cmp::min(area.height, self.buffer.height);

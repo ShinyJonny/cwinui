@@ -53,8 +53,8 @@ impl HorizBar {
     }
 }
 
-impl Widget for HorizBar {
-    fn render(&self, buf: &mut impl Paint, area: Area)
+impl<P: Paint> Widget<P> for HorizBar {
+    fn render(&self, buf: &mut P, area: Area)
     {
         if area.is_void() {
             return;
@@ -103,8 +103,8 @@ impl VertBar {
     }
 }
 
-impl Widget for VertBar {
-    fn render(&self, buf: &mut impl Paint, area: Area)
+impl<P: Paint> Widget<P> for VertBar {
+    fn render(&self, buf: &mut P, area: Area)
     {
         if area.is_void() {
             return;

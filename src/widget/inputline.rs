@@ -75,8 +75,8 @@ impl InputLine {
     }
 }
 
-impl Widget for InputLine {
-    fn render(&self, buf: &mut impl Paint, area: Area)
+impl<P: Paint> Widget<P> for InputLine {
+    fn render(&self, buf: &mut P, area: Area)
     {
         if area.is_void() {
             return;

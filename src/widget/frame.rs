@@ -33,12 +33,12 @@ impl Default for Theme {
 }
 
 #[derive(Debug, Clone)]
-pub struct Frame<T: Widget = Dummy> {
+pub struct Frame<T = Dummy> {
     pub theme: Theme,
     pub inner: T,
 }
 
-impl<T: Widget> Frame<T> {
+impl<T> Frame<T> {
     pub fn new(inner: T) -> Self
     {
         Self {
@@ -87,8 +87,8 @@ impl Frame<Dummy> {
     }
 }
 
-impl<T: Widget> Widget for Frame<T> {
-    fn render(&self, buf: &mut impl Paint, area: Area)
+impl<T: Widget<P>, P: Paint> Widget<P> for Frame<T> {
+    fn render(&self, buf: &mut P, area: Area)
     {
         if area.is_void() {
             return;

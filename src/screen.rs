@@ -28,7 +28,7 @@ impl<'b> RenderContext<'b> {
     }
 
     #[inline]
-    pub fn render_widget<W: Widget>(&mut self, widget: &W, area: Area)
+    pub fn render_widget<W: Widget<Buffer>>(&mut self, widget: &W, area: Area)
     {
         widget.render(self.buffer, area);
     }
