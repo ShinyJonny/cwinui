@@ -204,25 +204,13 @@ where
     T: Proportional
 {
     fn proportions(&self) -> Proportions {
-        use crate::layout::P;
-
-        #[inline]
-        pub fn pad_p(initial: P, pad: u16) -> P
-        {
-            match initial {
-                P::Flexible        => P::From(pad),
-                P::Fixed(v)        => P::Fixed(v + pad),
-                P::To(max)         => P::Range(pad, max + pad),
-                P::From(min)       => P::From(min + pad),
-                P::Range(min, max) => P::Range(min + pad, max + pad),
-            }
-        }
+        use crate::layout::Range;
 
         let inner_prop = self.inner.proportions();
 
         Proportions {
-            horiz: pad_p(inner_prop.horiz, self.left + self.right),
-            vert:  pad_p(inner_prop.vert,  self.top  + self.bottom),
+            horiz: inner_prop.horiz.add(Range::fixed(self.left + self.right)),
+            vert:  inner_prop.vert.add(Range::fixed(self.top + self.bottom)),
         }
     }
 }

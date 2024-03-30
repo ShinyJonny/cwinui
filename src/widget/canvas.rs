@@ -51,11 +51,11 @@ impl Proportional for Canvas {
     #[inline]
     fn proportions(&self) -> Proportions
     {
-        use crate::layout::P;
+        use crate::layout::Range;
 
         Proportions {
-            horiz: P::Fixed(self.buffer.width),
-            vert: P::Fixed(self.buffer.height),
+            horiz: Range::fixed(self.buffer.width),
+            vert: Range::fixed(self.buffer.height),
         }
     }
 }

@@ -113,8 +113,8 @@ impl Dim {
     #[inline]
     pub fn satisfy(self, proportions: Proportions) -> Result<Dim, Dim>
     {
-        let width  = Self::satisfy_p(self.width, proportions.horiz);
-        let height = Self::satisfy_p(self.height, proportions.vert);
+        let width  = Self::satisfy_range(self.width, proportions.horiz);
+        let height = Self::satisfy_range(self.height, proportions.vert);
 
         match (width, height) {
             (Some(width), Some(height)) => Ok(Self  { width,             height              }),
@@ -124,24 +124,22 @@ impl Dim {
         }
     }
 
-    #[inline]
-    fn satisfy_p(available: u16, g: P) -> Option<u16>
+    #[inline(always)]
+    fn satisfy_range(available: u16, range: Range) -> Option<u16>
     {
-        match g {
-            P::Flexible        => Some(available),
-            P::Fixed(v)        => (available >= v).then_some(v),
-            P::To(v)           => Some(std::cmp::min(v, available)),
-            P::From(v)         => (available >= v).then_some(available),
-            P::Range(min, max) => (available >= min)
-                .then_some(std::cmp::min(max, available)),
+        if available >= range.min {
+            Some(range.max.map(|max| std::cmp::min(available, max))
+                .unwrap_or(available))
+        } else {
+            None
         }
     }
 }
 
 #[derive(Debug, Copy, Clone, Default, PartialEq, Eq)]
 pub struct Proportions {
-    pub horiz: P,
-    pub vert: P,
+    pub horiz: Range,
+    pub vert: Range,
 }
 
 impl Proportions {
@@ -185,7 +183,7 @@ impl Proportions {
     }
 }
 
-/// A single proportion.
+/// A range of sizes.
 ///
 /// This structure defines the **inclusive** ranges that a single dimension of a
 /// widget can have.
@@ -194,58 +192,51 @@ impl Proportions {
 /// is the limiting factor, we always assume that the widget wants to be as
 /// large as it can (within its specified range).
 #[derive(Debug, Copy, Clone, Default, PartialEq, Eq)]
-pub enum P {
-    /// Fully flexible.
-    #[default]
-    Flexible,
-    /// Fixed size.
-    Fixed(u16),
-    /// Flexible, with a fixed maximum.
-    ///
-    /// NOTE: inclusive.
-    To(u16),
-    /// Flexible, with a fixed minimum.
-    ///
-    /// NOTE: inclusive.
-    From(u16),
-    /// Flexible, with a fixed minimum and maximum.
-    ///
-    /// NOTE: inclusive.
-    Range(u16, u16),
+pub struct Range {
+    pub min: u16,
+    pub max: Option<u16>,
 }
 
-impl P {
-    /// Get the lower bound.
-    #[inline]
-    pub fn min(self) -> u16
+impl Range {
+    pub const fn fixed(size: u16) -> Self
     {
-        match self {
-            P::Flexible      => 0,
-            P::Fixed(v)      => v,
-            P::To(_)         => 0,
-            P::From(v)       => v,
-            P::Range(min, _) => min,
+        Self {
+            min: size,
+            max: Some(size),
         }
     }
 
-    /// Get the upper bound (inclusive).
-    #[inline]
-    pub fn max(self) -> Option<u16>
+    pub const fn from(size: u16) -> Self
     {
-        match self {
-            P::Flexible     => None,
-            P::Fixed(v)     => Some(v),
-            P::To(to)       => Some(to),
-            P::From(_)      => None,
-            P::Range(_, to) => Some(to),
+        Self {
+            min: size,
+            max: None,
         }
     }
 
-    /// Collapse to minimum fixed values.
-    #[inline]
-    pub fn collapse(self) -> Self
+    pub const fn to(size: u16) -> Self
     {
-        P::Fixed(self.min())
+        Self {
+            min: 0,
+            max: Some(size),
+        }
+    }
+
+    pub const fn flexible() -> Self
+    {
+        Self {
+            min: 0,
+            max: None,
+        }
+    }
+
+    /// Collapse the maximum to be equal to the minimum.
+    #[inline]
+    pub fn collapse(mut self) -> Self
+    {
+        self.max = Some(self.min);
+
+        self
     }
 
     /// Make the upper end flexible.
@@ -253,15 +244,11 @@ impl P {
     /// This creates proportions that can contain the original ones but can also
     /// grow flexibly.
     #[inline]
-    pub fn expand(self) -> Self
+    pub fn expand(mut self) -> Self
     {
-        match self {
-            P::Flexible      => P::Flexible,
-            P::Fixed(v)      => P::From(v),
-            P::To(_)         => P::Flexible,
-            P::From(v)       => P::From(v),
-            P::Range(min, _) => P::From(min),
-        }
+        self.max = None;
+
+        self
     }
 
     /// Add the minimum requirements and maximum growth potential.
@@ -284,76 +271,10 @@ impl P {
     #[inline]
     pub fn add(self, other: Self) -> Self
     {
-        //let mut start = 0;
-        //let mut end   = None;
-
-        //#[inline(always)]
-        //fn update_bounds(v: P, start: &mut u16, end: &mut Option<u16>)
-        //{
-        //    match v {
-        //        P::Flexible => { *end = None; },
-        //        P::Fixed(v) => {
-        //            *start += v;
-
-        //            if let Some(end) = end.as_mut() {
-        //                *end += v;
-        //            }
-        //        },
-        //        P::To(to) => {
-        //            if let Some(end) = end.as_mut() {
-        //                *end += to;
-        //            }
-        //        },
-        //        P::From(from) => {
-        //            *start += from;
-        //            *end = None;
-        //        },
-        //        P::Range(from, to) => {
-        //            *start += from;
-        //            if let Some(end) = end.as_mut() {
-        //                *end += to;
-        //            }
-        //        },
-        //    }
-        //}
-
-        //update_bounds(self,  &mut start, &mut end);
-        //update_bounds(other, &mut start, &mut end);
-
-        //match (start, end) {
-        //    (0,    None    )               => P::Flexible,
-        //    (0,    Some(to))               => P::To(to),
-        //    (from, None    )               => P::From(from),
-        //    (from, Some(to)) if from == to => P::Fixed(to),
-        //    (from, Some(to))               => P::Range(from, to),
-        //}
-
-
-        match (self, other) {
-            (P::Flexible,            P::Flexible)            => P::Flexible,
-            (P::Fixed(a),            P::Fixed(b))            => P::Fixed(a + b),
-            (P::To(a),               P::To(b))               => P::To(a + b),
-            (P::From(a),             P::From(b))             => P::From(a + b),
-            (P::Range(a_from, a_to), P::Range(b_from, b_to)) => {
-                let from = a_from + b_from;
-                let to = a_to + b_to;
-
-                if from == to {
-                    P::Fixed(to)
-                } else {
-                    P::Range(from, to)
-                }
-            },
-            (P::Flexible,   P::To(_))               | (P::To(_),               P::Flexible)    => P::Flexible,
-            (P::Flexible,   P::Fixed(v))            | (P::Fixed(v),            P::Flexible)    => P::From(v),
-            (P::Flexible,   P::From(from))          | (P::From(from),          P::Flexible)    => P::From(from),
-            (P::Flexible,   P::Range(from, _))      | (P::Range(from, _),      P::Flexible)    => P::From(from),
-            (P::Fixed(v),   P::From(from))          | (P::From(from),          P::Fixed(v))    => P::From(from + v),
-            (P::To(_),      P::From(from))          | (P::From(from),          P::To(_))       => P::From(from),
-            (P::From(from), P::Range(o_from, _))    | (P::Range(o_from, _),    P::From(from))  => P::From(from + o_from),
-            (P::Fixed(v),   P::To(to))              | (P::To(to),              P::Fixed(v))    => P::Range(v, v + to),
-            (P::Fixed(v),   P::Range(from, to))     | (P::Range(from, to),     P::Fixed(v))    => P::Range(v + from, v + to),
-            (P::To(to),     P::Range(o_from, o_to)) | (P::Range(o_from, o_to), P::To(to))      => P::Range(o_from, to + o_to),
+        Self {
+            min: self.min + other.min,
+            max: Option::zip(self.max, other.max)
+                .map(|(a, b)| a + b),
         }
     }
 }
