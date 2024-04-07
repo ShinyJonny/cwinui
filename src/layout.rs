@@ -143,6 +143,14 @@ pub struct Proportions {
 }
 
 impl Proportions {
+    pub const fn flexible() -> Self
+    {
+        Self {
+            horiz: Range::flexible(),
+            vert:  Range::flexible(),
+        }
+    }
+
     /// Collapse all dimensions to minimum fixed values.
     #[inline]
     pub fn collapse(self) -> Self

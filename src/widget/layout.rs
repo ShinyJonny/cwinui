@@ -1,6 +1,6 @@
 use super::Widget;
-use crate::{Pos, Area};
-use crate::layout::{Proportional, Proportions, Alignment};
+use crate::{Area, Pos};
+use crate::layout::{Alignment, Proportional, Proportions, Range};
 use crate::paint::Paint;
 
 
@@ -110,6 +110,7 @@ macro_rules! def_static_align {
         #[doc = "Align the contained widget to"]
         #[doc = concat!("[`Alignment::", stringify!($al), "`]")]
         #[doc = "."]
+        #[derive(Debug)]
         pub struct $al<T: Proportional>(pub T);
 
         impl<T: Widget<P> + Proportional, P: Paint> Widget<P> for $al<T> {
@@ -204,13 +205,69 @@ where
     T: Proportional
 {
     fn proportions(&self) -> Proportions {
-        use crate::layout::Range;
-
         let inner_prop = self.inner.proportions();
 
         Proportions {
             horiz: inner_prop.horiz.add(Range::fixed(self.left + self.right)),
             vert:  inner_prop.vert.add(Range::fixed(self.top + self.bottom)),
         }
+    }
+}
+
+
+/// Widget that takes up the containing proportions but draws nothing.
+#[derive(Debug)]
+pub struct Spacer(pub Proportions);
+
+impl<P: Paint> Widget<P> for Spacer {
+    #[inline]
+    fn render(&self, _buf: &mut P, _area: Area) {}
+}
+
+impl Proportional for Spacer {
+    #[inline]
+    fn proportions(&self) -> Proportions { self.0 }
+}
+
+
+/// Container that has its own proportions and simply renders the contained
+/// widget.
+#[derive(Debug)]
+pub struct Container<T> {
+    pub inner: T,
+    pub proportions: Proportions,
+}
+
+impl<T> Container<T> {
+    #[inline]
+    pub const fn new(inner: T) -> Self
+    {
+        Self {
+            inner,
+            proportions: Proportions::flexible(),
+        }
+    }
+
+    pub const fn size(mut self, proportions: Proportions) -> Self
+    {
+        self.proportions = proportions;
+
+        self
+    }
+}
+
+impl<T: Widget<P>, P: Paint> Widget<P> for Container<T> {
+    #[inline]
+    fn render(&self, buf: &mut P, area: Area)
+    {
+        self.inner.render(buf, area);
+    }
+}
+
+impl<T> Proportional for Container<T> {
+    #[inline]
+    fn proportions(&self) -> Proportions
+    {
+        self.proportions
     }
 }
