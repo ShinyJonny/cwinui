@@ -11,7 +11,9 @@ pub mod prompt;
 pub mod frame;
 pub mod canvas;
 pub mod layout;
+pub mod flex;
 
+pub use flex::{FlexCol, FlexRow};
 pub use bar::{HorizBar, VertBar};
 pub use inputline::InputLine;
 pub use menu::Menu;

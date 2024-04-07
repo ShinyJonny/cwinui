@@ -143,6 +143,19 @@ pub struct Proportions {
 }
 
 impl Proportions {
+    pub const ZERO: Self = Self {
+        horiz: Range::ZERO,
+        vert:  Range::ZERO,
+    };
+
+    pub const fn fixed(dim: Dim) -> Self
+    {
+        Self {
+            horiz: Range::fixed(dim.width),
+            vert:  Range::fixed(dim.height),
+        }
+    }
+
     pub const fn flexible() -> Self
     {
         Self {
@@ -189,6 +202,15 @@ impl Proportions {
             vert:  self.vert.add(other.vert),
         }
     }
+
+    #[inline]
+    pub fn union(self, other: Self) -> Self
+    {
+        Self {
+            horiz: self.horiz.union(other.horiz),
+            vert:  self.vert.union(other.vert),
+        }
+    }
 }
 
 /// A range of sizes.
@@ -206,6 +228,8 @@ pub struct Range {
 }
 
 impl Range {
+    pub const ZERO: Self = Self::fixed(0);
+
     pub const fn fixed(size: u16) -> Self
     {
         Self {
@@ -283,6 +307,16 @@ impl Range {
             min: self.min + other.min,
             max: Option::zip(self.max, other.max)
                 .map(|(a, b)| a + b),
+        }
+    }
+
+    #[inline]
+    pub fn union(self, other: Self) -> Self
+    {
+        Self {
+            min: std::cmp::max(self.min, other.min),
+            max: Option::zip(self.max, other.max)
+                .map(|(a, b)| std::cmp::max(a, b)),
         }
     }
 }
