@@ -215,27 +215,22 @@ where
 }
 
 
-/// Widget that takes up the containing proportions but draws nothing.
-#[derive(Debug)]
-pub struct Spacer(pub Proportions);
-
-impl<P: Paint> Widget<P> for Spacer {
-    #[inline]
-    fn render(&self, _buf: &mut P, _area: Area) {}
-}
-
-impl Proportional for Spacer {
-    #[inline]
-    fn proportions(&self) -> Proportions { self.0 }
-}
-
-
-/// Container that has its own proportions and simply renders the contained
-/// widget.
+/// Container with its own proportions.
 #[derive(Debug)]
 pub struct Container<T> {
     pub inner: T,
     pub proportions: Proportions,
+}
+
+impl Container<super::Dummy> {
+    #[inline]
+    pub const fn empty() -> Self
+    {
+        Self {
+            inner: super::Dummy,
+            proportions: Proportions::flexible(),
+        }
+    }
 }
 
 impl<T> Container<T> {
