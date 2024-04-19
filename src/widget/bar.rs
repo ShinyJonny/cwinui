@@ -4,6 +4,7 @@ use super::Widget;
 use crate::layout::Area;
 use crate::style::StyledChar;
 
+/// Configuration options for theming [HorizBar] and [VertBar].
 pub struct Theme {
     pub beg: StyledChar,
     pub end: StyledChar,
@@ -21,18 +22,21 @@ impl Default for Theme {
     }
 }
 
+/// Draws a horizontal bar starting at the top-left corner of the render area
+/// and spanning the full width of the render area.
 pub struct HorizBar {
     pub theme: Theme,
 }
 
 impl HorizBar {
+    /// Creates a new `HorizBar`.
+    #[inline]
     pub fn new() -> Self
     {
-        Self {
-            theme: Theme::default(),
-        }
+        Self::default()
     }
 
+    /// Adjusts the theme of the `HorizBar`.
     #[inline]
     pub fn theme<C>(
         mut self,
@@ -50,6 +54,16 @@ impl HorizBar {
         };
 
         self
+    }
+}
+
+impl Default for HorizBar {
+    #[inline]
+    fn default() -> Self
+    {
+        Self {
+            theme: Theme::default()
+        }
     }
 }
 
@@ -67,20 +81,18 @@ impl<P: Paint> Widget<P> for HorizBar {
     }
 }
 
+/// Draws a vertical bar starting at the top-left corner of the render area and
+/// spanning the full height of the render area.
 pub struct VertBar {
     pub theme: Theme,
 }
 
 impl VertBar {
+    /// Creates a new `VertBar`.
+    #[inline]
     pub fn new() -> Self
     {
-        Self {
-            theme: Theme {
-                beg: '0'.styled(),
-                end: '0'.styled(),
-                body: '0'.styled(),
-            },
-        }
+        Self::default()
     }
 
     #[inline]
@@ -100,6 +112,16 @@ impl VertBar {
         };
 
         self
+    }
+}
+
+impl Default for VertBar {
+    #[inline]
+    fn default() -> Self
+    {
+        Self {
+            theme: Theme::default(),
+        }
     }
 }
 

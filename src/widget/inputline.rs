@@ -9,27 +9,29 @@ use crate::layout::Area;
 use crate::paint::Paint;
 use crate::style::{StyledChar, Style, WithStyle};
 
-const INPUT_CAPACITY: usize = 2048;
 
+/// Configuration options for theming [InputLine].
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Theme {
     pub blank_c: StyledChar,
     pub input_style: Style,
 }
 
+/// Primitive for rendering input fields.
 #[derive(Debug, Clone)]
 pub struct InputLine {
     pub theme: Theme,
+    pub active: bool,
     content: String,
     cursor_pos: u16,
-    active: bool,
 }
 
 impl InputLine {
-    pub fn new() -> Self
+    /// Creates a new `InputLine` with the default capacity of `capacity`.
+    pub fn with_capacity(capacity: usize) -> Self
     {
         Self {
-            content: String::with_capacity(INPUT_CAPACITY),
+            content: String::with_capacity(capacity),
             cursor_pos: 0,
             theme: Theme {
                 blank_c: ' '.styled(),
@@ -39,24 +41,28 @@ impl InputLine {
         }
     }
 
+    /// Creates a new `InputLine`.
+    pub fn new() -> Self
+    {
+        Self {
+            content: String::new(),
+            cursor_pos: 0,
+            theme: Theme {
+                blank_c: ' '.styled(),
+                input_style: Style::default(),
+            },
+            active: false,
+        }
+    }
+
+    /// Accesses the contents of the input.
     #[inline]
     pub fn content(&self) -> &str
     {
         &self.content
     }
 
-    #[inline]
-    pub fn set_active(&mut self)
-    {
-        self.active = true;
-    }
-
-    #[inline]
-    pub fn set_inactive(&mut self)
-    {
-        self.active = false;
-    }
-
+    /// Adjusts the theme of the `InputLine`.
     #[inline]
     pub fn theme<C>(
         mut self,

@@ -11,8 +11,9 @@ use termion::event::{Event, Key};
 
 use crate::Area;
 
-pub type Transformer = fn(&str) -> StyledString;
+type Transformer = fn(&str) -> StyledString;
 
+/// Configuration options for theming [Menu].
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Theme {
     pub normal: Transformer,
@@ -43,6 +44,7 @@ enum Location {
     Below,
 }
 
+/// Simple themable menu-like widget.
 #[derive(Debug, Clone)]
 pub struct Menu {
     pub theme: Theme,
@@ -53,6 +55,7 @@ pub struct Menu {
 }
 
 impl Menu {
+    /// Creates a new `Menu`.
     pub fn new(items: &[&str]) -> Self
     {
         Self {
@@ -65,18 +68,21 @@ impl Menu {
         }
     }
 
+    /// Gets a reference to the currently selected item.
     #[inline]
     pub fn selected(&self) -> &str
     {
         &self.items[self.active_idx]
     }
 
+    /// Gets the index of the currently selected item.
     #[inline]
     pub fn selected_idx(&self) -> usize
     {
         self.active_idx
     }
 
+    /// Adjusts the theme.
     #[inline]
     pub fn theme(mut self, theme: Theme) -> Self
     {
@@ -85,6 +91,7 @@ impl Menu {
         self
     }
 
+    /// Gets a reference to the items.
     #[inline]
     pub fn items(&self) -> &[String]
     {

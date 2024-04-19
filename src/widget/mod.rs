@@ -22,11 +22,13 @@ pub use frame::Frame;
 pub use canvas::Canvas;
 
 
+/// Structures that can be rendered as widgets.
 pub trait Widget<P: Paint> {
     fn render(&self, buf: &mut P, area: Area);
 }
 
 
+/// Interactive widgets that can process events.
 pub trait InteractiveWidget {
     fn process_event(&mut self, e: Event);
 }
@@ -39,7 +41,6 @@ pub struct Dummy;
 impl<P: Paint> Widget<P> for Dummy {
     fn render(&self, _buf: &mut P, _area: Area) {}
 }
-
 
 impl InteractiveWidget for Dummy {
     fn process_event(&mut self, _e: Event) {}

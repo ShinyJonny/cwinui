@@ -1,9 +1,20 @@
+//! Flexbox-like containers.
+//!
+//! Each contained item gets its minimum proportion requirements (if possible).
+//! The rest of the render area is distributed among the flexible items equally,
+//! in proportion to the size of their request compared to other flexible items.
+//!
+//! Items whose proportions have no upper end are truncated to 100% of the
+//! render area.
+
+
 use super::Widget;
 use crate::paint::Paint;
 use crate::layout::{Proportional, Proportions, Range};
 use crate::Area;
 
 
+/// Items that can be rendered in a *flex container*.
 pub trait FlexItem<P: Paint>: Widget<P> + Proportional {}
 
 impl<P: Paint, T> FlexItem<P> for T
@@ -11,6 +22,10 @@ where
     T: Widget<P> + Proportional {}
 
 
+/// Vertical flex container.
+///
+/// For more information on how the items are rendered, see the [Module-level
+/// documentation](self).
 pub struct FlexCol<'a, P: Paint>(pub &'a [&'a dyn FlexItem<P>]);
 
 impl<P: Paint> Widget<P> for FlexCol<'_, P> {
@@ -74,6 +89,10 @@ impl<P: Paint> Proportional for FlexCol<'_, P> {
 }
 
 
+/// Horizontal flex container.
+///
+/// For more information on how the items are rendered, see the [Module-level
+/// documentation](self).
 pub struct FlexRow<'a, P: Paint>(pub &'a [&'a dyn FlexItem<P>]);
 
 impl<P: Paint> Widget<P> for FlexRow<'_, P> {

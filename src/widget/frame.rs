@@ -4,6 +4,7 @@ use crate::{Pos, Area,};
 
 use super::{Widget, Dummy};
 
+/// Configuration options for theming [Frame].
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Theme {
     pub top_left: StyledChar,
@@ -39,6 +40,7 @@ pub struct Frame<T = Dummy> {
 }
 
 impl<T> Frame<T> {
+    /// Creates a new `Frame` containing `inner`.
     pub fn new(inner: T) -> Self
     {
         Self {
@@ -47,6 +49,7 @@ impl<T> Frame<T> {
         }
     }
 
+    /// Adjusts the theme of the `Frame`.
     #[inline]
     pub fn theme<C>(
         mut self,
@@ -74,16 +77,6 @@ impl<T> Frame<T> {
         };
 
         self
-    }
-}
-
-impl Frame<Dummy> {
-    pub fn empty() -> Self
-    {
-        Self {
-            theme: Theme::default(),
-            inner: Dummy,
-        }
     }
 }
 

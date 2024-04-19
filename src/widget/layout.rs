@@ -29,7 +29,7 @@ impl<T: Proportional> Proportional for Min<T> {
 }
 
 
-/// Align the contained widget dynamically, based on `alignment`.
+/// Align the contained widget based on `alignment`.
 #[derive(Debug)]
 pub struct Align<T: Proportional> {
     pub inner:     T,
@@ -38,6 +38,9 @@ pub struct Align<T: Proportional> {
 
 macro_rules! align_method {
     ($name:ident, $al:ident) => {
+        #[doc = "Align to"]
+        #[doc = concat!("[`Alignment::", stringify!($al), "`]")]
+        #[doc = "."]
         pub const fn $name(inner: T) -> Self
         {
             Self {
@@ -159,6 +162,7 @@ pub struct Pad<T> {
 }
 
 impl<T> Pad<T> {
+    /// Creates `Pad<T>` with the default padding (zero for all sides).
     pub const fn new(inner: T) -> Self
     {
         Self {
@@ -170,9 +174,13 @@ impl<T> Pad<T> {
         }
     }
 
+    /// Adjusts the *top* padding.
     pub const fn top(mut self,    val: u16) -> Self { self.top    = val; self }
+    /// Adjusts the *right* padding.
     pub const fn right(mut self,  val: u16) -> Self { self.right  = val; self }
+    /// Adjusts the *bottom* padding.
     pub const fn bottom(mut self, val: u16) -> Self { self.bottom = val; self }
+    /// Adjusts the *left* padding.
     pub const fn left(mut self,   val: u16) -> Self { self.left   = val; self }
 }
 
@@ -223,6 +231,7 @@ pub struct Container<T> {
 }
 
 impl Container<super::Dummy> {
+    /// Creates a `Container` containing nothing.
     #[inline]
     pub const fn empty() -> Self
     {
@@ -234,6 +243,7 @@ impl Container<super::Dummy> {
 }
 
 impl<T> Container<T> {
+    /// Wraps `inner` in a `Container` with fully flexible proportions.
     #[inline]
     pub const fn new(inner: T) -> Self
     {
@@ -243,6 +253,7 @@ impl<T> Container<T> {
         }
     }
 
+    /// Adjusts the proportions of the `Container`.
     pub const fn size(mut self, proportions: Proportions) -> Self
     {
         self.proportions = proportions;

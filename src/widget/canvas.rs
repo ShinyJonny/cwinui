@@ -5,11 +5,14 @@ use crate::{Dim, Widget, Area, Pos};
 use crate::buffer::Buffer;
 use crate::paint::Paint;
 
+
+/// A buffered canvas that allows widgets to render onto it.
 pub struct Canvas {
     buffer: Buffer,
 }
 
 impl Canvas {
+    /// Allocates a new `Canvas` with the size of `dimensions`.
     pub fn new(dimensions: Dim) -> Self
     {
         Self {
@@ -17,6 +20,7 @@ impl Canvas {
         }
     }
 
+    /// Exposes the `Paint` interface.
     #[inline]
     pub fn painter(&mut self) -> &mut impl Paint
     {

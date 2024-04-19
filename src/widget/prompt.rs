@@ -12,6 +12,7 @@ use super::{
 };
 
 
+/// Configuration options for theming [Prompt].
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Theme {
     pub sep: StyledString,
@@ -20,18 +21,20 @@ pub struct Theme {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-struct ITheme {
+struct ThemeInternal {
     sep: StyledString,
 }
 
+/// Prompt-like wrapper for [InputLine].
 #[derive(Debug, Clone)]
 pub struct Prompt {
     pub label: StyledString,
-    theme: ITheme,
+    theme: ThemeInternal,
     inputline: InputLine,
 }
 
 impl Prompt {
+    /// Creates a new `Prompt`.
     pub fn new<'s, T>(label: T) -> Self
     where
         T: Into<StyledStr<'s>>
@@ -39,18 +42,20 @@ impl Prompt {
         Self {
             label: label.into().to_owned(),
             inputline: InputLine::new(),
-            theme: ITheme {
+            theme: ThemeInternal {
                 sep: StyledString::from(": "),
             },
         }
     }
 
+    /// Gets a reference to the contents of the input.
     #[inline]
     pub fn content(&self) -> &str
     {
         self.inputline.content()
     }
 
+    /// Adjusts the theme.
     #[inline]
     pub fn theme<'t, S, C>(
         mut self,
@@ -62,7 +67,7 @@ impl Prompt {
         S: Into<StyledStr<'t>>,
         C: Into<StyledChar>
     {
-        self.theme = ITheme {
+        self.theme = ThemeInternal {
             sep: StyledString::from(sep)
         };
         self.inputline.theme = super::inputline::Theme {
@@ -73,28 +78,31 @@ impl Prompt {
         self
     }
 
+    /// Sets the theme.
     #[inline]
     pub fn set_theme(&mut self, theme: Theme)
     {
         let Theme { sep, input_style, blank_c } = theme;
 
-        self.theme = ITheme { sep };
+        self.theme = ThemeInternal { sep };
         self.inputline.theme = super::inputline::Theme {
             input_style,
             blank_c,
         };
     }
 
+    /// Sets the prompt to its *active* state.
     #[inline]
     pub fn set_active(&mut self)
     {
-        self.inputline.set_active();
+        self.inputline.active = true;
     }
 
+    /// Sets the prompt to its *inactive* state.
     #[inline]
     pub fn set_inactive(&mut self)
     {
-        self.inputline.set_inactive();
+        self.inputline.active = false;
     }
 }
 
