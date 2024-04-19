@@ -1,7 +1,7 @@
 use super::Widget;
 use crate::{Area, Pos};
 use crate::layout::{Alignment, Proportional, Proportions, Range};
-use crate::paint::Paint;
+use crate::widget::Paint;
 
 
 /// Renders the wrapped widget in the smallest area possible.

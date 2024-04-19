@@ -9,7 +9,7 @@
 
 
 use super::Widget;
-use crate::paint::Paint;
+use crate::widget::Paint;
 use crate::layout::{Proportional, Proportions, Range};
 use crate::Area;
 
@@ -31,7 +31,7 @@ pub struct FlexCol<'a, P: Paint>(pub &'a [&'a dyn FlexItem<P>]);
 impl<P: Paint> Widget<P> for FlexCol<'_, P> {
     fn render(&self, buf: &mut P, area: Area)
     {
-        if area.is_void() || self.0.len() == 0 {
+        if area.is_collapsed() || self.0.len() == 0 {
             return;
         }
 
@@ -81,7 +81,7 @@ impl<P: Paint> Proportional for FlexCol<'_, P> {
             let p = it.proportions();
 
             Proportions {
-                horiz: horiz.union(p.horiz),
+                horiz: horiz.join(p.horiz),
                 vert:  vert.add(p.vert),
             }
         })
@@ -98,7 +98,7 @@ pub struct FlexRow<'a, P: Paint>(pub &'a [&'a dyn FlexItem<P>]);
 impl<P: Paint> Widget<P> for FlexRow<'_, P> {
     fn render(&self, buf: &mut P, area: Area)
     {
-        if area.is_void() || self.0.len() == 0 {
+        if area.is_collapsed() || self.0.len() == 0 {
             return;
         }
 
@@ -149,7 +149,7 @@ impl<P: Paint> Proportional for FlexRow<'_, P> {
 
             Proportions {
                 horiz: horiz.add(p.horiz),
-                vert:  vert.union(p.vert),
+                vert:  vert.join(p.vert),
             }
         })
     }

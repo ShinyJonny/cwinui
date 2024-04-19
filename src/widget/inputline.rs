@@ -6,7 +6,7 @@ use super::{
 };
 use crate::Pos;
 use crate::layout::Area;
-use crate::paint::Paint;
+use crate::widget::Paint;
 use crate::style::{StyledChar, Style, WithStyle};
 
 
@@ -84,7 +84,7 @@ impl InputLine {
 impl<P: Paint> Widget<P> for InputLine {
     fn render(&self, buf: &mut P, area: Area)
     {
-        if area.is_void() {
+        if area.is_collapsed() {
             return;
         }
 

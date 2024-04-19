@@ -1,4 +1,4 @@
-use crate::paint::Paint;
+use crate::widget::Paint;
 use crate::style::WithStyle;
 use super::Widget;
 use crate::layout::Area;
@@ -70,7 +70,7 @@ impl Default for HorizBar {
 impl<P: Paint> Widget<P> for HorizBar {
     fn render(&self, buf: &mut P, area: Area)
     {
-        if area.is_void() {
+        if area.is_collapsed() {
             return;
         }
 
@@ -128,7 +128,7 @@ impl Default for VertBar {
 impl<P: Paint> Widget<P> for VertBar {
     fn render(&self, buf: &mut P, area: Area)
     {
-        if area.is_void() {
+        if area.is_collapsed() {
             return;
         }
 

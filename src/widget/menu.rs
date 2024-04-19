@@ -2,7 +2,7 @@ use std::cell::Cell;
 
 use crate::{style::StyledString, Pos};
 use crate::Dim;
-use crate::paint::Paint;
+use crate::widget::Paint;
 use super::{
     Widget,
     InteractiveWidget,
@@ -120,7 +120,7 @@ impl Menu {
 impl<P: Paint> Widget<P> for Menu {
     fn render(&self, buf: &mut P, area: Area)
     {
-        if area.is_void() {
+        if area.is_collapsed() {
             return;
         }
 

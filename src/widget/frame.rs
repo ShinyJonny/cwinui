@@ -1,5 +1,5 @@
 use crate::style::StyledChar;
-use crate::paint::Paint;
+use crate::widget::Paint;
 use crate::{Pos, Area,};
 
 use super::{Widget, Dummy};
@@ -83,7 +83,7 @@ impl<T> Frame<T> {
 impl<T: Widget<P>, P: Paint> Widget<P> for Frame<T> {
     fn render(&self, buf: &mut P, area: Area)
     {
-        if area.is_void() {
+        if area.is_collapsed() {
             return;
         }
 

@@ -3,7 +3,7 @@ use crate::style::WithStyle;
 use crate::util::offset;
 use crate::{Dim, Widget, Area, Pos};
 use crate::buffer::Buffer;
-use crate::paint::Paint;
+use crate::widget::Paint;
 
 
 /// A buffered canvas that allows widgets to render onto it.

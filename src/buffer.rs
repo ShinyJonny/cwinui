@@ -1,8 +1,9 @@
-use crate::paint::Paint;
+use crate::widget::Paint;
 use crate::{Pos, Area};
 use crate::style::{StyledStr, StyledChar, Style};
 use crate::util::offset;
 
+/// Internals determining the state of the cursor.
 #[derive(Debug)]
 pub struct Cursor {
     pub x: u16,
@@ -10,17 +11,22 @@ pub struct Cursor {
     pub hidden: bool,
 }
 
+// TODO: resizing.
+
+// FIXME: most of the fields cannot remain public.
+
 /// Versatile buffer that can be used for painting widgets.
 #[derive(Debug)]
 pub struct Buffer {
+    pub cursor: Cursor,
     pub width: u16,
     pub height: u16,
     pub chars: Vec<char>,
     pub styles: Vec<Style>,
-    pub cursor: Cursor,
 }
 
 impl Buffer {
+    /// Creates a new `Buffer`.
     pub fn new(width: u16, height: u16) -> Self
     {
         let buf_size = width as usize * height as usize;
@@ -33,7 +39,6 @@ impl Buffer {
             cursor: Cursor { y: 0, x: 0, hidden: true },
         }
     }
-
 }
 
 impl Paint for Buffer {
@@ -48,8 +53,6 @@ impl Paint for Buffer {
         }
     }
 
-    /// Prints `text` relative to the specified `area`, potentially truncating
-    /// its contents.
     #[inline]
     fn paint_str<'s, S>(&mut self, pos: Pos, text: S)
     where

@@ -6,8 +6,24 @@ pub struct Pos {
 }
 
 impl Pos {
+    /// \[0, 0].
     pub const ZERO: Self = Pos { x: 0, y: 0 };
 
+    /// Performs a saturating addition.
+    ///
+    /// ```
+    /// use cwinui::Pos;
+    ///
+    /// let a = Pos { x: 4, y: 3 };
+    /// let b = Pos { x: 1, y: 9 };
+    /// assert_eq!(
+    ///     a.saturating_add(b),
+    ///     Pos {
+    ///         x: a.x.saturating_add(b.x),
+    ///         y: a.y.saturating_add(b.y),
+    ///     }
+    /// );
+    /// ```
     #[inline]
     pub fn saturating_add(self, rhs: Self) -> Self
     {
@@ -17,6 +33,21 @@ impl Pos {
         }
     }
 
+    /// Performs a saturating subtraction.
+    ///
+    /// ```
+    /// use cwinui::Pos;
+    ///
+    /// let a = Pos { x: 4, y: 3 };
+    /// let b = Pos { x: 1, y: 9 };
+    /// assert_eq!(
+    ///     a.saturating_sub(b),
+    ///     Pos {
+    ///         x: a.x.saturating_sub(b.x),
+    ///         y: a.y.saturating_sub(b.y),
+    ///     }
+    /// );
+    /// ```
     #[inline]
     pub fn saturating_sub(self, rhs: Self) -> Self
     {
@@ -26,6 +57,7 @@ impl Pos {
         }
     }
 
+    /// Adds `x` to `self.x`.
     #[inline]
     pub fn add_x(self, x: u16) -> Self
     {
@@ -35,6 +67,7 @@ impl Pos {
         }
     }
 
+    /// Adds `y` to `self.y`.
     #[inline]
     pub fn add_y(self, y: u16) -> Self
     {
@@ -44,6 +77,7 @@ impl Pos {
         }
     }
 
+    /// Subtracts `x` from `self.x`.
     #[inline]
     pub fn sub_x(self, x: u16) -> Self
     {
@@ -53,6 +87,7 @@ impl Pos {
         }
     }
 
+    /// Subtracts `y` from `self.y`.
     #[inline]
     pub fn sub_y(self, y: u16) -> Self
     {
@@ -99,7 +134,7 @@ pub struct Dim {
 impl Dim {
     /// Check if either of the dimensions is `0`.
     #[inline]
-    pub fn is_void(&self) -> bool
+    pub fn is_collapsed(&self) -> bool
     {
         self.width == 0 || self.height == 0
     }
@@ -136,6 +171,7 @@ impl Dim {
     }
 }
 
+/// Proportions of widgets that can be laid out in space.
 #[derive(Debug, Copy, Clone, Default, PartialEq, Eq)]
 pub struct Proportions {
     pub horiz: Range,
@@ -143,11 +179,13 @@ pub struct Proportions {
 }
 
 impl Proportions {
+    /// Both `horiz` and `vert` have the range of \[0, 0].
     pub const ZERO: Self = Self {
         horiz: Range::ZERO,
         vert:  Range::ZERO,
     };
 
+    /// Creates fixed proportions, from `dim`.
     pub const fn fixed(dim: Dim) -> Self
     {
         Self {
@@ -156,6 +194,8 @@ impl Proportions {
         }
     }
 
+    /// Creates fully flexible proportions, i.e. both `horiz` and `vert` are
+    /// \[0, infinity].
     pub const fn flexible() -> Self
     {
         Self {
@@ -164,7 +204,7 @@ impl Proportions {
         }
     }
 
-    /// Collapse all dimensions to minimum fixed values.
+    /// Collapses all dimensions to minimum fixed values.
     #[inline]
     pub fn collapse(self) -> Self
     {
@@ -174,10 +214,10 @@ impl Proportions {
         }
     }
 
-    /// Make the upper ends of all dimensions flexible.
+    /// Makes the upper ends of all dimensions flexible.
     ///
-    /// This creates proportions that can contain the previous value but can
-    /// also grow flexibly.
+    /// This creates proportions that can contain the previous ones but can also
+    /// grow flexibly.
     #[inline]
     pub fn expand(self) -> Self
     {
@@ -187,10 +227,7 @@ impl Proportions {
         }
     }
 
-    /// Computes the resulting proportions of 
-    ///
-    /// Put simply, the resulting proportions express the minimum and maximum
-    /// bounds of the original addends. 
+    /// Adds the range requirements for both directions.
     ///
     /// It can be used to express the resulting proportions of 2
     /// [`Proportional`] objects placed next to each other.
@@ -203,12 +240,28 @@ impl Proportions {
         }
     }
 
+    /// Joins the range requirements for both directions.
+    ///
+    /// ```
+    /// use cwinui::layout::{Proportions, Dim};
+    ///
+    /// let a = Proportions::fixed(Dim { width: 4, height: 20 });
+    /// let b = Proportions::fixed(Dim { width: 9, height: 10 });
+    ///
+    /// assert_eq!(
+    ///     a.join(b),
+    ///     Proportions {
+    ///         horiz: a.horiz.join(b.horiz),
+    ///         vert: a.vert.join(b.vert),
+    ///     },
+    /// );
+    /// ```
     #[inline]
-    pub fn union(self, other: Self) -> Self
+    pub fn join(self, other: Self) -> Self
     {
         Self {
-            horiz: self.horiz.union(other.horiz),
-            vert:  self.vert.union(other.vert),
+            horiz: self.horiz.join(other.horiz),
+            vert:  self.vert.join(other.vert),
         }
     }
 }
@@ -228,8 +281,16 @@ pub struct Range {
 }
 
 impl Range {
+    /// \[0, 0]
     pub const ZERO: Self = Self::fixed(0);
 
+    /// Creates a fixed range: \[`size`, `size`].
+    ///
+    /// ```
+    /// use cwinui::layout::Range;
+    ///
+    /// assert_eq!(Range::fixed(4), Range { min: 4, max: Some(4) });
+    /// ```
     pub const fn fixed(size: u16) -> Self
     {
         Self {
@@ -238,6 +299,13 @@ impl Range {
         }
     }
 
+    /// Creates a starting at `size`: \[`size`, infinity]
+    ///
+    /// ```
+    /// use cwinui::layout::Range;
+    ///
+    /// assert_eq!(Range::from(4), Range { min: 4, max: None });
+    /// ```
     pub const fn from(size: u16) -> Self
     {
         Self {
@@ -246,6 +314,13 @@ impl Range {
         }
     }
 
+    /// Creates a ending at `size`: \[0, `size`]
+    ///
+    /// ```
+    /// use cwinui::layout::Range;
+    ///
+    /// assert_eq!(Range::to(4), Range { min: 0, max: Some(4) });
+    /// ```
     pub const fn to(size: u16) -> Self
     {
         Self {
@@ -254,6 +329,13 @@ impl Range {
         }
     }
 
+    /// Creates a fully flexible range: \[0, infinity].
+    ///
+    /// ```
+    /// use cwinui::layout::Range;
+    ///
+    /// assert_eq!(Range::flexible(), Range { min: 0, max: None });
+    /// ```
     pub const fn flexible() -> Self
     {
         Self {
@@ -272,9 +354,6 @@ impl Range {
     }
 
     /// Make the upper end flexible.
-    ///
-    /// This creates proportions that can contain the original ones but can also
-    /// grow flexibly.
     #[inline]
     pub fn expand(mut self) -> Self
     {
@@ -285,20 +364,20 @@ impl Range {
 
     /// Add the minimum requirements and maximum growth potential.
     ///
-    /// Put simply, the resulting proportion expresses the minimum and maximum
-    /// bounds of the original addends. 
+    /// The minimums and maximums are added.
     ///
-    /// It can be used to express the resulting proportions of 2 other
-    /// proportions placed next to each other.
+    /// Can be used to express the result of placing 2 ranges next to each
+    /// other.
     ///
     /// ```
-    /// use cwinui::layout::P;
+    /// use cwinui::layout::Range;
     ///
-    /// let a = P::Flexible;
-    /// let b = P::Range(3, 45);
-    /// assert_eq!(a.add(b).collapse(), P::Fixed(a.min() + b.min()));
-    /// assert_eq!(P::From(3).add(P::Fixed(44)).max(), None);
-    /// assert_eq!(P::To(3).add(P::Fixed(32)).max(), Some(35));
+    /// let a = Range { min: 3, max: None };
+    /// let b = Range { min: 7, max: Some(7) };
+    /// let c = Range { min: 2, max: Some(33) };
+    ///
+    /// assert_eq!(a.add(b), Range { min: 10, max: None });
+    /// assert_eq!(b.add(c), Range { min: 9, max: Some(40) });
     /// ```
     #[inline]
     pub fn add(self, other: Self) -> Self
@@ -310,8 +389,22 @@ impl Range {
         }
     }
 
+    /// Joins the ranges.
+    ///
+    /// The resulting minimum and maximum is the higher one.
+    ///
+    /// ```
+    /// use cwinui::layout::Range;
+    ///
+    /// let a = Range { min: 7, max: None };
+    /// let b = Range { min: 2, max: Some(7) };
+    /// let c = Range { min: 3, max: Some(33) };
+    ///
+    /// assert_eq!(a.join(b), Range { min: 7, max: None });
+    /// assert_eq!(b.join(c), Range { min: 3, max: Some(33) });
+    /// ```
     #[inline]
-    pub fn union(self, other: Self) -> Self
+    pub fn join(self, other: Self) -> Self
     {
         Self {
             min: std::cmp::max(self.min, other.min),
@@ -325,6 +418,7 @@ impl Range {
 ///
 /// Types can implement this trait to define their layout requirements.
 pub trait Proportional {
+    /// Computes the proportions.
     fn proportions(&self) -> Proportions;
 }
 
@@ -338,6 +432,8 @@ pub struct Area {
 }
 
 impl Area {
+    /// Creates `Area` from the position of the top-left corner and its
+    /// dimensions.
     #[inline]
     pub fn from_parts(pos: Pos, dimensions: Dim) -> Self
     {
@@ -349,6 +445,7 @@ impl Area {
         }
     }
 
+    /// Gets the position of the top-left corner and the dimensions.
     #[inline]
     pub fn parts(self) -> (Pos, Dim)
     {
@@ -358,6 +455,7 @@ impl Area {
         )
     }
 
+    /// Aligns `self` to `anchor`.
     #[inline]
     pub fn align_to(&self, anchor: Self, alignment: Alignment) -> Self
     {
@@ -397,7 +495,7 @@ impl Area {
         }
     }
 
-    /// Checks if `self` and `other` overlap.
+    /// Checks if areas overlap.
     pub fn overlaps(&self, other: Self) -> bool
     {
         let other_l = other.x;
@@ -416,6 +514,7 @@ impl Area {
         x_overlaps && y_overlaps
     }
 
+    /// Checks if `pos` is falls within the area.
     #[inline]
     pub fn contains_pos(&self, pos: Pos) -> bool
     {
@@ -427,13 +526,14 @@ impl Area {
 
     /// Checks if either of the dimensions is `0`.
     #[inline]
-    pub fn is_void(&self) -> bool
+    pub fn is_collapsed(&self) -> bool
     {
         self.width == 0 || self.height == 0
     }
 
-    /// Returns the area that corresponds to the intersection of `self` and
-    /// `other`.
+    /// Computes the intersection of `self` and `other`.
+    ///
+    /// **It is unsound to call this on areas that do not overlap.**
     ///
     /// # Overflows
     ///
@@ -455,6 +555,7 @@ impl Area {
         }
     }
 
+    /// Shrinks the area from all sides by `count`.
     #[inline]
     pub fn inset(&self, count: u16) -> Self
     {
@@ -466,10 +567,15 @@ impl Area {
         }
     }
 
+    /// Splits the area horizontally at `y` relative to the start of the area.
+    ///
+    /// # Panics
+    ///
+    /// When `y` is greater than the height.
     #[inline]
     pub fn split_horiz_at(&self, y: u16) -> (Self, Self)
     {
-        // FIXME: make these debug asserts.
+        // FIXME: make these debug asserts?
         assert!(y <= self.height);
 
         (
@@ -488,10 +594,15 @@ impl Area {
         )
     }
 
+    /// Splits the area vertically at `x` relative to the start of the area.
+    ///
+    /// # Panics
+    ///
+    /// When `x` is greater than the width.
     #[inline]
     pub fn split_vert_at(&self, x: u16) -> (Self, Self)
     {
-        // FIXME: make these debug asserts.
+        // FIXME: make these debug asserts?
         assert!(x <= self.width);
 
         (
@@ -510,6 +621,11 @@ impl Area {
         )
     }
 
+    /// Splits the area horizontally at `y`.
+    ///
+    /// # Panics
+    ///
+    /// When `y` is not contained in the area.
     #[inline]
     pub fn split_horiz_at_abs(&self, y: u16) -> (Self, Self)
     {
@@ -535,6 +651,11 @@ impl Area {
         )
     }
 
+    /// Splits the area vertically at `x`.
+    ///
+    /// # Panics
+    ///
+    /// When `x` is not contained in the area.
     #[inline]
     pub fn split_vert_at_abs(&self, x: u16) -> (Self, Self)
     {
@@ -560,6 +681,7 @@ impl Area {
         )
     }
 
+    /// Dimensions of the area.
     #[inline]
     pub fn dimensions(&self) -> Dim
     {
@@ -664,6 +786,7 @@ impl Area {
     }
 }
 
+/// Alignment of an item within a rectangle.
 #[derive(Debug, Copy, Clone, Default, PartialEq, Eq)]
 pub enum Alignment {
     #[default]
@@ -678,6 +801,7 @@ pub enum Alignment {
     BottomRight,
 }
 
+/// Alignment of a string of items within a rectangle.
 #[derive(Debug, Copy, Clone, Default, PartialEq, Eq)]
 pub enum Justify {
     HCenter(u16),

@@ -4,29 +4,33 @@ use termion::input::MouseTerminal;
 
 use crate::{Area, Dim};
 use crate::buffer::Buffer;
-use crate::paint::Paint;
+use crate::widget::Paint;
 use crate::style::{Color, TextStyle};
 use crate::util::offset;
 use crate::widget::Widget;
 
+/// Context for rendering widgets to the screen.
 #[derive(Debug)]
 pub struct RenderContext<'b> {
     buffer: &'b mut Buffer,
 }
 
 impl<'b> RenderContext<'b> {
+    /// The full area of the screen.
     #[inline]
     pub fn area(&self) -> Area
     {
         self.buffer.area()
     }
 
+    /// The full dimensions of the screen.
     #[inline]
     pub fn dimensions(&self) -> Dim
     {
         self.buffer.dimensions()
     }
 
+    /// Renders `widget` to the screen within `area`.
     #[inline]
     pub fn render_widget<W: Widget<Buffer>>(&mut self, widget: &W, area: Area)
     {
@@ -34,6 +38,7 @@ impl<'b> RenderContext<'b> {
     }
 }
 
+/// The screen that renders widgets and displays them to the terminal.
 pub struct Screen {
     pub width: u16,
     pub height: u16,
@@ -42,6 +47,9 @@ pub struct Screen {
 }
 
 impl Screen {
+    /// Initialises and creates the `Screen`.
+    ///
+    /// Should be called only once, as it modifies the state of the terminal.
     pub fn init(rows: u16, cols: u16) -> Self
     {
         let (x, y) = termion::terminal_size()
@@ -65,6 +73,10 @@ impl Screen {
         }
     }
 
+    /// Draws the UI into the `Screen`'s internal buffer.
+    ///
+    /// `ui` is passed the [render context](RenderContext), which it can use to
+    /// draw widgets.
     pub fn draw<F>(&mut self, ui: F)
     where
         F: FnOnce(&mut RenderContext)
@@ -78,7 +90,7 @@ impl Screen {
         ui(&mut ctx);
     }
 
-    /// Writes the internal buffer to the terminal.
+    /// Flushes the internal buffer to the terminal.
     pub fn refresh(&mut self)
     {
         for y in 0..self.height - 1 {
