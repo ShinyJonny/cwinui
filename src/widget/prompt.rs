@@ -3,7 +3,7 @@ use termion::event::Event;
 use crate::Pos;
 use crate::layout::Area;
 use crate::widget::Paint;
-use crate::style::{StyledString, StyledStr, Style, StyledChar};
+use crate::style::{Style, StyledChar, StyledStr, StyledString, WithStyle};
 
 use super::{
     Widget,
@@ -18,6 +18,17 @@ pub struct Theme {
     pub sep: StyledString,
     pub input_style: Style,
     pub blank_c: StyledChar,
+}
+
+impl Default for Theme {
+    fn default() -> Self
+    {
+        Self {
+            sep: StyledString::from(" "),
+            input_style: Style::default(),
+            blank_c: 'c'.styled(),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -57,22 +68,14 @@ impl Prompt {
 
     /// Adjusts the theme.
     #[inline]
-    pub fn theme<'t, S, C>(
-        mut self,
-        sep: S,
-        input_style: Style,
-        blank_c: C
-    ) -> Self
-    where
-        S: Into<StyledStr<'t>>,
-        C: Into<StyledChar>
+    pub fn theme(mut self, theme: Theme) -> Self
     {
-        self.theme = ThemeInternal {
-            sep: StyledString::from(sep)
-        };
+        let Theme { sep, input_style, blank_c } = theme;
+
+        self.theme = ThemeInternal { sep };
         self.inputline.theme = super::inputline::Theme {
-            input_style: input_style.into(),
-            blank_c: blank_c.into(),
+            input_style,
+            blank_c,
         };
 
         self

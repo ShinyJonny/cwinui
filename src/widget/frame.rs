@@ -1,4 +1,4 @@
-use crate::style::StyledChar;
+use crate::style::{Style, StyledChar};
 use crate::widget::Paint;
 use crate::{Pos, Area,};
 
@@ -17,22 +17,32 @@ pub struct Theme {
     pub left: StyledChar,
 }
 
-impl Default for Theme {
-    fn default() -> Self
+impl Theme {
+    /// Const version of `Default::default`.
+    pub const fn default() -> Self
     {
+        let c = StyledChar { content: '#', style: Style::default() };
         Self {
-            top_left: '#'.into(),
-            top_right: '#'.into(),
-            bottom_right: '#'.into(),
-            bottom_left: '#'.into(),
-            top: '#'.into(),
-            right: '#'.into(),
-            bottom: '#'.into(),
-            left: '#'.into(),
+            top_left: c,
+            top_right: c,
+            bottom_right: c,
+            bottom_left: c,
+            top: c,
+            right: c,
+            bottom: c,
+            left: c,
         }
     }
 }
 
+impl Default for Theme {
+    fn default() -> Self
+    {
+        Self::default()
+    }
+}
+
+/// Adds border around the contained widget.
 #[derive(Debug, Clone)]
 pub struct Frame<T = Dummy> {
     pub theme: Theme,
@@ -41,7 +51,7 @@ pub struct Frame<T = Dummy> {
 
 impl<T> Frame<T> {
     /// Creates a new `Frame` containing `inner`.
-    pub fn new(inner: T) -> Self
+    pub const fn new(inner: T) -> Self
     {
         Self {
             inner,
@@ -51,30 +61,9 @@ impl<T> Frame<T> {
 
     /// Adjusts the theme of the `Frame`.
     #[inline]
-    pub fn theme<C>(
-        mut self,
-        top_left: C,
-        top_right: C,
-        bottom_right: C,
-        bottom_left: C,
-        top: C,
-        right: C,
-        bottom: C,
-        left: C,
-    ) -> Self
-    where
-        C: Into<StyledChar>
+    pub const fn theme(mut self, theme: Theme) -> Self
     {
-        self.theme = Theme {
-            top_left: top_left.into(),
-            top_right: top_right.into(),
-            bottom_right: bottom_right.into(),
-            bottom_left: bottom_left.into(),
-            top: top.into(),
-            right: right.into(),
-            bottom: bottom.into(),
-            left: left.into(),
-        };
+        self.theme = theme;
 
         self
     }

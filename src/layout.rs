@@ -1,3 +1,6 @@
+use crate::util::{min, max};
+
+
 /// Position coordinates.
 #[derive(Debug, Copy, Clone, Default, PartialEq, Eq, std::hash::Hash)]
 pub struct Pos {
@@ -25,7 +28,7 @@ impl Pos {
     /// );
     /// ```
     #[inline]
-    pub fn saturating_add(self, rhs: Self) -> Self
+    pub const fn saturating_add(self, rhs: Self) -> Self
     {
         Self {
             x: self.x.saturating_add(rhs.x),
@@ -49,7 +52,7 @@ impl Pos {
     /// );
     /// ```
     #[inline]
-    pub fn saturating_sub(self, rhs: Self) -> Self
+    pub const fn saturating_sub(self, rhs: Self) -> Self
     {
         Self {
             x: self.x.saturating_sub(rhs.x),
@@ -59,7 +62,7 @@ impl Pos {
 
     /// Adds `x` to `self.x`.
     #[inline]
-    pub fn add_x(self, x: u16) -> Self
+    pub const fn add_x(self, x: u16) -> Self
     {
         Self {
             x: self.x + x,
@@ -69,7 +72,7 @@ impl Pos {
 
     /// Adds `y` to `self.y`.
     #[inline]
-    pub fn add_y(self, y: u16) -> Self
+    pub const fn add_y(self, y: u16) -> Self
     {
         Self {
             x: self.x,
@@ -79,7 +82,7 @@ impl Pos {
 
     /// Subtracts `x` from `self.x`.
     #[inline]
-    pub fn sub_x(self, x: u16) -> Self
+    pub const fn sub_x(self, x: u16) -> Self
     {
         Self {
             x: self.x - x,
@@ -89,11 +92,31 @@ impl Pos {
 
     /// Subtracts `y` from `self.y`.
     #[inline]
-    pub fn sub_y(self, y: u16) -> Self
+    pub const fn sub_y(self, y: u16) -> Self
     {
         Self {
             x: self.x,
             y: self.y - y,
+        }
+    }
+
+    /// Const version of `Add::add`.
+    #[inline]
+    pub const fn add(self, rhs: Self) -> Self
+    {
+        Self {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+        }
+    }
+
+    /// Const version of `Sub::sub`.
+    #[inline]
+    pub const fn sub(self, rhs: Self) -> Self
+    {
+        Self {
+            x: self.x - rhs.x,
+            y: self.y - rhs.y,
         }
     }
 }
@@ -101,13 +124,9 @@ impl Pos {
 impl std::ops::Add for Pos {
     type Output = Self;
 
-    #[inline]
     fn add(self, rhs: Self) -> Self::Output
     {
-        Self {
-            x: self.x + rhs.x,
-            y: self.y + rhs.y,
-        }
+        Self::add(self, rhs)
     }
 }
 
@@ -117,10 +136,7 @@ impl std::ops::Sub for Pos {
     #[inline]
     fn sub(self, rhs: Self) -> Self::Output
     {
-        Self {
-            x: self.x - rhs.x,
-            y: self.y - rhs.y,
-        }
+        Self::sub(self, rhs)
     }
 }
 
@@ -134,7 +150,7 @@ pub struct Dim {
 impl Dim {
     /// Check if either of the dimensions is `0`.
     #[inline]
-    pub fn is_collapsed(&self) -> bool
+    pub const fn is_collapsed(&self) -> bool
     {
         self.width == 0 || self.height == 0
     }
@@ -146,7 +162,7 @@ impl Dim {
     /// the `Err` value is returned with the best possible attempt at satisfying
     /// the dimensions.
     #[inline]
-    pub fn satisfy(self, proportions: Proportions) -> Result<Dim, Dim>
+    pub const fn satisfy(self, proportions: Proportions) -> Result<Dim, Dim>
     {
         let width  = Self::satisfy_range(self.width, proportions.horiz);
         let height = Self::satisfy_range(self.height, proportions.vert);
@@ -160,14 +176,19 @@ impl Dim {
     }
 
     #[inline(always)]
-    fn satisfy_range(available: u16, range: Range) -> Option<u16>
+    const fn satisfy_range(available: u16, range: Range) -> Option<u16>
     {
-        if available >= range.min {
-            Some(range.max.map(|max| std::cmp::min(available, max))
-                .unwrap_or(available))
-        } else {
-            None
+        if available < range.min {
+            return None;
         }
+
+        let provision = if let Some(max) = range.max {
+            min!(available, max)
+        } else {
+            available
+        };
+
+        Some(provision)
     }
 }
 
@@ -206,7 +227,7 @@ impl Proportions {
 
     /// Collapses all dimensions to minimum fixed values.
     #[inline]
-    pub fn collapse(self) -> Self
+    pub const fn collapse(self) -> Self
     {
         Self {
             horiz: self.horiz.collapse(),
@@ -219,7 +240,7 @@ impl Proportions {
     /// This creates proportions that can contain the previous ones but can also
     /// grow flexibly.
     #[inline]
-    pub fn expand(self) -> Self
+    pub const fn expand(self) -> Self
     {
         Self {
             horiz: self.horiz.expand(),
@@ -232,7 +253,7 @@ impl Proportions {
     /// It can be used to express the resulting proportions of 2
     /// [`Proportional`] objects placed next to each other.
     #[inline]
-    pub fn add(self, other: Self) -> Self
+    pub const fn add(self, other: Self) -> Self
     {
         Self {
             horiz: self.horiz.add(other.horiz),
@@ -257,7 +278,7 @@ impl Proportions {
     /// );
     /// ```
     #[inline]
-    pub fn join(self, other: Self) -> Self
+    pub const fn join(self, other: Self) -> Self
     {
         Self {
             horiz: self.horiz.join(other.horiz),
@@ -359,7 +380,7 @@ impl Range {
 
     /// Collapse the maximum to be equal to the minimum.
     #[inline]
-    pub fn collapse(mut self) -> Self
+    pub const fn collapse(mut self) -> Self
     {
         self.max = Some(self.min);
 
@@ -368,7 +389,7 @@ impl Range {
 
     /// Make the upper end flexible.
     #[inline]
-    pub fn expand(mut self) -> Self
+    pub const fn expand(mut self) -> Self
     {
         self.max = None;
 
@@ -393,12 +414,15 @@ impl Range {
     /// assert_eq!(b.add(c), Range { min: 9, max: Some(40) });
     /// ```
     #[inline]
-    pub fn add(self, other: Self) -> Self
+    pub const fn add(self, other: Self) -> Self
     {
         Self {
             min: self.min + other.min,
-            max: Option::zip(self.max, other.max)
-                .map(|(a, b)| a + b),
+            max: if let (Some(a), Some(b)) = (self.max, other.max) {
+                Some(a + b)
+            } else {
+                None
+            },
         }
     }
 
@@ -417,12 +441,15 @@ impl Range {
     /// assert_eq!(b.join(c), Range { min: 3, max: Some(33) });
     /// ```
     #[inline]
-    pub fn join(self, other: Self) -> Self
+    pub const fn join(self, other: Self) -> Self
     {
         Self {
-            min: std::cmp::max(self.min, other.min),
-            max: Option::zip(self.max, other.max)
-                .map(|(a, b)| std::cmp::max(a, b)),
+            min: max!(self.min, other.min),
+            max: if let (Some(a), Some(b)) = (self.max, other.max) {
+                Some(max!(a, b))
+            } else {
+                None
+            },
         }
     }
 }
@@ -448,7 +475,7 @@ impl Area {
     /// Creates `Area` from the position of the top-left corner and its
     /// dimensions.
     #[inline]
-    pub fn from_parts(pos: Pos, dimensions: Dim) -> Self
+    pub const fn from_parts(pos: Pos, dimensions: Dim) -> Self
     {
         Self {
             x: pos.x,
@@ -460,7 +487,7 @@ impl Area {
 
     /// Gets the position of the top-left corner and the dimensions.
     #[inline]
-    pub fn parts(self) -> (Pos, Dim)
+    pub const fn parts(self) -> (Pos, Dim)
     {
         (
             Pos { x: self.x, y: self.y },
@@ -470,7 +497,7 @@ impl Area {
 
     /// Aligns `self` to `anchor`.
     #[inline]
-    pub fn align_to(&self, anchor: Self, alignment: Alignment) -> Self
+    pub const fn align_to(&self, anchor: Self, alignment: Alignment) -> Self
     {
         let top_left = match alignment {
             Alignment::TopLeft => anchor.top_left(),
@@ -509,7 +536,7 @@ impl Area {
     }
 
     /// Checks if areas overlap.
-    pub fn overlaps(&self, other: Self) -> bool
+    pub const fn overlaps(&self, other: Self) -> bool
     {
         let other_l = other.x;
         let other_r = other.x + other.width;
@@ -529,7 +556,7 @@ impl Area {
 
     /// Checks if `pos` is falls within the area.
     #[inline]
-    pub fn contains_pos(&self, pos: Pos) -> bool
+    pub const fn contains_pos(&self, pos: Pos) -> bool
     {
         pos.x >= self.x
             && pos.x < self.x + self.width
@@ -539,7 +566,7 @@ impl Area {
 
     /// Checks if either of the dimensions is `0`.
     #[inline]
-    pub fn is_collapsed(&self) -> bool
+    pub const fn is_collapsed(&self) -> bool
     {
         self.width == 0 || self.height == 0
     }
@@ -552,13 +579,12 @@ impl Area {
     ///
     /// When `self` and `other` do not overlap.
     #[inline]
-    pub fn intersection(&self, other: Self) -> Self
+    pub const fn intersection(&self, other: Self) -> Self
     {
-        let left_x = std::cmp::max(self.x, other.x);
-        let right_x = std::cmp::min(self.x + self.width, other.x + other.width);
-        let top_y = std::cmp::max(self.y, other.y);
-        let bottom_y
-            = std::cmp::min(self.y + self.height, other.y + other.height);
+        let left_x   = max!(self.x, other.x);
+        let right_x  = min!(self.x + self.width, other.x + other.width);
+        let top_y    = max!(self.y, other.y);
+        let bottom_y = min!(self.y + self.height, other.y + other.height);
 
         Self {
             x: left_x,
@@ -570,7 +596,7 @@ impl Area {
 
     /// Shrinks the area from all sides by `count`.
     #[inline]
-    pub fn inset(&self, count: u16) -> Self
+    pub const fn inset(&self, count: u16) -> Self
     {
         Self {
             x: self.x + count,
@@ -586,7 +612,7 @@ impl Area {
     ///
     /// When `y` is greater than the height.
     #[inline]
-    pub fn split_horiz_at(&self, y: u16) -> (Self, Self)
+    pub const fn split_horiz_at(&self, y: u16) -> (Self, Self)
     {
         // FIXME: make these debug asserts?
         assert!(y <= self.height);
@@ -613,7 +639,7 @@ impl Area {
     ///
     /// When `x` is greater than the width.
     #[inline]
-    pub fn split_vert_at(&self, x: u16) -> (Self, Self)
+    pub const fn split_vert_at(&self, x: u16) -> (Self, Self)
     {
         // FIXME: make these debug asserts?
         assert!(x <= self.width);
@@ -640,7 +666,7 @@ impl Area {
     ///
     /// When `y` is not contained in the area.
     #[inline]
-    pub fn split_horiz_at_abs(&self, y: u16) -> (Self, Self)
+    pub const fn split_horiz_at_abs(&self, y: u16) -> (Self, Self)
     {
         // FIXME: make these debug asserts.
         assert!(y >= self.y);
@@ -670,7 +696,7 @@ impl Area {
     ///
     /// When `x` is not contained in the area.
     #[inline]
-    pub fn split_vert_at_abs(&self, x: u16) -> (Self, Self)
+    pub const fn split_vert_at_abs(&self, x: u16) -> (Self, Self)
     {
         // FIXME: make these debug asserts.
         assert!(x >= self.x);
@@ -696,21 +722,21 @@ impl Area {
 
     /// Dimensions of the area.
     #[inline]
-    pub fn dimensions(&self) -> Dim
+    pub const fn dimensions(&self) -> Dim
     {
         Dim { width: self.width, height: self.height }
     }
 
     /// Position of the top left corner.
     #[inline]
-    pub fn top_left(&self) -> Pos
+    pub const fn top_left(&self) -> Pos
     {
         Pos { x: self.x, y: self.y }
     }
 
     /// Position of the midpoint of the top side.
     #[inline]
-    pub fn top_center(&self) -> Pos
+    pub const fn top_center(&self) -> Pos
     {
         Pos {
             x: self.x + self.width / 2,
@@ -722,7 +748,7 @@ impl Area {
     ///
     /// NOTE: the x coordinate is non-inclusive.
     #[inline]
-    pub fn top_right(&self) -> Pos
+    pub const fn top_right(&self) -> Pos
     {
         Pos {
             x: self.x + self.width,
@@ -732,7 +758,7 @@ impl Area {
 
     /// Position of the midpoint of the left side.
     #[inline]
-    pub fn center_left(&self) -> Pos
+    pub const fn center_left(&self) -> Pos
     {
         Pos {
             x: self.x,
@@ -742,7 +768,7 @@ impl Area {
 
     /// Position of the center.
     #[inline]
-    pub fn center(&self) -> Pos
+    pub const fn center(&self) -> Pos
     {
         Pos {
             x: self.x + self.width / 2,
@@ -754,7 +780,7 @@ impl Area {
     ///
     /// NOTE: the x coordinate is non-inclusive.
     #[inline]
-    pub fn center_right(&self) -> Pos
+    pub const fn center_right(&self) -> Pos
     {
         Pos {
             x: self.x + self.width,
@@ -766,7 +792,7 @@ impl Area {
     ///
     /// NOTE: the y coordinate is non-inclusive.
     #[inline]
-    pub fn bottom_left(&self) -> Pos
+    pub const fn bottom_left(&self) -> Pos
     {
         Pos {
             x: self.x,
@@ -778,7 +804,7 @@ impl Area {
     ///
     /// NOTE: the y coordinate is non-inclusive.
     #[inline]
-    pub fn bottom_center(&self) -> Pos
+    pub const fn bottom_center(&self) -> Pos
     {
         Pos {
             x: self.x + self.width / 2,
@@ -790,7 +816,7 @@ impl Area {
     ///
     /// NOTE: both coordinates are non-inclusive.
     #[inline]
-    pub fn bottom_right(&self) -> Pos
+    pub const fn bottom_right(&self) -> Pos
     {
         Pos {
             x: self.x + self.width,

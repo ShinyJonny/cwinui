@@ -17,6 +17,24 @@ pub struct Theme {
     pub input_style: Style,
 }
 
+impl Theme {
+    /// Const version of `Default::default`.
+    pub const fn default() -> Self
+    {
+        Self {
+            blank_c: StyledChar { content: ' ', style: Style::default() },
+            input_style: Style::default(),
+        }
+    }
+}
+
+impl Default for Theme {
+    fn default() -> Self
+    {
+        Self::default()
+    }
+}
+
 /// Primitive for rendering input fields.
 #[derive(Debug, Clone)]
 pub struct InputLine {
@@ -33,24 +51,18 @@ impl InputLine {
         Self {
             content: String::with_capacity(capacity),
             cursor_pos: 0,
-            theme: Theme {
-                blank_c: ' '.styled(),
-                input_style: Style::default(),
-            },
+            theme: Theme::default(),
             active: false,
         }
     }
 
     /// Creates a new `InputLine`.
-    pub fn new() -> Self
+    pub const fn new() -> Self
     {
         Self {
             content: String::new(),
             cursor_pos: 0,
-            theme: Theme {
-                blank_c: ' '.styled(),
-                input_style: Style::default(),
-            },
+            theme: Theme::default(),
             active: false,
         }
     }
@@ -64,18 +76,9 @@ impl InputLine {
 
     /// Adjusts the theme of the `InputLine`.
     #[inline]
-    pub fn theme<C>(
-        mut self,
-        blank_c: C,
-        input_style: Style,
-    ) -> Self
-    where
-        C: Into<StyledChar>
+    pub const fn theme(mut self, theme: Theme) -> Self
     {
-        self.theme = Theme {
-            blank_c: blank_c.into(),
-            input_style,
-        };
+        self.theme = theme;
 
         self
     }

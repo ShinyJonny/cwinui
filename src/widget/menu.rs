@@ -20,8 +20,9 @@ pub struct Theme {
     pub selected: Transformer,
 }
 
-impl Default for Theme {
-    fn default() -> Self
+impl Theme {
+    /// Const version of `Default::default`.
+    pub const fn default() -> Self
     {
         Self {
             normal: |item| {
@@ -35,6 +36,13 @@ impl Default for Theme {
                 line
             },
         }
+    }
+}
+
+impl Default for Theme {
+    fn default() -> Self
+    {
+        Self::default()
     }
 }
 

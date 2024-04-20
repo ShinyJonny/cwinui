@@ -1,17 +1,36 @@
 use bitflags::bitflags;
 
 /// Styling data used to style text.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, std::hash::Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, std::hash::Hash)]
 pub struct Style {
     pub text_style: Option<TextStyle>,
     pub fg_color: Option<Color>,
     pub bg_color: Option<Color>,
 }
 
+impl Default for Style {
+    #[inline]
+    fn default() -> Self
+    {
+        Self::default()
+    }
+}
+
 impl Style {
+    /// Const version of `Default::default`.
+    #[inline]
+    pub const fn default() -> Self
+    {
+        Self {
+            text_style: None,
+            fg_color: None,
+            bg_color: None,
+        }
+    }
+
     /// Resets the style.
     #[inline]
-    pub fn clean(mut self) -> Self
+    pub const fn clean(mut self) -> Self
     {
         self.text_style = Some(TextStyle::NORMAL);
         self.fg_color = Some(Color::Normal);
@@ -22,7 +41,7 @@ impl Style {
 
     /// Adjusts the text style.
     #[inline]
-    pub fn text_style(mut self, new_ts: TextStyle) -> Self
+    pub const fn text_style(mut self, new_ts: TextStyle) -> Self
     {
         self.text_style = Some(new_ts);
 
@@ -31,7 +50,7 @@ impl Style {
 
     /// Adjusts the foreground color.
     #[inline]
-    pub fn fg(mut self, color: Color) -> Self
+    pub const fn fg(mut self, color: Color) -> Self
     {
         self.fg_color = Some(color);
 
@@ -40,7 +59,7 @@ impl Style {
 
     /// Adjusts the background color.
     #[inline]
-    pub fn bg(mut self, color: Color) -> Self
+    pub const fn bg(mut self, color: Color) -> Self
     {
         self.bg_color = Some(color);
 
@@ -49,9 +68,9 @@ impl Style {
 
     /// Overrides with values from `other` that aren't `None`.
     #[inline]
-    pub fn merge(&self, other: Self) -> Self
+    pub const fn merge(&self, other: Self) -> Self
     {
-        let mut ret = self.clone();
+        let mut ret = *self;
 
         if other.text_style.is_some() {
             ret.text_style = other.text_style;
@@ -70,6 +89,7 @@ impl Style {
 bitflags! {
     /// Used to define style special text styling in consoles, e.g. bold text,
     /// underlined text, blinking, etc.
+    #[derive(Default)]
     pub struct TextStyle: u8 {
         const NORMAL    = 0b00000000;
         const BOLD      = 0b00000001;
@@ -77,13 +97,6 @@ bitflags! {
         const INVERT    = 0b00000100;
         const ITALIC    = 0b00001000;
         const UNDERLINE = 0b00010000;
-    }
-}
-
-impl Default for TextStyle {
-    fn default() -> Self
-    {
-        Self::NORMAL
     }
 }
 

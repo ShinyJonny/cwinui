@@ -1,5 +1,5 @@
 use crate::widget::Paint;
-use crate::style::WithStyle;
+use crate::style::Style;
 use super::Widget;
 use crate::layout::Area;
 use crate::style::StyledChar;
@@ -12,14 +12,24 @@ pub struct Theme {
     pub body: StyledChar,
 }
 
+impl Theme {
+    /// Const version of `Default::default`.
+    #[inline]
+    pub const fn default() -> Self
+    {
+        let c = StyledChar { content: '\0', style: Style::default() };
+        Self {
+            beg: c,
+            end: c,
+            body: c,
+        }
+    }
+}
+
 impl Default for Theme {
     fn default() -> Self
     {
-        Self {
-            beg: '\0'.styled(),
-            end: '\0'.styled(),
-            body: '\0'.styled(),
-        }
+        Self::default()
     }
 }
 
@@ -33,27 +43,18 @@ pub struct HorizBar {
 impl HorizBar {
     /// Creates a new `HorizBar`.
     #[inline]
-    pub fn new() -> Self
+    pub const fn new() -> Self
     {
-        Self::default()
+        Self {
+            theme: Theme::default(),
+        }
     }
 
     /// Adjusts the theme of the `HorizBar`.
     #[inline]
-    pub fn theme<C>(
-        mut self,
-        beg: C,
-        end: C,
-        body: C,
-    ) -> Self
-    where
-        C: Into<StyledChar>
+    pub const fn theme(mut self, theme: Theme) -> Self
     {
-        self.theme = Theme {
-            beg: beg.into(),
-            end: end.into(),
-            body: body.into(),
-        };
+        self.theme = theme;
 
         self
     }
@@ -83,26 +84,17 @@ pub struct VertBar {
 impl VertBar {
     /// Creates a new `VertBar`.
     #[inline]
-    pub fn new() -> Self
+    pub const fn new() -> Self
     {
-        Self::default()
+        Self {
+            theme: Theme::default(),
+        }
     }
 
     #[inline]
-    pub fn theme<C>(
-        mut self,
-        beg: C,
-        end: C,
-        body: C,
-    ) -> Self
-    where
-        C: Into<StyledChar>
+    pub const fn theme(mut self, theme: Theme) -> Self
     {
-        self.theme = Theme {
-            beg: beg.into(),
-            end: end.into(),
-            body: body.into(),
-        };
+        self.theme = theme;
 
         self
     }
