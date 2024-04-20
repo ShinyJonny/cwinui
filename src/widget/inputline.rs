@@ -11,7 +11,7 @@ use crate::style::{StyledChar, Style, WithStyle};
 
 
 /// Configuration options for theming [InputLine].
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy)]
 pub struct Theme {
     pub blank_c: StyledChar,
     pub input_style: Style,

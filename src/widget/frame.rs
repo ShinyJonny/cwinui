@@ -5,7 +5,7 @@ use crate::{Pos, Area,};
 use super::{Widget, Dummy};
 
 /// Configuration options for theming [Frame].
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy)]
 pub struct Theme {
     pub top_left: StyledChar,
     pub top_right: StyledChar,

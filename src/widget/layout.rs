@@ -5,7 +5,7 @@ use crate::widget::Paint;
 
 
 /// Renders the wrapped widget in the smallest area possible.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Min<T: Proportional>(pub T);
 
 impl<T: Widget<P> + Proportional, P: Paint> Widget<P> for Min<T> {
@@ -30,7 +30,7 @@ impl<T: Proportional> Proportional for Min<T> {
 
 
 /// Align the contained widget based on `alignment`.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Align<T: Proportional> {
     pub inner:     T,
     pub alignment: Alignment,
@@ -113,7 +113,7 @@ macro_rules! def_static_align {
         #[doc = "Align the contained widget to"]
         #[doc = concat!("[`Alignment::", stringify!($al), "`]")]
         #[doc = "."]
-        #[derive(Debug)]
+        #[derive(Debug, Clone)]
         pub struct $al<T: Proportional>(pub T);
 
         impl<T: Widget<P> + Proportional, P: Paint> Widget<P> for $al<T> {
@@ -153,6 +153,7 @@ def_static_align!(BottomRight);
 
 
 /// Adds padding to the contained widget.
+#[derive(Debug, Clone)]
 pub struct Pad<T> {
     pub inner:  T,
     pub top:    u16,
@@ -224,7 +225,7 @@ where
 
 
 /// Container with its own proportions.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Container<T> {
     pub inner: T,
     pub proportions: Proportions,

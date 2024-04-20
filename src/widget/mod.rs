@@ -294,7 +294,7 @@ pub trait InteractiveWidget {
 
 
 /// A dummy widget that does nothing.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy)]
 pub struct Dummy;
 
 impl<P: Paint> Widget<P> for Dummy {
@@ -303,4 +303,11 @@ impl<P: Paint> Widget<P> for Dummy {
 
 impl InteractiveWidget for Dummy {
     fn process_event(&mut self, _e: Event) {}
+}
+
+impl crate::layout::Proportional for Dummy {
+    fn proportions(&self) -> crate::layout::Proportions
+    {
+        crate::layout::Proportions::flexible()
+    }
 }

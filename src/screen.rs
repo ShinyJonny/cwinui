@@ -46,6 +46,17 @@ pub struct Screen {
     stdout: RawTerminal<MouseTerminal<Stdout>>,
 }
 
+impl std::fmt::Debug for Screen {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result
+    {
+        f.debug_struct("Screen")
+            .field("width", &self.width)
+            .field("height", &self.height)
+            .field("buffer", &self.buffer)
+            .finish()
+    }
+}
+
 impl Screen {
     /// Initialises and creates the `Screen`.
     ///

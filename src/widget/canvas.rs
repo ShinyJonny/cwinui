@@ -7,6 +7,7 @@ use crate::widget::Paint;
 
 
 /// A buffered canvas that allows widgets to render onto it.
+#[derive(Clone)]
 pub struct Canvas {
     buffer: Buffer,
 }
@@ -25,6 +26,16 @@ impl Canvas {
     pub fn painter(&mut self) -> &mut impl Paint
     {
         &mut self.buffer
+    }
+}
+
+impl std::fmt::Debug for Canvas {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result
+    {
+        f.debug_struct("Canvas")
+            .field("width", &self.buffer.width)
+            .field("height", &self.buffer.height)
+            .finish()
     }
 }
 

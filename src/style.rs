@@ -1,24 +1,15 @@
 use bitflags::bitflags;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// Styling data used to style text.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, std::hash::Hash)]
 pub struct Style {
     pub text_style: Option<TextStyle>,
     pub fg_color: Option<Color>,
     pub bg_color: Option<Color>,
 }
 
-impl Default for Style {
-    fn default() -> Self
-    {
-        Self {
-            text_style: None,
-            fg_color: None,
-            bg_color: None,
-        }
-    }
-}
-
 impl Style {
+    /// Resets the style.
     #[inline]
     pub fn clean(mut self) -> Self
     {
@@ -29,6 +20,7 @@ impl Style {
         self
     }
 
+    /// Adjusts the text style.
     #[inline]
     pub fn text_style(mut self, new_ts: TextStyle) -> Self
     {
@@ -37,6 +29,7 @@ impl Style {
         self
     }
 
+    /// Adjusts the foreground color.
     #[inline]
     pub fn fg(mut self, color: Color) -> Self
     {
@@ -45,6 +38,7 @@ impl Style {
         self
     }
 
+    /// Adjusts the background color.
     #[inline]
     pub fn bg(mut self, color: Color) -> Self
     {
@@ -53,6 +47,7 @@ impl Style {
         self
     }
 
+    /// Overrides with values from `other` that aren't `None`.
     #[inline]
     pub fn merge(&self, other: Self) -> Self
     {
@@ -73,6 +68,8 @@ impl Style {
 }
 
 bitflags! {
+    /// Used to define style special text styling in consoles, e.g. bold text,
+    /// underlined text, blinking, etc.
     pub struct TextStyle: u8 {
         const NORMAL    = 0b00000000;
         const BOLD      = 0b00000001;
@@ -90,7 +87,9 @@ impl Default for TextStyle {
     }
 }
 
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+/// Colors supporting the standard 16 terminal colors, ANSI 256 colors and full
+/// true colors (24-bit RGB).
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, std::hash::Hash)]
 pub enum Color {
     #[default]
     Normal,
@@ -115,6 +114,9 @@ pub enum Color {
     Rgb(u8, u8, u8),
 }
 
+/// String slice with attached `Style`.
+///
+/// For owned version, see [StyledString].
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct StyledStr<'s> {
     pub content: &'s str,
@@ -123,12 +125,15 @@ pub struct StyledStr<'s> {
 
 impl<'s> StyledStr<'s> {
     // FIXME: properly implement `Borrow` and `ToOwned`.
+    /// Converts to `StyledString`.
     #[inline]
     pub fn to_owned(&self) -> StyledString
     {
         StyledString::from(*self)
     }
 
+    /// Slices the contained `str`, clones the [Style] and constructs a new
+    /// `StyledStr`.
     #[inline]
     pub fn slice<T>(&self, index: T) -> Self
     where
@@ -166,6 +171,7 @@ impl<'s> From<&'s StyledString> for StyledStr<'s>
     }
 }
 
+/// Owned version of [StyledStr].
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct StyledString {
     pub content: String,
@@ -187,6 +193,9 @@ where
     }
 }
 
+/// Char with attached style.
+///
+/// See also [StyledStr] and [StyledString].
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct StyledChar {
     pub content: char,
@@ -203,11 +212,15 @@ impl From<char> for StyledChar {
     }
 }
 
+/// Structures that can be wrapped with [Style].
 pub trait WithStyle<T>
 {
+    /// Converts `self` into `T` (styled type) and allows the style to be
+    /// introspected and modified via `f`.
     fn with_style<F>(self, f: F) -> T
     where
         F: FnOnce(Style) -> Style;
+    /// Converts `self` into `T` (styled type).
     fn styled(self) -> T;
 }
 

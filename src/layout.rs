@@ -1,5 +1,5 @@
 /// Position coordinates.
-#[derive(Debug, Copy, Clone, Default, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, Default, PartialEq, Eq, std::hash::Hash)]
 pub struct Pos {
     pub x: u16,
     pub y: u16,
@@ -125,7 +125,7 @@ impl std::ops::Sub for Pos {
 }
 
 /// Area dimensions.
-#[derive(Debug, Copy, Clone, Default, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, Default, PartialEq, Eq, std::hash::Hash)]
 pub struct Dim {
     pub width: u16,
     pub height: u16,
@@ -172,7 +172,7 @@ impl Dim {
 }
 
 /// Proportions of widgets that can be laid out in space.
-#[derive(Debug, Copy, Clone, Default, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, Default, PartialEq, Eq, std::hash::Hash)]
 pub struct Proportions {
     pub horiz: Range,
     pub vert: Range,
@@ -274,10 +274,23 @@ impl Proportions {
 /// NOTE: since a widget can always go as small as it wants to but the max size
 /// is the limiting factor, we always assume that the widget wants to be as
 /// large as it can (within its specified range).
-#[derive(Debug, Copy, Clone, Default, PartialEq, Eq)]
+#[derive(Copy, Clone, Default, PartialEq, Eq, std::hash::Hash)]
 pub struct Range {
     pub min: u16,
     pub max: Option<u16>,
+}
+
+impl std::fmt::Debug for Range {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result
+    {
+        f.write_fmt(format_args!("Range [{}, ", self.min))?;
+        if let Some(max) = self.max {
+            f.write_fmt(format_args!("{}", max))?;
+        } else {
+            f.write_str("-")?;
+        }
+        f.write_str("]")
+    }
 }
 
 impl Range {

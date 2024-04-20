@@ -26,7 +26,18 @@ where
 ///
 /// For more information on how the items are rendered, see the [Module-level
 /// documentation](self).
+#[derive(Clone)]
 pub struct FlexCol<'a, P: Paint>(pub &'a [&'a dyn FlexItem<P>]);
+
+impl<'a, P: Paint> std::fmt::Debug for FlexCol<'a, P> {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result
+    {
+        f.write_str("FlexCol ")?;
+        f.debug_list()
+            .entries(self.0.iter().map(|_| FlexItemDbg))
+            .finish()
+    }
+}
 
 impl<P: Paint> Widget<P> for FlexCol<'_, P> {
     fn render(&self, buf: &mut P, area: Area)
@@ -93,7 +104,18 @@ impl<P: Paint> Proportional for FlexCol<'_, P> {
 ///
 /// For more information on how the items are rendered, see the [Module-level
 /// documentation](self).
+#[derive(Clone)]
 pub struct FlexRow<'a, P: Paint>(pub &'a [&'a dyn FlexItem<P>]);
+
+impl<'a, P: Paint> std::fmt::Debug for FlexRow<'a, P> {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result
+    {
+        f.write_str("FlexRow ")?;
+        f.debug_list()
+            .entries(self.0.iter().map(|_| FlexItemDbg))
+            .finish()
+    }
+}
 
 impl<P: Paint> Widget<P> for FlexRow<'_, P> {
     fn render(&self, buf: &mut P, area: Area)
@@ -163,4 +185,15 @@ fn calc_grow(range: Range, max: u16) -> u16
         .map(|v| std::cmp::min(v, max))
         .unwrap_or(max)
         .saturating_sub(range.min)
+}
+
+
+struct FlexItemDbg;
+
+impl std::fmt::Debug for FlexItemDbg
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result
+    {
+        f.write_str("FlexItem")
+    }
 }

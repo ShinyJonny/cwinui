@@ -4,7 +4,7 @@ use crate::style::{StyledStr, StyledChar, Style};
 use crate::util::offset;
 
 /// Internals determining the state of the cursor.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Cursor {
     pub x: u16,
     pub y: u16,
@@ -16,7 +16,7 @@ pub struct Cursor {
 // FIXME: most of the fields cannot remain public.
 
 /// Versatile buffer that can be used for painting widgets.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Buffer {
     pub cursor: Cursor,
     pub width: u16,

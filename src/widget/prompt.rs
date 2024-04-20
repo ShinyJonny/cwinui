@@ -13,14 +13,14 @@ use super::{
 
 
 /// Configuration options for theming [Prompt].
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct Theme {
     pub sep: StyledString,
     pub input_style: Style,
     pub blank_c: StyledChar,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 struct ThemeInternal {
     sep: StyledString,
 }
