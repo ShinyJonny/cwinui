@@ -334,19 +334,19 @@ pub trait InteractiveWidget {
 }
 
 
-/// A dummy widget that does nothing.
+/// A widget that does nothing.
 #[derive(Debug, Clone, Copy)]
-pub struct Dummy;
+pub struct Void;
 
-impl<P: Paint> Widget<P> for Dummy {
+impl<P: Paint> Widget<P> for Void {
     fn render(&self, _buf: &mut P, _area: Area) {}
 }
 
-impl InteractiveWidget for Dummy {
+impl InteractiveWidget for Void {
     fn process_event(&mut self, _e: Event) {}
 }
 
-impl crate::layout::Proportional for Dummy {
+impl crate::layout::Proportional for Void {
     fn proportions(&self) -> crate::layout::Proportions
     {
         crate::layout::Proportions::flexible()

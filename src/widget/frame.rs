@@ -1,9 +1,8 @@
 use crate::layout::{Proportional, Proportions};
 use crate::style::{Style, StyledChar};
-use crate::widget::Paint;
 use crate::{Area, Dim, Pos};
 
-use super::{Widget, Dummy};
+use super::{Widget, Paint};
 
 /// Configuration options for theming [`Frame`].
 #[derive(Debug, Clone, Copy)]
@@ -45,7 +44,7 @@ impl Default for Theme {
 
 /// Adds border around the contained widget.
 #[derive(Debug, Clone)]
-pub struct Frame<T = Dummy> {
+pub struct Frame<T> {
     pub theme: Theme,
     pub inner: T,
 }

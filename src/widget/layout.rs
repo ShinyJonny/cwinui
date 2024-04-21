@@ -231,13 +231,13 @@ pub struct Container<T> {
     pub proportions: Proportions,
 }
 
-impl Container<super::Dummy> {
+impl Container<super::Void> {
     /// Creates a `Container` containing nothing.
     #[inline]
     pub const fn empty() -> Self
     {
         Self {
-            inner: super::Dummy,
+            inner: super::Void,
             proportions: Proportions::flexible(),
         }
     }
