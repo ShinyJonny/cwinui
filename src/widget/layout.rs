@@ -12,8 +12,8 @@ impl<T: Widget<P> + Proportional, P: Paint> Widget<P> for Min<T> {
     #[inline]
     fn render(&self, buf: &mut P, area: Area)
     {
-        let dim = area.dimensions()
-            .satisfy(self.proportions())
+        let dim = self.proportions()
+            .fit_into(area.dimensions())
             .unwrap_or_else(|d| d);
 
         self.0.render(buf, Area::from_parts(area.top_left(), dim));
@@ -67,8 +67,8 @@ impl<T: Widget<P> + Proportional, P: Paint> Widget<P> for Align<T> {
     #[inline]
     fn render(&self, buf: &mut P, area: Area)
     {
-        let dim = area.dimensions()
-            .satisfy(self.proportions())
+        let dim = self.proportions()
+            .fit_into(area.dimensions())
             .unwrap_or_else(|d| d);
 
         let pos = match self.alignment {
@@ -119,8 +119,8 @@ macro_rules! def_static_align {
         impl<T: Widget<P> + Proportional, P: Paint> Widget<P> for $al<T> {
             fn render(&self, buf: &mut P, area: Area)
             {
-                let dim = area.dimensions()
-                    .satisfy(self.0.proportions())
+                let dim = self.0.proportions()
+                    .fit_into(area.dimensions())
                     .unwrap_or_else(|d| d);
 
                 let inner_area = Area::from_parts(Pos::ZERO, dim)
@@ -276,5 +276,36 @@ impl<T> Proportional for Container<T> {
     fn proportions(&self) -> Proportions
     {
         self.proportions
+    }
+}
+
+
+/// In case if insufficient dimensions, renders `F` instead of `T`.
+#[derive(Debug, Clone)]
+pub struct Fallback<T: Proportional, F> {
+    pub inner: T,
+    pub fallback: F,
+}
+
+impl<T: Proportional, F, P: Paint> Widget<P> for Fallback<T, F>
+where
+    T: Widget<P>,
+    F: Widget<P>,
+{
+    fn render(&self, buf: &mut P, area: Area)
+    {
+        if area.dimensions().satisfies(self.inner.proportions()) {
+            self.inner.render(buf, area);
+        } else {
+            self.fallback.render(buf, area);
+        }
+    }
+}
+
+impl<T: Proportional, F> Proportional for Fallback<T, F> {
+    #[inline]
+    fn proportions(&self) -> Proportions
+    {
+        self.inner.proportions()
     }
 }

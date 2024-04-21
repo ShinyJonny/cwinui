@@ -148,47 +148,19 @@ pub struct Dim {
 }
 
 impl Dim {
-    /// Check if either of the dimensions is `0`.
+    /// Checks if either of the dimensions is `0`.
     #[inline]
-    pub const fn is_collapsed(&self) -> bool
+    pub const fn is_collapsed(self) -> bool
     {
         self.width == 0 || self.height == 0
     }
 
-    /// Return [`Dim`] that satisfies `proportions`.
-    ///
-    /// This method will always attempt to yield as large dimensions as
-    /// `proportions` allow. If the dimensions can't satisfy the proportions,
-    /// the `Err` value is returned with the best possible attempt at satisfying
-    /// the dimensions.
+    /// Checks if `proportions` can fit into the dimensions.
     #[inline]
-    pub const fn satisfy(self, proportions: Proportions) -> Result<Dim, Dim>
+    pub const fn satisfies(self, proportions: Proportions) -> bool
     {
-        let width  = Self::satisfy_range(self.width, proportions.horiz);
-        let height = Self::satisfy_range(self.height, proportions.vert);
-
-        match (width, height) {
-            (Some(width), Some(height)) => Ok(Self  { width,             height              }),
-            (Some(width), None        ) => Err(Self { width,             height: self.height }),
-            (None,        Some(height)) => Err(Self { width: self.width, height              }),
-            (None,        None        ) => Err(self),
-        }
-    }
-
-    #[inline(always)]
-    const fn satisfy_range(available: u16, range: Range) -> Option<u16>
-    {
-        if available < range.min {
-            return None;
-        }
-
-        let provision = if let Some(max) = range.max {
-            min!(available, max)
-        } else {
-            available
-        };
-
-        Some(provision)
+        self.width >= proportions.horiz.min
+            && self.height >= proportions.vert.min
     }
 }
 
@@ -284,6 +256,42 @@ impl Proportions {
             horiz: self.horiz.join(other.horiz),
             vert:  self.vert.join(other.vert),
         }
+    }
+
+    /// Try to fit the proportions into the [`Dim`]ensions.
+    ///
+    /// This method will always attempt to yield as large dimensions as the
+    /// proportions allow. If the dimensions can't satisfy the proportions,
+    /// the `Err` value is returned with the best possible attempt at fitting
+    /// into the dimensions.
+    #[inline]
+    pub const fn fit_into(self, dim: Dim) -> Result<Dim, Dim>
+    {
+        let width  = Self::fit_range(dim.width, self.horiz);
+        let height = Self::fit_range(dim.height, self.vert);
+
+        match (width, height) {
+            (Some(width), Some(height)) => Ok(Dim  { width,            height             }),
+            (Some(width), None        ) => Err(Dim { width,            height: dim.height }),
+            (None,        Some(height)) => Err(Dim { width: dim.width, height             }),
+            (None,        None        ) => Err(dim),
+        }
+    }
+
+    #[inline(always)]
+    const fn fit_range(available: u16, range: Range) -> Option<u16>
+    {
+        if available < range.min {
+            return None;
+        }
+
+        let provision = if let Some(max) = range.max {
+            min!(available, max)
+        } else {
+            available
+        };
+
+        Some(provision)
     }
 }
 
