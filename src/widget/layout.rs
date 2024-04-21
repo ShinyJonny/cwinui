@@ -244,7 +244,7 @@ impl Container<super::Dummy> {
 }
 
 impl<T> Container<T> {
-    /// Wraps `inner` in a `Container` with fully flexible proportions.
+    /// Wraps `inner` in a `Container` with default proportions.
     #[inline]
     pub const fn new(inner: T) -> Self
     {

@@ -4,7 +4,7 @@ use super::Widget;
 use crate::layout::Area;
 use crate::style::StyledChar;
 
-/// Configuration options for theming [HorizBar] and [VertBar].
+/// Configuration options for theming [`HorizBar`] and [`VertBar`].
 #[derive(Debug, Clone, Copy)]
 pub struct Theme {
     pub beg: StyledChar,

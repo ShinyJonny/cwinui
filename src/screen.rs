@@ -61,7 +61,7 @@ impl Screen {
     /// Initialises and creates the `Screen`.
     ///
     /// Should be called only once, as it modifies the state of the terminal.
-    pub fn init(rows: u16, cols: u16) -> Self
+    pub fn init(cols: u16, rows: u16) -> Self
     {
         let (x, y) = termion::terminal_size()
             .expect("Failed to detect terminal size.");
@@ -86,7 +86,7 @@ impl Screen {
 
     /// Draws the UI into the `Screen`'s internal buffer.
     ///
-    /// `ui` is passed the [render context](RenderContext), which it can use to
+    /// `ui` is passed the [`RenderContext`], which it can use to
     /// draw widgets.
     pub fn draw<F>(&mut self, ui: F)
     where

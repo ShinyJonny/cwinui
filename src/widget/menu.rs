@@ -13,7 +13,7 @@ use crate::Area;
 
 type Transformer = fn(&str) -> StyledString;
 
-/// Configuration options for theming [Menu].
+/// Configuration options for theming [`Menu`].
 #[derive(Debug, Clone, Copy)]
 pub struct Theme {
     pub normal: Transformer,

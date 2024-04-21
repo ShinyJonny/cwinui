@@ -12,7 +12,7 @@ use super::{
 };
 
 
-/// Configuration options for theming [Prompt].
+/// Configuration options for theming [`Prompt`].
 #[derive(Debug, Clone)]
 pub struct Theme {
     pub sep: StyledString,
@@ -36,7 +36,7 @@ struct ThemeInternal {
     sep: StyledString,
 }
 
-/// Prompt-like wrapper for [InputLine].
+/// Prompt-like wrapper for [`InputLine`].
 #[derive(Debug, Clone)]
 pub struct Prompt {
     pub label: StyledString,

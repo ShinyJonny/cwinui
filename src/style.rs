@@ -100,8 +100,8 @@ bitflags! {
     }
 }
 
-/// Colors supporting the standard 16 terminal colors, ANSI 256 colors and full
-/// true colors (24-bit RGB).
+/// Colors, supporting the standard 16 terminal colors, ANSI 256 colors and true
+/// colors (24-bit RGB).
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, std::hash::Hash)]
 pub enum Color {
     #[default]
@@ -129,7 +129,7 @@ pub enum Color {
 
 /// String slice with attached `Style`.
 ///
-/// For owned version, see [StyledString].
+/// For owned version, see [`StyledString`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct StyledStr<'s> {
     pub content: &'s str,
@@ -145,7 +145,7 @@ impl<'s> StyledStr<'s> {
         StyledString::from(*self)
     }
 
-    /// Slices the contained `str`, clones the [Style] and constructs a new
+    /// Slices the contained `str`, clones the [`Style`] and constructs a new
     /// `StyledStr`.
     #[inline]
     pub fn slice<T>(&self, index: T) -> Self
@@ -184,7 +184,7 @@ impl<'s> From<&'s StyledString> for StyledStr<'s>
     }
 }
 
-/// Owned version of [StyledStr].
+/// Owned version of [`StyledStr`].
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct StyledString {
     pub content: String,
@@ -208,7 +208,7 @@ where
 
 /// Char with attached style.
 ///
-/// See also [StyledStr] and [StyledString].
+/// See also [`StyledStr`] and [`StyledString`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct StyledChar {
     pub content: char,
@@ -225,7 +225,7 @@ impl From<char> for StyledChar {
     }
 }
 
-/// Structures that can be wrapped with [Style].
+/// Structures that can be wrapped with [`Style`].
 pub trait WithStyle<T>
 {
     /// Converts `self` into `T` (styled type) and allows the style to be

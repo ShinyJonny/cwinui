@@ -200,13 +200,13 @@ pub struct Proportions {
 }
 
 impl Proportions {
-    /// Both `horiz` and `vert` have the range of \[0, 0].
+    /// Both `horiz` and `vert` have the range of `0..=0` .
     pub const ZERO: Self = Self {
         horiz: Range::ZERO,
         vert:  Range::ZERO,
     };
 
-    /// Creates fixed proportions, from `dim`.
+    /// Creates fixed proportions from [`Dim`].
     pub const fn fixed(dim: Dim) -> Self
     {
         Self {
@@ -216,7 +216,7 @@ impl Proportions {
     }
 
     /// Creates fully flexible proportions, i.e. both `horiz` and `vert` are
-    /// \[0, infinity].
+    /// `0..`
     pub const fn flexible() -> Self
     {
         Self {
@@ -287,7 +287,7 @@ impl Proportions {
     }
 }
 
-/// A range of sizes.
+/// Inclusive range of sizes.
 ///
 /// This structure defines the **inclusive** ranges that a single dimension of a
 /// widget can have.
@@ -304,21 +304,22 @@ pub struct Range {
 impl std::fmt::Debug for Range {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result
     {
-        f.write_fmt(format_args!("Range [{}, ", self.min))?;
+        <u16 as std::fmt::Debug>::fmt(&self.min, f)?;
+        f.write_str("..")?;
         if let Some(max) = self.max {
-            f.write_fmt(format_args!("{}", max))?;
-        } else {
-            f.write_str("-")?;
+            f.write_str("=")?;
+            <u16 as std::fmt::Debug>::fmt(&max, f)?;
         }
-        f.write_str("]")
+
+        Ok(())
     }
 }
 
 impl Range {
-    /// \[0, 0]
+    /// `0..=0`
     pub const ZERO: Self = Self::fixed(0);
 
-    /// Creates a fixed range: \[`size`, `size`].
+    /// Creates a fixed range: `size..=size`.
     ///
     /// ```
     /// use cwinui::layout::Range;
@@ -333,7 +334,7 @@ impl Range {
         }
     }
 
-    /// Creates a starting at `size`: \[`size`, infinity]
+    /// Creates a starting at `size`: `size..` .
     ///
     /// ```
     /// use cwinui::layout::Range;
@@ -348,7 +349,7 @@ impl Range {
         }
     }
 
-    /// Creates a ending at `size`: \[0, `size`]
+    /// Creates a ending at `size`: `0..=size` .
     ///
     /// ```
     /// use cwinui::layout::Range;
@@ -363,7 +364,7 @@ impl Range {
         }
     }
 
-    /// Creates a fully flexible range: \[0, infinity].
+    /// Creates a fully flexible range: `0..` .
     ///
     /// ```
     /// use cwinui::layout::Range;
@@ -594,7 +595,11 @@ impl Area {
         }
     }
 
-    /// Shrinks the area from all sides by `count`.
+    /// Shrinks the area from each side by `count`.
+    ///
+    /// # Underflows
+    ///
+    /// When `width` or `height` are less than `count * 2`.
     #[inline]
     pub const fn inset(&self, count: u16) -> Self
     {

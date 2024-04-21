@@ -10,7 +10,7 @@ use crate::widget::Paint;
 use crate::style::{StyledChar, Style, WithStyle};
 
 
-/// Configuration options for theming [InputLine].
+/// Configuration options for theming [`InputLine`].
 #[derive(Debug, Clone, Copy)]
 pub struct Theme {
     pub blank_c: StyledChar,

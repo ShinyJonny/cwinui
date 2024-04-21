@@ -13,7 +13,9 @@ pub mod frame;
 pub mod canvas;
 pub mod layout;
 pub mod flex;
+pub mod array;
 
+pub use array::{Row, Col};
 pub use flex::{FlexCol, FlexRow};
 pub use bar::{HorizBar, VertBar};
 pub use inputline::InputLine;
@@ -44,7 +46,7 @@ pub trait Paint {
     /// # Panics
     ///
     /// When out of bounds.
-    fn paint_char<'s, C>(&mut self, pos: Pos, c: C)
+    fn paint_char<C>(&mut self, pos: Pos, c: C)
     where
         C: Into<StyledChar>;
 
@@ -283,6 +285,16 @@ pub trait Paint {
 pub trait Widget<P: Paint> {
     /// Renders the widget onto `buf`.
     fn render(&self, buf: &mut P, area: Area);
+}
+
+impl<T, P: Paint> Widget<P> for &T
+where
+    T: Widget<P>,
+{
+    fn render(&self, buf: &mut P, area: Area)
+    {
+        T::render(self, buf, area);
+    }
 }
 
 

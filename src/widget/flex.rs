@@ -4,8 +4,11 @@
 //! The rest of the render area is distributed among the flexible items equally,
 //! in proportion to the size of their request compared to other flexible items.
 //!
-//! Items whose proportions have no upper end are truncated to 100% of the
-//! render area.
+//! In case the minimum proportion requirements cannot be met, the items are
+//! rendered sequentially until there is no space left.
+//!
+//! Flexible items whose maximum exceeds the render area or have no maximum are
+//! truncated to the 100% of the render area.
 
 
 use super::Widget;
@@ -42,7 +45,7 @@ impl<'a, P: Paint> std::fmt::Debug for FlexCol<'a, P> {
 impl<P: Paint> Widget<P> for FlexCol<'_, P> {
     fn render(&self, buf: &mut P, area: Area)
     {
-        if area.is_collapsed() || self.0.len() == 0 {
+        if area.is_collapsed() || self.0.is_empty() {
             return;
         }
 
@@ -120,7 +123,7 @@ impl<'a, P: Paint> std::fmt::Debug for FlexRow<'a, P> {
 impl<P: Paint> Widget<P> for FlexRow<'_, P> {
     fn render(&self, buf: &mut P, area: Area)
     {
-        if area.is_collapsed() || self.0.len() == 0 {
+        if area.is_collapsed() || self.0.is_empty() {
             return;
         }
 
