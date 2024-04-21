@@ -84,9 +84,9 @@ impl<T: Widget<P>, P: Paint> Widget<P> for Frame<T> {
         let bottom_right = area.bottom_right() - Pos { x: 1, y: 1 };
 
         buf.hfill(top_left, self.theme.top, area.width as usize);
-        buf.vfill(top_right, self.theme.right, area.width as usize);
         buf.hfill(bottom_left, self.theme.bottom, area.width as usize);
         buf.vfill(top_left, self.theme.left, area.height as usize);
+        buf.vfill(top_right, self.theme.right, area.height as usize);
 
         // Corners
 

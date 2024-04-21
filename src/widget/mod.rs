@@ -103,7 +103,7 @@ pub trait Paint {
             return;
         }
 
-        let fill_len = std::cmp::min((dim.width - pos.x) as usize, len);
+        let fill_len = std::cmp::min((dim.height - pos.y) as usize, len);
         let c = c.into();
 
         for i in 0..fill_len {
