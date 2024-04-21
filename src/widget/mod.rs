@@ -26,7 +26,7 @@ pub use prompt::Prompt;
 pub use frame::Frame;
 pub use canvas::Canvas;
 pub use filler::Filler;
-pub use backdrop::BackDrop;
+pub use backdrop::Backdrop;
 
 
 /// Painting rendered widgets.
