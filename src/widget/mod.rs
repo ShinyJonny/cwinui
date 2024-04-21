@@ -13,9 +13,9 @@ pub mod frame;
 pub mod canvas;
 pub mod layout;
 pub mod flex;
-pub mod array;
+pub mod split;
 
-pub use array::{Row, Col};
+pub use split::{Row, Col};
 pub use flex::{FlexCol, FlexRow};
 pub use bar::{HorizBar, VertBar};
 pub use inputline::InputLine;
