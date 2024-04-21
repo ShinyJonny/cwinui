@@ -1,7 +1,7 @@
 use termion::event::Event;
 
 use crate::Pos;
-use crate::layout::Area;
+use crate::layout::{Area, Proportional, Proportions};
 use crate::widget::Paint;
 use crate::style::{Style, StyledChar, StyledStr, StyledString, WithStyle};
 
@@ -137,6 +137,26 @@ impl<P: Paint> Widget<P> for Prompt {
         buf.print(Pos::ZERO, &self.label, label_area);
         buf.print(Pos::ZERO, &self.theme.sep, sep_area);
         self.inputline.render(buf, input_area);
+    }
+}
+
+impl Proportional for Prompt {
+    /// Prompt requires the width to be at least the length of:
+    /// - the label
+    /// - the separator
+    /// - 1 for the input line
+    fn proportions(&self) -> Proportions
+    {
+        use crate::layout::Range;
+
+        let min = (self.label.content.len()
+            + self.theme.sep.content.len()
+            + 1) as u16;
+
+        Proportions {
+            horiz: Range::from(min),
+            vert: Range::fixed(1)
+        }
     }
 }
 

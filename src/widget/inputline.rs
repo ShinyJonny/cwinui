@@ -5,7 +5,7 @@ use super::{
     InteractiveWidget,
 };
 use crate::Pos;
-use crate::layout::Area;
+use crate::layout::{Area, Proportional, Proportions};
 use crate::widget::Paint;
 use crate::style::{StyledChar, Style, WithStyle};
 
@@ -128,6 +128,18 @@ impl<P: Paint> Widget<P> for InputLine {
                 y: area.y
             });
             buf.show_cursor()
+        }
+    }
+}
+
+impl Proportional for InputLine {
+    fn proportions(&self) -> Proportions
+    {
+        use crate::layout::Range;
+
+        Proportions {
+            horiz: Range::flexible(),
+            vert: Range::fixed(1),
         }
     }
 }

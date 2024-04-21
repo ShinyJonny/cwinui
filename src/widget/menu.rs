@@ -1,5 +1,6 @@
 use std::cell::Cell;
 
+use crate::layout::{Proportional, Proportions};
 use crate::{style::StyledString, Pos};
 use crate::Dim;
 use crate::widget::Paint;
@@ -151,6 +152,13 @@ impl<P: Paint> Widget<P> for Menu {
             let item = transform(item);
             buf.print(Pos{x:0, y:i as u16}, &item, area);
         }
+    }
+}
+
+impl Proportional for Menu {
+    fn proportions(&self) -> Proportions
+    {
+        Proportions::flexible()
     }
 }
 

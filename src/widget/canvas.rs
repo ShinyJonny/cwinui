@@ -66,11 +66,9 @@ impl Proportional for Canvas {
     #[inline]
     fn proportions(&self) -> Proportions
     {
-        use crate::layout::Range;
-
-        Proportions {
-            horiz: Range::fixed(self.buffer.width),
-            vert: Range::fixed(self.buffer.height),
-        }
+        Proportions::fixed(Dim {
+            width: self.buffer.width,
+            height: self.buffer.height,
+        })
     }
 }

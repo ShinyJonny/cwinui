@@ -1,7 +1,7 @@
 use crate::widget::Paint;
 use crate::style::Style;
 use super::Widget;
-use crate::layout::Area;
+use crate::layout::{Area, Proportional, Proportions};
 use crate::style::StyledChar;
 
 /// Configuration options for theming [`HorizBar`] and [`VertBar`].
@@ -74,6 +74,18 @@ impl<P: Paint> Widget<P> for HorizBar {
     }
 }
 
+impl Proportional for HorizBar {
+    fn proportions(&self) -> Proportions
+    {
+        use crate::layout::Range;
+
+        Proportions {
+            horiz: Range::flexible(),
+            vert: Range::fixed(1),
+        }
+    }
+}
+
 /// Draws a vertical bar starting at the top-left corner of the render area and
 /// spanning the full height of the render area.
 #[derive(Debug, Clone, Default)]
@@ -111,5 +123,17 @@ impl<P: Paint> Widget<P> for VertBar {
         buf.hfill(top_left, self.theme.body, area.height as usize);
         buf.putc_abs(top_left, self.theme.beg);
         buf.putc_abs(area.bottom_left().sub_y(1), self.theme.end);
+    }
+}
+
+impl Proportional for VertBar {
+    fn proportions(&self) -> Proportions
+    {
+        use crate::layout::Range;
+
+        Proportions {
+            horiz: Range::fixed(1),
+            vert: Range::flexible(),
+        }
     }
 }

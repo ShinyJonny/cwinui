@@ -1,6 +1,7 @@
+use crate::layout::{Proportional, Proportions};
 use crate::style::{Style, StyledChar};
 use crate::widget::Paint;
-use crate::{Pos, Area,};
+use crate::{Area, Dim, Pos};
 
 use super::{Widget, Dummy};
 
@@ -109,5 +110,16 @@ impl<T: Widget<P>, P: Paint> Widget<P> for Frame<T> {
             };
 
         self.inner.render(buf, inner_area);
+    }
+}
+
+impl<T> Proportional for Frame<T>
+where
+    T: Proportional
+{
+    fn proportions(&self) -> Proportions
+    {
+        self.inner.proportions()
+            .add(Proportions::fixed(Dim { width: 2, height: 2 }))
     }
 }
