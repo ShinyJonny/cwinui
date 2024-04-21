@@ -574,7 +574,7 @@ impl Area {
 
     /// Computes the intersection of `self` and `other`.
     ///
-    /// **It is unsound to call this on areas that do not overlap.**
+    /// **It is unsound to call this on areas that do not overlap!!!**
     ///
     /// # Overflows
     ///

@@ -10,10 +10,12 @@ pub mod inputline;
 pub mod menu;
 pub mod prompt;
 pub mod frame;
-pub mod canvas;
+mod canvas;
 pub mod layout;
 pub mod flex;
 pub mod split;
+mod filler;
+mod backdrop;
 
 pub use split::{Row, Col};
 pub use flex::{FlexCol, FlexRow};
@@ -23,6 +25,8 @@ pub use menu::Menu;
 pub use prompt::Prompt;
 pub use frame::Frame;
 pub use canvas::Canvas;
+pub use filler::Filler;
+pub use backdrop::BackDrop;
 
 
 /// Painting rendered widgets.
@@ -69,6 +73,31 @@ pub trait Paint {
     fn dimensions(&self) -> Dim
     {
         self.area().dimensions()
+    }
+
+    /// Fill an area with `c`.
+    #[inline]
+    fn fill<T>(&mut self, c: T, area: Area)
+    where
+        T: Into<StyledChar>
+    {
+        if !self.area().overlaps(area) {
+            return;
+        }
+        let area = self.area().intersection(area);
+        if area.is_collapsed() {
+            return;
+        }
+
+        let c = c.into();
+
+        for y in 0..area.height {
+            for x in 0..area.width {
+                let x = area.x + x;
+                let y = area.y + y;
+                self.paint_char(Pos { x, y }, c);
+            }
+        }
     }
 
     /// Fill a horizontal line with `c`,  of length `len` and starting a `pos`.
