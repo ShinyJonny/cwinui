@@ -55,7 +55,7 @@ impl<P: Paint> Widget<P> for FlexCol<'_, P> {
         for &it in self.0 {
             let p = it .proportions();
 
-            min   += p.vert.min as usize;
+            min   += p.vert.min() as usize;
             basis += calc_grow(p.vert, area.height) as usize;
         }
 
@@ -76,7 +76,7 @@ impl<P: Paint> Widget<P> for FlexCol<'_, P> {
             remainder = growth.fract();
 
             let height = std::cmp::min(
-                p.vert.min + growth.trunc() as u16,
+                p.vert.min() + growth.trunc() as u16,
                 area.height - used,
             );
 
@@ -146,7 +146,7 @@ impl<P: Paint> Widget<P> for FlexRow<'_, P> {
         for &it in self.0 {
             let p = it .proportions();
 
-            min   += p.horiz.min as usize;
+            min   += p.horiz.min() as usize;
             basis += calc_grow(p.horiz, area.width) as usize;
         }
 
@@ -167,7 +167,7 @@ impl<P: Paint> Widget<P> for FlexRow<'_, P> {
             remainder = growth.fract();
 
             let width = std::cmp::min(
-                p.horiz.min + growth.trunc() as u16,
+                p.horiz.min() + growth.trunc() as u16,
                 area.width - used,
             );
 
@@ -210,10 +210,10 @@ impl<P: Paint> Proportional for FlexRow<'_, P> {
 #[inline]
 fn calc_grow(range: Range, max: u16) -> u16
 {
-    range.max
+    range.max()
         .map(|v| std::cmp::min(v, max))
         .unwrap_or(max)
-        .saturating_sub(range.min)
+        .saturating_sub(range.min())
 }
 
 

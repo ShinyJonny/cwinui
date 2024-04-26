@@ -221,9 +221,6 @@ impl Proportions {
     }
 
     /// Adds the range requirements for both directions.
-    ///
-    /// It can be used to express the resulting proportions of 2
-    /// [`Proportional`] objects placed next to each other.
     #[inline]
     pub const fn add(self, other: Self) -> Self
     {
@@ -305,8 +302,8 @@ impl Proportions {
 /// large as it can (within its specified range).
 #[derive(Copy, Clone, Default, PartialEq, Eq, std::hash::Hash)]
 pub struct Range {
-    pub min: u16,
-    pub max: Option<u16>,
+    min: u16,
+    max: Option<u16>,
 }
 
 impl std::fmt::Debug for Range {
@@ -326,6 +323,28 @@ impl std::fmt::Debug for Range {
 impl Range {
     /// `0..=0`
     pub const ZERO: Self = Self::fixed(0);
+
+    /// Creates a new range: `min..=max`.
+    ///
+    /// If `max` is less than `min`, it is ignored and `min` becomes the max
+    /// value (`min..=min`).
+    pub const fn new(min: u16, max: u16) -> Self
+    {
+        Self {
+            min,
+            max: Some(max!(min, max)),
+        }
+    }
+
+    /// Creates a new range without any checks.
+    ///
+    /// # Safety
+    ///
+    /// It is unsound to call this function with `Some(max) < min`.
+    pub const unsafe fn new_unchecked(min: u16, max: u16) -> Self
+    {
+        Self { min, max: Some(max) }
+    }
 
     /// Creates a fixed range: `size..=size`.
     ///
@@ -385,6 +404,18 @@ impl Range {
             min: 0,
             max: None,
         }
+    }
+
+    /// The low bound.
+    pub const fn min(self) -> u16
+    {
+        self.min
+    }
+
+    /// The upper bound.
+    pub const fn max(self) -> Option<u16>
+    {
+        self.max
     }
 
     /// Collapse the maximum to be equal to the minimum.
