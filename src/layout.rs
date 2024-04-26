@@ -559,7 +559,7 @@ impl Area {
                 .saturating_sub(Pos { x: self.width, y: self.height / 2 }),
             Alignment::BottomLeft => Pos {
                 x: anchor.x,
-                y: anchor.bottom_left().y.saturating_sub(self.height / 2),
+                y: anchor.bottom_left().y.saturating_sub(self.height),
             },
             Alignment::BottomCenter => anchor.bottom_center()
                 .saturating_sub(Pos { x: self.width / 2, y: self.height }),

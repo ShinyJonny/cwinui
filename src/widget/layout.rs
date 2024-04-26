@@ -67,35 +67,14 @@ impl<T: Widget<P> + Proportional, P: Paint> Widget<P> for Align<T> {
     #[inline]
     fn render(&self, buf: &mut P, area: Area)
     {
-        let dim = self.proportions()
+        let dim = self.inner.proportions()
             .fit_into(area.dimensions())
             .unwrap_or_else(|d| d);
 
-        let pos = match self.alignment {
-            Alignment::TopLeft => area.top_left(),
-            Alignment::TopCenter => area.top_left()
-                .add_x((area.width - dim.width) / 2),
-            Alignment::TopRight => area.top_right()
-                .sub_x(dim.width),
-            Alignment::CenterLeft => area.top_left()
-                .add_y((area.height - dim.height) / 2),
-            Alignment::Center => area.top_left()
-                .add_x((area.width - dim.width) / 2)
-                .add_y((area.height - dim.height) / 2),
-            Alignment::CenterRight => area.top_right()
-                .sub_x(dim.width)
-                .add_y((area.height - dim.height) / 2),
-            Alignment::BottomLeft => area.bottom_left()
-                .sub_y(dim.height),
-            Alignment::BottomCenter => area.bottom_left()
-                .add_x((area.width - dim.width) / 2)
-                .sub_y(dim.height),
-            Alignment::BottomRight => area.bottom_right()
-                .sub_x(dim.width)
-                .sub_y(dim.height),
-        };
+        let inner_area = Area::from_parts(Pos::ZERO, dim)
+            .align_to(area, self.alignment);
 
-        self.inner.render(buf, Area::from_parts(pos, dim));
+        self.inner.render(buf, inner_area);
     }
 }
 
