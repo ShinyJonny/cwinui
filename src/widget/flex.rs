@@ -65,12 +65,18 @@ impl<P: Paint> Widget<P> for FlexCol<'_, P> {
             else { f64::min(1., flexy_len / basis as f64) };
 
         let mut used = 0;
-        for &it in self.0 {
+        let mut remainder = 0f64;
+
+        for &it in &self.0[..self.0.len() - 1] {
             let p = it.proportions();
             let growth
-                = (calc_grow(p.vert, area.height) as f64 * growth_scale) as u16;
+                = calc_grow(p.vert, area.height) as f64
+                * growth_scale
+                + remainder;
+            remainder = growth.fract();
+
             let height = std::cmp::min(
-                p.vert.min + growth,
+                p.vert.min + growth.trunc() as u16,
                 area.height - used,
             );
 
@@ -83,6 +89,13 @@ impl<P: Paint> Widget<P> for FlexCol<'_, P> {
 
             used += height;
         }
+
+        self.0[self.0.len() - 1].render(buf, Area {
+            x: area.x,
+            y: area.y + used,
+            width: area.width,
+            height: area.height - used,
+        });
     }
 }
 
@@ -143,12 +156,18 @@ impl<P: Paint> Widget<P> for FlexRow<'_, P> {
             else { f64::min(1., flexy_len / basis as f64) };
 
         let mut used = 0;
-        for &it in self.0 {
+        let mut remainder = 0f64;
+
+        for &it in &self.0[..self.0.len() - 1] {
             let p = it.proportions();
             let growth
-                = (calc_grow(p.horiz, area.width) as f64 * growth_scale) as u16;
+                = calc_grow(p.horiz, area.width) as f64
+                * growth_scale
+                + remainder;
+            remainder = growth.fract();
+
             let width = std::cmp::min(
-                p.horiz.min + growth,
+                p.horiz.min + growth.trunc() as u16,
                 area.width - used,
             );
 
@@ -161,6 +180,13 @@ impl<P: Paint> Widget<P> for FlexRow<'_, P> {
 
             used += width;
         }
+
+        self.0[self.0.len() - 1].render(buf, Area {
+            x: area.x + used,
+            y: area.y,
+            width: area.width - used,
+            height: area.height,
+        });
     }
 }
 
