@@ -17,7 +17,7 @@
 //! use cwinui::widget::{
 //!     layout::{Container, Center},
 //!     Row,
-//!     Dummy,
+//!     Wireframe,
 //! };
 //! use cwinui::layout::{Dim, Proportions};
 //!
@@ -31,7 +31,7 @@
 //!
 //!     ctx.render_widget(
 //!         &Center(
-//!             Container::new(Row(&[&Dummy, &Dummy]))
+//!             Container::new(Row(&[&Wireframe::new(), &Wireframe::new()]))
 //!                 .size(Proportions::fixed(dim))
 //!         ),
 //!         area

@@ -16,6 +16,7 @@ pub mod flex;
 pub mod split;
 mod filler;
 mod backdrop;
+mod debug;
 
 pub use split::{Row, Col};
 pub use flex::{FlexCol, FlexRow};
@@ -27,6 +28,7 @@ pub use frame::Frame;
 pub use canvas::Canvas;
 pub use filler::Filler;
 pub use backdrop::Backdrop;
+pub use debug::Wireframe;
 
 
 /// Painting rendered widgets.
@@ -228,7 +230,7 @@ pub trait Paint {
 
     /// Print justified in an area.
     #[inline]
-    fn printj<'s, S>(&mut self, text: S, j: Justify, area: Area)
+    fn jprint<'s, S>(&mut self, text: S, j: Justify, area: Area)
     where
         S: Into<StyledStr<'s>>
     {
@@ -306,6 +308,86 @@ pub trait Paint {
         };
 
         self.print(pos, text.slice(..text_width), area);
+    }
+
+    /// Putc justified in an area.
+    #[inline]
+    fn jputc<C>(&mut self, c: C, j: Justify, area: Area)
+    where
+        C: Into<StyledChar>
+    {
+        if !self.area().overlaps(area) {
+            return;
+        }
+        let area = self.area().intersection(area);
+
+        if area.is_collapsed() {
+            return;
+        }
+
+        // TODO: utf8 support.
+
+        let pos = match j {
+            Justify::Left(y) => Pos {
+                x: 0,
+                y
+            },
+            Justify::HCenter(y) => Pos {
+                x: area.width.saturating_sub(1) / 2,
+                y,
+            },
+            Justify::Right(y) => Pos {
+                x: area.width.saturating_sub(1),
+                y,
+            },
+            Justify::Top(x) => Pos {
+                x,
+                y: 0,
+            },
+            Justify::VCenter(x) => Pos {
+                x,
+                y: area.height.saturating_sub(1) / 2,
+            },
+            Justify::Bottom(x) => Pos {
+                x,
+                y: area.height.saturating_sub(1),
+            },
+            Justify::TopLeft => Pos::ZERO,
+            Justify::TopCenter => Pos {
+                x: area.width.saturating_sub(1) / 2,
+                y: 0,
+            },
+            Justify::TopRight => Pos {
+                x: area.width.saturating_sub(1),
+                y: 0,
+            },
+            Justify::CenterLeft => Pos {
+                x: 0,
+                y: area.height.saturating_sub(1) / 2,
+            },
+            Justify::Center => Pos {
+                x: area.width.saturating_sub(1) / 2,
+                y: area.height.saturating_sub(1) / 2,
+            },
+            Justify::CenterRight => Pos {
+                x: area.width.saturating_sub(1),
+                y: area.height.saturating_sub(1) / 2,
+            },
+            Justify::BottomLeft => Pos {
+                x: 0,
+                y: area.height.saturating_sub(1),
+            },
+            Justify::BottomCenter => Pos {
+                x: area.width.saturating_sub(1) / 2,
+                y: area.height.saturating_sub(1),
+            },
+            Justify::BottomRight => Pos {
+                x: area.width.saturating_sub(1),
+                y: area.height.saturating_sub(1),
+            },
+        };
+
+        self.putc(pos, c, area);
     }
 }
 
