@@ -12,8 +12,8 @@ impl<T: Widget<P> + Proportional, P: Paint> Widget<P> for Min<T> {
     #[inline]
     fn render(&self, buf: &mut P, area: Area)
     {
-        let dim = self.proportions()
-            .fit_into(area.dimensions())
+        let dim = area.dimensions()
+            .fit_into(self.proportions())
             .unwrap_or_else(|d| d);
 
         self.0.render(buf, Area::from_parts(area.top_left(), dim));
@@ -67,8 +67,8 @@ impl<T: Widget<P> + Proportional, P: Paint> Widget<P> for Align<T> {
     #[inline]
     fn render(&self, buf: &mut P, area: Area)
     {
-        let dim = self.inner.proportions()
-            .fit_into(area.dimensions())
+        let dim = area.dimensions()
+            .fit_into(self.inner.proportions())
             .unwrap_or_else(|d| d);
 
         let inner_area = Area::from_parts(Pos::ZERO, dim)
@@ -98,8 +98,8 @@ macro_rules! def_static_align {
         impl<T: Widget<P> + Proportional, P: Paint> Widget<P> for $al<T> {
             fn render(&self, buf: &mut P, area: Area)
             {
-                let dim = self.0.proportions()
-                    .fit_into(area.dimensions())
+                let dim = area.dimensions()
+                    .fit_into(self.0.proportions())
                     .unwrap_or_else(|d| d);
 
                 let inner_area = Area::from_parts(Pos::ZERO, dim)
@@ -196,8 +196,8 @@ where
         let inner_prop = self.inner.proportions();
 
         Proportions {
-            horiz: inner_prop.horiz.add(Range::fixed(self.left + self.right)),
-            vert:  inner_prop.vert.add(Range::fixed(self.top + self.bottom)),
+            height: inner_prop.height.add(Range::fixed(self.left + self.right)),
+            width:  inner_prop.width.add(Range::fixed(self.top + self.bottom)),
         }
     }
 }

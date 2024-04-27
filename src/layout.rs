@@ -155,35 +155,71 @@ impl Dim {
         self.width == 0 || self.height == 0
     }
 
-    /// Checks if `proportions` can fit into the dimensions.
+    /// Checks if the dimensions can fit into `proportions`.
     #[inline]
     pub const fn satisfies(self, proportions: Proportions) -> bool
     {
-        self.width >= proportions.horiz.min
-            && self.height >= proportions.vert.min
+        self.width >= proportions.width.min
+            && self.height >= proportions.height.min
+    }
+
+    /// Try to fit the dimensions into the [`Proportions`].
+    ///
+    /// This method will always attempt to yield as large dimensions as the
+    /// proportions allow. If the dimensions can't fit into the proportions,
+    /// the `Err` value is returned with the best possible attempt at fitting
+    /// into the proportions.
+    #[inline]
+    pub const fn fit_into(self, p: Proportions) -> Result<Dim, Dim>
+    {
+        let width  = Self::fit_range(self.width, p.width);
+        let height = Self::fit_range(self.height, p.height);
+
+        match (width, height) {
+            (Some(width), Some(height)) => Ok(Dim  { width,             height              }),
+            (Some(width), None        ) => Err(Dim { width,             height: self.height }),
+            (None,        Some(height)) => Err(Dim { width: self.width, height              }),
+            (None,        None        ) => Err(self),
+        }
+    }
+
+    #[inline(always)]
+    const fn fit_range(available: u16, range: Range) -> Option<u16>
+    {
+        if available < range.min {
+            return None;
+        }
+
+        let provision = if let Some(max) = range.max {
+            min!(available, max)
+        } else {
+            available
+        };
+
+        Some(provision)
     }
 }
 
 /// Proportions of widgets that can be laid out in space.
 #[derive(Debug, Copy, Clone, Default, PartialEq, Eq, std::hash::Hash)]
 pub struct Proportions {
-    pub horiz: Range,
-    pub vert: Range,
+    pub width: Range,
+    pub height: Range,
 }
 
 impl Proportions {
     /// Both `horiz` and `vert` have the range of `0..=0` .
     pub const ZERO: Self = Self {
-        horiz: Range::ZERO,
-        vert:  Range::ZERO,
+        width:  Range::ZERO,
+        height: Range::ZERO,
     };
 
     /// Creates fixed proportions from [`Dim`].
     pub const fn fixed(dim: Dim) -> Self
     {
         Self {
-            horiz: Range::fixed(dim.width),
-            vert:  Range::fixed(dim.height),
+            width: Range::fixed(dim.width),
+            height:  Range::fixed(dim.height),
         }
     }
 
@@ -192,8 +228,8 @@ impl Proportions {
     pub const fn flexible() -> Self
     {
         Self {
-            horiz: Range::flexible(),
-            vert:  Range::flexible(),
+            width:  Range::flexible(),
+            height: Range::flexible(),
         }
     }
 
@@ -202,8 +238,8 @@ impl Proportions {
     pub const fn collapse(self) -> Self
     {
         Self {
-            horiz: self.horiz.collapse(),
-            vert: self.vert.collapse(),
+            width: self.width.collapse(),
+            height: self.height.collapse(),
         }
     }
 
@@ -215,8 +251,8 @@ impl Proportions {
     pub const fn expand(self) -> Self
     {
         Self {
-            horiz: self.horiz.expand(),
-            vert: self.vert.expand(),
+            width: self.width.expand(),
+            height: self.height.expand(),
         }
     }
 
@@ -225,8 +261,8 @@ impl Proportions {
     pub const fn add(self, other: Self) -> Self
     {
         Self {
-            horiz: self.horiz.add(other.horiz),
-            vert:  self.vert.add(other.vert),
+            width:  self.width.add(other.width),
+            height: self.height.add(other.height),
         }
     }
 
@@ -250,45 +286,9 @@ impl Proportions {
     pub const fn join(self, other: Self) -> Self
     {
         Self {
-            horiz: self.horiz.join(other.horiz),
-            vert:  self.vert.join(other.vert),
+            width:  self.width.join(other.width),
+            height: self.height.join(other.height),
         }
-    }
-
-    /// Try to fit the proportions into the [`Dim`]ensions.
-    ///
-    /// This method will always attempt to yield as large dimensions as the
-    /// proportions allow. If the dimensions can't satisfy the proportions,
-    /// the `Err` value is returned with the best possible attempt at fitting
-    /// into the dimensions.
-    #[inline]
-    pub const fn fit_into(self, dim: Dim) -> Result<Dim, Dim>
-    {
-        let width  = Self::fit_range(dim.width, self.horiz);
-        let height = Self::fit_range(dim.height, self.vert);
-
-        match (width, height) {
-            (Some(width), Some(height)) => Ok(Dim  { width,            height             }),
-            (Some(width), None        ) => Err(Dim { width,            height: dim.height }),
-            (None,        Some(height)) => Err(Dim { width: dim.width, height             }),
-            (None,        None        ) => Err(dim),
-        }
-    }
-
-    #[inline(always)]
-    const fn fit_range(available: u16, range: Range) -> Option<u16>
-    {
-        if available < range.min {
-            return None;
-        }
-
-        let provision = if let Some(max) = range.max {
-            min!(available, max)
-        } else {
-            available
-        };
-
-        Some(provision)
     }
 }
 

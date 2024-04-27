@@ -154,8 +154,8 @@ impl Proportional for Prompt {
             + 1) as u16;
 
         Proportions {
-            horiz: Range::from(min),
-            vert: Range::fixed(1)
+            height: Range::from(min),
+            width: Range::fixed(1)
         }
     }
 }

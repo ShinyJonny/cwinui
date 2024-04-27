@@ -80,8 +80,8 @@ impl Proportional for HorizBar {
         use crate::layout::Range;
 
         Proportions {
-            horiz: Range::flexible(),
-            vert: Range::fixed(1),
+            height: Range::flexible(),
+            width: Range::fixed(1),
         }
     }
 }
@@ -132,8 +132,8 @@ impl Proportional for VertBar {
         use crate::layout::Range;
 
         Proportions {
-            horiz: Range::fixed(1),
-            vert: Range::flexible(),
+            height: Range::fixed(1),
+            width: Range::flexible(),
         }
     }
 }

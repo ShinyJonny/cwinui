@@ -138,8 +138,8 @@ impl Proportional for InputLine {
         use crate::layout::Range;
 
         Proportions {
-            horiz: Range::flexible(),
-            vert: Range::fixed(1),
+            height: Range::flexible(),
+            width: Range::fixed(1),
         }
     }
 }
