@@ -4,7 +4,7 @@ use crate::{Area, Dim, Pos};
 
 use super::{Widget, Paint};
 
-/// Configuration options for theming [`Frame`].
+/// Configuration options for theming [`Border`].
 #[derive(Debug, Clone, Copy)]
 pub struct Theme {
     pub top_left: StyledChar,
@@ -42,15 +42,15 @@ impl Default for Theme {
     }
 }
 
-/// Adds border around the contained widget.
+/// Adds a border around the contained widget.
 #[derive(Debug, Clone)]
-pub struct Frame<T> {
+pub struct Border<T> {
     pub theme: Theme,
     pub inner: T,
 }
 
-impl<T> Frame<T> {
-    /// Creates a new `Frame` containing `inner`.
+impl<T> Border<T> {
+    /// Wraps `inner` in a `Border`.
     pub const fn new(inner: T) -> Self
     {
         Self {
@@ -59,7 +59,7 @@ impl<T> Frame<T> {
         }
     }
 
-    /// Adjusts the theme of the `Frame`.
+    /// Adjusts the theme of the `Border`.
     #[inline]
     pub const fn theme(mut self, theme: Theme) -> Self
     {
@@ -69,7 +69,7 @@ impl<T> Frame<T> {
     }
 }
 
-impl<T: Widget<P>, P: Paint> Widget<P> for Frame<T> {
+impl<T: Widget<P>, P: Paint> Widget<P> for Border<T> {
     fn render(&self, buf: &mut P, area: Area)
     {
         if area.is_collapsed() {
@@ -112,7 +112,7 @@ impl<T: Widget<P>, P: Paint> Widget<P> for Frame<T> {
     }
 }
 
-impl<T> Proportional for Frame<T>
+impl<T> Proportional for Border<T>
 where
     T: Proportional
 {

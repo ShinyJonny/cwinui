@@ -1,8 +1,8 @@
 use crate::{Area, Pos};
-use crate::style::{StyledStr, WithStyle};
+use crate::style::WithStyle;
 use crate::layout::{Justify, Proportional, Proportions};
 
-use super::{frame, Frame, Paint, Widget};
+use super::{border, Border, Paint, Widget};
 
 
 /// Option flags for [`Wireframe`].
@@ -27,7 +27,7 @@ impl Flags {
             center: true,
             corners: true,
             diagonals: true,
-            midpoints: false,
+            midpoints: true,
         }
     }
 }
@@ -127,8 +127,8 @@ impl<P: Paint> Widget<P> for Wireframe {
         let center = 'x'.styled();
 
         if self.flags.outline {
-            Frame::new(super::Void)
-                .theme(frame::Theme {
+            Border::new(super::Void)
+                .theme(border::Theme {
                     top_left: corner,
                     top_right: corner,
                     bottom_right: corner,
