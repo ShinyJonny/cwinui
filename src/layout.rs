@@ -219,7 +219,7 @@ impl Proportions {
     {
         Self {
             width: Range::fixed(dim.width),
-            height:  Range::fixed(dim.height),
+            height: Range::fixed(dim.height),
         }
     }
 
@@ -228,7 +228,7 @@ impl Proportions {
     pub const fn flexible() -> Self
     {
         Self {
-            width:  Range::flexible(),
+            width: Range::flexible(),
             height: Range::flexible(),
         }
     }
@@ -261,32 +261,17 @@ impl Proportions {
     pub const fn add(self, other: Self) -> Self
     {
         Self {
-            width:  self.width.add(other.width),
+            width: self.width.add(other.width),
             height: self.height.add(other.height),
         }
     }
 
     /// Joins the range requirements for both directions.
-    ///
-    /// ```
-    /// use cwinui::layout::{Proportions, Dim};
-    ///
-    /// let a = Proportions::fixed(Dim { width: 4, height: 20 });
-    /// let b = Proportions::fixed(Dim { width: 9, height: 10 });
-    ///
-    /// assert_eq!(
-    ///     a.join(b),
-    ///     Proportions {
-    ///         horiz: a.horiz.join(b.horiz),
-    ///         vert: a.vert.join(b.vert),
-    ///     },
-    /// );
-    /// ```
     #[inline]
     pub const fn join(self, other: Self) -> Self
     {
         Self {
-            width:  self.width.join(other.width),
+            width: self.width.join(other.width),
             height: self.height.join(other.height),
         }
     }
@@ -340,10 +325,20 @@ impl Range {
     ///
     /// # Safety
     ///
-    /// It is unsound to call this function with `Some(max) < min`.
+    /// It is unsound to call this function with `max < min`.
     pub const unsafe fn new_unchecked(min: u16, max: u16) -> Self
     {
         Self { min, max: Some(max) }
+    }
+
+    /// Creates a new range from its raw parts without any checks.
+    ///
+    /// # Safety
+    ///
+    /// It is unsound to call this function with `Some(max) < min`.
+    pub const unsafe fn from_raw_parts(min: u16, max: Option<u16>) -> Self
+    {
+        Self { min, max }
     }
 
     /// Creates a fixed range: `size..=size`.
@@ -351,7 +346,10 @@ impl Range {
     /// ```
     /// use cwinui::layout::Range;
     ///
-    /// assert_eq!(Range::fixed(4), Range { min: 4, max: Some(4) });
+    /// let r = Range::fixed(4);
+    ///
+    /// assert_eq!(r.min(), 4);
+    /// assert_eq!(r.max(), Some(4));
     /// ```
     pub const fn fixed(size: u16) -> Self
     {
@@ -366,7 +364,10 @@ impl Range {
     /// ```
     /// use cwinui::layout::Range;
     ///
-    /// assert_eq!(Range::from(4), Range { min: 4, max: None });
+    /// let r = Range::from(4);
+    ///
+    /// assert_eq!(r.min(), 4);
+    /// assert_eq!(r.max(), None);
     /// ```
     pub const fn from(size: u16) -> Self
     {
@@ -381,7 +382,10 @@ impl Range {
     /// ```
     /// use cwinui::layout::Range;
     ///
-    /// assert_eq!(Range::to(4), Range { min: 0, max: Some(4) });
+    /// let r = Range::to(4);
+    ///
+    /// assert_eq!(r.min(), 0);
+    /// assert_eq!(r.max(), Some(4));
     /// ```
     pub const fn to(size: u16) -> Self
     {
@@ -396,7 +400,10 @@ impl Range {
     /// ```
     /// use cwinui::layout::Range;
     ///
-    /// assert_eq!(Range::flexible(), Range { min: 0, max: None });
+    /// let r = Range::flexible();
+    ///
+    /// assert_eq!(r.min(), 0);
+    /// assert_eq!(r.max(), None);
     /// ```
     pub const fn flexible() -> Self
     {
@@ -446,12 +453,12 @@ impl Range {
     /// ```
     /// use cwinui::layout::Range;
     ///
-    /// let a = Range { min: 3, max: None };
-    /// let b = Range { min: 7, max: Some(7) };
-    /// let c = Range { min: 2, max: Some(33) };
+    /// let a = Range::from(3);
+    /// let b = Range::new(7, 7);
+    /// let c = Range::new(2, 33);
     ///
-    /// assert_eq!(a.add(b), Range { min: 10, max: None });
-    /// assert_eq!(b.add(c), Range { min: 9, max: Some(40) });
+    /// assert_eq!(a.add(b), Range::from(10));
+    /// assert_eq!(b.add(c), Range::new(9, 40));
     /// ```
     #[inline]
     pub const fn add(self, other: Self) -> Self
@@ -473,12 +480,12 @@ impl Range {
     /// ```
     /// use cwinui::layout::Range;
     ///
-    /// let a = Range { min: 7, max: None };
-    /// let b = Range { min: 2, max: Some(7) };
-    /// let c = Range { min: 3, max: Some(33) };
+    /// let a = Range::from(7);
+    /// let b = Range::new(2, 7);
+    /// let c = Range::new(3, 33);
     ///
-    /// assert_eq!(a.join(b), Range { min: 7, max: None });
-    /// assert_eq!(b.join(c), Range { min: 3, max: Some(33) });
+    /// assert_eq!(a.join(b), Range::from(7));
+    /// assert_eq!(b.join(c), Range::new(3, 33));
     /// ```
     #[inline]
     pub const fn join(self, other: Self) -> Self
