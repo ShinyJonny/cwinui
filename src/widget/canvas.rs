@@ -1,12 +1,12 @@
 use crate::layout::{Proportional, Proportions};
 use crate::style::WithStyle;
 use crate::util::offset;
-use crate::{Dim, Widget, Area, Pos};
+use crate::{Dim, Draw, Area, Pos};
 use crate::buffer::Buffer;
 use crate::widget::Paint;
 
 
-/// A buffered canvas that allows widgets to render onto it.
+/// A buffered canvas that allows widgets to draw onto it.
 #[derive(Clone)]
 pub struct Canvas {
     buffer: Buffer,
@@ -39,8 +39,8 @@ impl std::fmt::Debug for Canvas {
     }
 }
 
-impl<P: Paint> Widget<P> for Canvas {
-    fn render(&self, buf: &mut P, area: Area)
+impl<P: Paint> Draw<P> for Canvas {
+    fn draw(&self, buf: &mut P, area: Area)
     {
         let width = std::cmp::min(area.width, self.buffer.width);
         let height = std::cmp::min(area.height, self.buffer.height);

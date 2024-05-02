@@ -8,7 +8,7 @@ mod util;
 mod misc;
 
 pub use screen::Screen;
-pub use widget::{Widget, InteractiveWidget};
+pub use widget::{Draw, InteractiveWidget};
 pub use layout::{
     Pos,
     Dim,

@@ -1,6 +1,6 @@
 use crate::widget::Paint;
 use crate::style::Style;
-use super::Widget;
+use super::Draw;
 use crate::layout::{Area, Proportional, Proportions};
 use crate::style::StyledChar;
 
@@ -33,8 +33,8 @@ impl Default for Theme {
     }
 }
 
-/// Draws a horizontal bar starting at the top-left corner of the render area
-/// and spanning the full width of the render area.
+/// Draws a horizontal bar starting at the top-left corner of the paint area
+/// and spanning the full width of the paint area.
 #[derive(Debug, Clone, Default)]
 pub struct HorizBar {
     pub theme: Theme,
@@ -60,8 +60,8 @@ impl HorizBar {
     }
 }
 
-impl<P: Paint> Widget<P> for HorizBar {
-    fn render(&self, buf: &mut P, area: Area)
+impl<P: Paint> Draw<P> for HorizBar {
+    fn draw(&self, buf: &mut P, area: Area)
     {
         if area.is_collapsed() {
             return;
@@ -112,8 +112,8 @@ impl VertBar {
     }
 }
 
-impl<P: Paint> Widget<P> for VertBar {
-    fn render(&self, buf: &mut P, area: Area)
+impl<P: Paint> Draw<P> for VertBar {
+    fn draw(&self, buf: &mut P, area: Area)
     {
         if area.is_collapsed() {
             return;

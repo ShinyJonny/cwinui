@@ -2,7 +2,7 @@ use crate::{Area, Pos};
 use crate::style::WithStyle;
 use crate::layout::{Justify, Proportional, Proportions};
 
-use super::{border, Border, Paint, Widget};
+use super::{border, Border, Paint, Draw};
 
 
 /// Option flags for [`Wireframe`].
@@ -41,10 +41,10 @@ impl Default for Flags {
 }
 
 
-/// Wireframe of the render area.
+/// Wireframe of the paint area.
 ///
-/// Can show debugging information such as the outline of the render area and
-/// the size of the render area.
+/// Can show debugging information such as the outline of the paint area and the
+/// size of the paint area.
 #[derive(Debug, Clone)]
 pub struct Wireframe {
     pub flags: Flags,
@@ -114,8 +114,8 @@ impl Wireframe {
     }
 }
 
-impl<P: Paint> Widget<P> for Wireframe {
-    fn render(&self, buf: &mut P, area: crate::Area)
+impl<P: Paint> Draw<P> for Wireframe {
+    fn draw(&self, buf: &mut P, area: crate::Area)
     {
         if area.is_collapsed() {
             return;
@@ -138,7 +138,7 @@ impl<P: Paint> Widget<P> for Wireframe {
                     bottom: hbar,
                     left: vbar,
                 })
-                .render(buf, area);
+                .draw(buf, area);
         }
 
         if self.flags.midpoints {

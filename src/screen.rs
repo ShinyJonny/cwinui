@@ -7,9 +7,9 @@ use crate::buffer::Buffer;
 use crate::widget::Paint;
 use crate::style::{Color, TextStyle};
 use crate::util::offset;
-use crate::widget::Widget;
+use crate::widget::Draw;
 
-/// Context for rendering widgets to the screen.
+/// Context for rendering widgets.
 #[derive(Debug)]
 pub struct RenderContext<'b> {
     buffer: &'b mut Buffer,
@@ -30,11 +30,20 @@ impl<'b> RenderContext<'b> {
         self.buffer.dimensions()
     }
 
-    /// Renders `widget` to the screen within `area`.
+    /// Accesses the [`Paint`] interface.
     #[inline]
-    pub fn render_widget<W: Widget<Buffer>>(&mut self, widget: &W, area: Area)
+    pub fn painter(&mut self) -> &mut impl Paint
     {
-        widget.render(self.buffer, area);
+        self.buffer
+    }
+
+    /// Draws `d`, passing the full area of the [`Screen`].
+    #[inline]
+    pub fn draw_fullscreen<D: Draw<Buffer>>(&mut self, d: &D)
+    {
+        let area = self.area();
+        
+        d.draw(self.buffer, area);
     }
 }
 
@@ -84,11 +93,11 @@ impl Screen {
         }
     }
 
-    /// Draws the UI into the `Screen`'s internal buffer.
+    /// Renders the UI into the `Screen`'s internal buffer.
     ///
     /// `ui` is passed the [`RenderContext`], which it can use to
     /// draw widgets.
-    pub fn draw<F>(&mut self, ui: F)
+    pub fn render<F>(&mut self, ui: F)
     where
         F: FnOnce(&mut RenderContext)
     {

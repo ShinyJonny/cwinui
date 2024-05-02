@@ -2,7 +2,7 @@ use crate::layout::{Proportional, Proportions};
 use crate::style::{Style, StyledChar};
 use crate::{Area, Dim, Pos};
 
-use super::{Widget, Paint};
+use super::{Draw, Paint};
 
 /// Configuration options for theming [`Border`].
 #[derive(Debug, Clone, Copy)]
@@ -69,8 +69,8 @@ impl<T> Border<T> {
     }
 }
 
-impl<T: Widget<P>, P: Paint> Widget<P> for Border<T> {
-    fn render(&self, buf: &mut P, area: Area)
+impl<T: Draw<P>, P: Paint> Draw<P> for Border<T> {
+    fn draw(&self, buf: &mut P, area: Area)
     {
         if area.is_collapsed() {
             return;
@@ -108,7 +108,7 @@ impl<T: Widget<P>, P: Paint> Widget<P> for Border<T> {
                 }
             };
 
-        self.inner.render(buf, inner_area);
+        self.inner.draw(buf, inner_area);
     }
 }
 

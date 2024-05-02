@@ -5,7 +5,7 @@ use crate::{style::StyledString, Pos};
 use crate::Dim;
 use crate::widget::Paint;
 use super::{
-    Widget,
+    Draw,
     InteractiveWidget,
 };
 use termion::event::{Event, Key};
@@ -59,7 +59,7 @@ pub struct Menu {
     pub theme: Theme,
     items: Vec<String>,
     active_idx: usize,
-    // HACK: FIXME: this is state related purely to rendering.
+    // HACK: FIXME: this is state related purely to drawing.
     scroll: Cell<usize>,
 }
 
@@ -126,8 +126,8 @@ impl Menu {
     }
 }
 
-impl<P: Paint> Widget<P> for Menu {
-    fn render(&self, buf: &mut P, area: Area)
+impl<P: Paint> Draw<P> for Menu {
+    fn draw(&self, buf: &mut P, area: Area)
     {
         if area.is_collapsed() {
             return;

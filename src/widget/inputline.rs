@@ -1,7 +1,7 @@
 use termion::event::{Event, Key};
 
 use super::{
-    Widget,
+    Draw,
     InteractiveWidget,
 };
 use crate::Pos;
@@ -35,7 +35,7 @@ impl Default for Theme {
     }
 }
 
-/// Primitive for rendering input fields.
+/// Primitive for drawing input fields.
 #[derive(Debug, Clone)]
 pub struct InputLine {
     pub theme: Theme,
@@ -84,8 +84,8 @@ impl InputLine {
     }
 }
 
-impl<P: Paint> Widget<P> for InputLine {
-    fn render(&self, buf: &mut P, area: Area)
+impl<P: Paint> Draw<P> for InputLine {
+    fn draw(&self, buf: &mut P, area: Area)
     {
         if area.is_collapsed() {
             return;

@@ -6,7 +6,7 @@ use crate::widget::Paint;
 use crate::style::{Style, StyledChar, StyledStr, StyledString, WithStyle};
 
 use super::{
-    Widget,
+    Draw,
     InteractiveWidget,
     InputLine,
 };
@@ -109,8 +109,8 @@ impl Prompt {
     }
 }
 
-impl<P: Paint> Widget<P> for Prompt {
-    fn render(&self, buf: &mut P, area: Area)
+impl<P: Paint> Draw<P> for Prompt {
+    fn draw(&self, buf: &mut P, area: Area)
     {
         if area.is_collapsed() {
             return;
@@ -136,7 +136,7 @@ impl<P: Paint> Widget<P> for Prompt {
 
         buf.print(Pos::ZERO, &self.label, label_area);
         buf.print(Pos::ZERO, &self.theme.sep, sep_area);
-        self.inputline.render(buf, input_area);
+        self.inputline.draw(buf, input_area);
     }
 }
 

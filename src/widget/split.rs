@@ -29,29 +29,28 @@
 //!         height: area.height,
 //!     };
 //!
-//!     ctx.render_widget(
+//!     ctx.draw_fullscreen(
 //!         &Center(
 //!             Container::new(Row(&[&Wireframe::new(), &Wireframe::new()]))
 //!                 .size(Proportions::fixed(dim))
-//!         ),
-//!         area
+//!         )
 //!     );
 //! };
 //! ```
 
 
 use crate::layout::{Proportional, Proportions};
-use super::{Widget, Paint};
+use super::{Draw, Paint};
 
 
 /// Vertical split of widgets.
 ///
-/// The render area is split equally among the items. For more information see
+/// The paint area is split equally among the items. For more information see
 /// the [Module-level documentation](self)
-pub struct Col<'a, P: Paint>(pub &'a [&'a dyn Widget<P>]);
+pub struct Col<'a, P: Paint>(pub &'a [&'a dyn Draw<P>]);
 
-impl<P: Paint> Widget<P> for Col<'_, P> {
-    fn render(&self, buf: &mut P, area: crate::Area)
+impl<P: Paint> Draw<P> for Col<'_, P> {
+    fn draw(&self, buf: &mut P, area: crate::Area)
     {
         if area.is_collapsed() || self.0.is_empty() {
             return;
@@ -65,10 +64,10 @@ impl<P: Paint> Widget<P> for Col<'_, P> {
             let (cur_area, rest) = remaining.split_horiz_at(window);
             remaining = rest;
 
-            w.render(buf, cur_area);
+            w.draw(buf, cur_area);
         }
 
-        self.0[last_idx].render(buf, remaining);
+        self.0[last_idx].draw(buf, remaining);
     }
 }
 
@@ -82,12 +81,12 @@ impl<P: Paint> Proportional for Col<'_, P> {
 
 /// Horizontal split of widgets.
 ///
-/// The render area is split equally among the items. For more information see
+/// The paint area is split equally among the items. For more information see
 /// the [Module-level documentation](self)
-pub struct Row<'a, P: Paint>(pub &'a [&'a dyn Widget<P>]);
+pub struct Row<'a, P: Paint>(pub &'a [&'a dyn Draw<P>]);
 
-impl<P: Paint> Widget<P> for Row<'_, P> {
-    fn render(&self, buf: &mut P, area: crate::Area)
+impl<P: Paint> Draw<P> for Row<'_, P> {
+    fn draw(&self, buf: &mut P, area: crate::Area)
     {
         if area.is_collapsed() || self.0.is_empty() {
             return;
@@ -101,10 +100,10 @@ impl<P: Paint> Widget<P> for Row<'_, P> {
             let (cur_area, rest) = remaining.split_vert_at(window);
             remaining = rest;
 
-            w.render(buf, cur_area);
+            w.draw(buf, cur_area);
         }
 
-        self.0[last_idx].render(buf, remaining);
+        self.0[last_idx].draw(buf, remaining);
     }
 }
 

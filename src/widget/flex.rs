@@ -1,33 +1,33 @@
 //! Flexbox-like containers.
 //!
 //! Each contained item gets its minimum proportion requirements (if possible).
-//! The rest of the render area is distributed among the flexible items equally,
+//! The rest of the paint area is distributed among the flexible items equally,
 //! in proportion to the size of their request compared to other flexible items.
 //!
 //! In case the minimum proportion requirements cannot be met, the items are
-//! rendered sequentially until there is no space left.
+//! drawn sequentially until there is no space left.
 //!
-//! Flexible items whose maximum exceeds the render area or have no maximum are
-//! truncated to the 100% of the render area.
+//! Flexible items whose maximum exceeds the paint area or have no maximum are
+//! truncated to the 100% of the paint area.
 
 
-use super::Widget;
+use super::Draw;
 use crate::widget::Paint;
 use crate::layout::{Proportional, Proportions, Range};
 use crate::Area;
 
 
-/// Items that can be rendered in a *flex container*.
-pub trait FlexItem<P: Paint>: Widget<P> + Proportional {}
+/// Items that can be drawn in a *flex container*.
+pub trait FlexItem<P: Paint>: Draw<P> + Proportional {}
 
 impl<P: Paint, T> FlexItem<P> for T
 where
-    T: Widget<P> + Proportional {}
+    T: Draw<P> + Proportional {}
 
 
 /// Vertical flex container.
 ///
-/// For more information on how the items are rendered, see the [Module-level
+/// For more information on how the items are drawn, see the [Module-level
 /// documentation](self).
 #[derive(Clone)]
 pub struct FlexCol<'a, P: Paint>(pub &'a [&'a dyn FlexItem<P>]);
@@ -42,8 +42,8 @@ impl<'a, P: Paint> std::fmt::Debug for FlexCol<'a, P> {
     }
 }
 
-impl<P: Paint> Widget<P> for FlexCol<'_, P> {
-    fn render(&self, buf: &mut P, area: Area)
+impl<P: Paint> Draw<P> for FlexCol<'_, P> {
+    fn draw(&self, buf: &mut P, area: Area)
     {
         if area.is_collapsed() || self.0.is_empty() {
             return;
@@ -80,7 +80,7 @@ impl<P: Paint> Widget<P> for FlexCol<'_, P> {
                 area.height - used,
             );
 
-            it.render(buf, Area {
+            it.draw(buf, Area {
                 x: area.x,
                 y: area.y + used,
                 width: area.width,
@@ -90,7 +90,7 @@ impl<P: Paint> Widget<P> for FlexCol<'_, P> {
             used += height;
         }
 
-        self.0[self.0.len() - 1].render(buf, Area {
+        self.0[self.0.len() - 1].draw(buf, Area {
             x: area.x,
             y: area.y + used,
             width: area.width,
@@ -118,7 +118,7 @@ impl<P: Paint> Proportional for FlexCol<'_, P> {
 
 /// Horizontal flex container.
 ///
-/// For more information on how the items are rendered, see the [Module-level
+/// For more information on how the items are drawn, see the [Module-level
 /// documentation](self).
 #[derive(Clone)]
 pub struct FlexRow<'a, P: Paint>(pub &'a [&'a dyn FlexItem<P>]);
@@ -133,8 +133,8 @@ impl<'a, P: Paint> std::fmt::Debug for FlexRow<'a, P> {
     }
 }
 
-impl<P: Paint> Widget<P> for FlexRow<'_, P> {
-    fn render(&self, buf: &mut P, area: Area)
+impl<P: Paint> Draw<P> for FlexRow<'_, P> {
+    fn draw(&self, buf: &mut P, area: Area)
     {
         if area.is_collapsed() || self.0.is_empty() {
             return;
@@ -171,7 +171,7 @@ impl<P: Paint> Widget<P> for FlexRow<'_, P> {
                 area.width - used,
             );
 
-            it.render(buf, Area {
+            it.draw(buf, Area {
                 x: area.x + used,
                 y: area.y,
                 width,
@@ -181,7 +181,7 @@ impl<P: Paint> Widget<P> for FlexRow<'_, P> {
             used += width;
         }
 
-        self.0[self.0.len() - 1].render(buf, Area {
+        self.0[self.0.len() - 1].draw(buf, Area {
             x: area.x + used,
             y: area.y,
             width: area.width - used,

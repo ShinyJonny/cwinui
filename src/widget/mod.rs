@@ -31,11 +31,11 @@ pub use backdrop::Backdrop;
 pub use debug::Wireframe;
 
 
-/// Painting rendered widgets.
+/// Painting - the basic mechanism for drawing widgets.
 ///
 /// Types can implement this trait to allow widgets to be painted onto them.
 pub trait Paint {
-    /// Get the render area.
+    /// Get the paint area.
     fn area(&self) -> Area;
 
     /// Paint a `StyledStr`.
@@ -70,7 +70,7 @@ pub trait Paint {
 
     // Helper methods.
 
-    /// Get the dimensions of the render area.
+    /// Get the dimensions of the paint area.
     #[inline]
     fn dimensions(&self) -> Dim
     {
@@ -392,29 +392,29 @@ pub trait Paint {
 }
 
 
-/// Structures that can be rendered as widgets.
-pub trait Widget<P: Paint> {
-    /// Renders the widget onto `buf`.
-    fn render(&self, buf: &mut P, area: Area);
+/// The type can be drawn with [`Screen`](crate::screen::Screen).
+pub trait Draw<P: Paint> {
+    /// Draws the widget onto `buf`.
+    fn draw(&self, buf: &mut P, area: Area);
 }
 
-impl<T, P: Paint> Widget<P> for &T
+impl<T, P: Paint> Draw<P> for &T
 where
-    T: Widget<P>,
+    T: Draw<P>,
 {
-    fn render(&self, buf: &mut P, area: Area)
+    fn draw(&self, buf: &mut P, area: Area)
     {
-        T::render(*self, buf, area);
+        T::draw(*self, buf, area);
     }
 }
 
-impl<T, P: Paint> Widget<P> for &mut T
+impl<T, P: Paint> Draw<P> for &mut T
 where
-    T: Widget<P>,
+    T: Draw<P>,
 {
-    fn render(&self, buf: &mut P, area: Area)
+    fn draw(&self, buf: &mut P, area: Area)
     {
-        T::render(*self, buf, area);
+        T::draw(*self, buf, area);
     }
 }
 
@@ -430,8 +430,8 @@ pub trait InteractiveWidget {
 #[derive(Debug, Clone, Copy)]
 pub struct Void;
 
-impl<P: Paint> Widget<P> for Void {
-    fn render(&self, _buf: &mut P, _area: Area) {}
+impl<P: Paint> Draw<P> for Void {
+    fn draw(&self, _buf: &mut P, _area: Area) {}
 }
 
 impl InteractiveWidget for Void {
