@@ -204,6 +204,9 @@ where
 
 
 /// Container with its own proportions.
+///
+/// `Container` also tries to render `inner` in an area that matches the
+/// proportions.
 #[derive(Debug, Clone)]
 pub struct Container<T> {
     pub inner: T,
@@ -246,7 +249,10 @@ impl<T: Widget<P>, P: Paint> Widget<P> for Container<T> {
     #[inline]
     fn render(&self, buf: &mut P, area: Area)
     {
-        self.inner.render(buf, area);
+        let dim = area.dimensions().fit_into(self.proportions)
+            .unwrap_or_else(|dim| dim);
+
+        self.inner.render(buf, Area::from_parts(area.top_left(), dim));
     }
 }
 

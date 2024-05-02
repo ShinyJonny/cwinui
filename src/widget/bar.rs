@@ -68,7 +68,7 @@ impl<P: Paint> Widget<P> for HorizBar {
         }
 
         let top_left = area.top_left();
-        buf.vfill(top_left, self.theme.body, area.width as usize);
+        buf.hfill(top_left, self.theme.body, area.width as usize);
         buf.putc_abs(top_left, self.theme.beg);
         buf.putc_abs(area.top_right().sub_x(1), self.theme.end);
     }
@@ -120,7 +120,7 @@ impl<P: Paint> Widget<P> for VertBar {
         }
 
         let top_left = area.top_left();
-        buf.hfill(top_left, self.theme.body, area.height as usize);
+        buf.vfill(top_left, self.theme.body, area.height as usize);
         buf.putc_abs(top_left, self.theme.beg);
         buf.putc_abs(area.bottom_left().sub_y(1), self.theme.end);
     }

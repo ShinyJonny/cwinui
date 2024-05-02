@@ -139,11 +139,6 @@ impl<P: Paint> Widget<P> for Wireframe {
                     left: vbar,
                 })
                 .render(buf, area);
-        } else if self.flags.corners {
-            buf.jputc(corner, Justify::TopLeft, area);
-            buf.jputc(corner, Justify::TopRight, area);
-            buf.jputc(corner, Justify::BottomLeft, area);
-            buf.jputc(corner, Justify::BottomRight, area);
         }
 
         if self.flags.midpoints {
@@ -157,7 +152,7 @@ impl<P: Paint> Widget<P> for Wireframe {
                 buf.jprint("\\/", Justify::Top(w_mid),    area);
                 buf.jprint("/\\", Justify::Bottom(w_mid), area);
             } else {
-                buf.jputc('V', Justify::Top(w_mid),    area);
+                buf.jputc('v', Justify::Top(w_mid),    area);
                 buf.jputc('^', Justify::Bottom(w_mid), area);
             }
 
@@ -170,6 +165,13 @@ impl<P: Paint> Widget<P> for Wireframe {
                 buf.jputc('>', Justify::Left(h_mid),    area);
                 buf.jputc('<', Justify::Right(h_mid), area);
             }
+        }
+
+        if self.flags.corners {
+            buf.jputc(corner, Justify::TopLeft, area);
+            buf.jputc(corner, Justify::TopRight, area);
+            buf.jputc(corner, Justify::BottomLeft, area);
+            buf.jputc(corner, Justify::BottomRight, area);
         }
         if self.flags.diagonals {
         }
