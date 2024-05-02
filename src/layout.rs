@@ -502,6 +502,20 @@ pub trait Proportional {
     fn proportions(&self) -> Proportions;
 }
 
+impl<T: Proportional> Proportional for &T {
+    fn proportions(&self) -> Proportions
+    {
+        T::proportions(*self)
+    }
+}
+
+impl<T: Proportional> Proportional for &mut T {
+    fn proportions(&self) -> Proportions
+    {
+        T::proportions(*self)
+    }
+}
+
 /// Rectangular area.
 #[derive(Debug, Copy, Clone, Default, PartialEq, Eq)]
 pub struct Area {

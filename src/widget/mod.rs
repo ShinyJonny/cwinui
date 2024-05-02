@@ -404,7 +404,17 @@ where
 {
     fn render(&self, buf: &mut P, area: Area)
     {
-        T::render(self, buf, area);
+        T::render(*self, buf, area);
+    }
+}
+
+impl<T, P: Paint> Widget<P> for &mut T
+where
+    T: Widget<P>,
+{
+    fn render(&self, buf: &mut P, area: Area)
+    {
+        T::render(*self, buf, area);
     }
 }
 

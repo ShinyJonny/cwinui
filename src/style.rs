@@ -173,6 +173,19 @@ where
     }
 }
 
+impl<'s, T> From<&'s mut T> for StyledStr<'s>
+where
+    T: AsMut<str> + ?Sized
+{
+    fn from(s: &'s mut T) -> Self
+    {
+        Self {
+            content: s.as_mut(),
+            style: Style::default(),
+        }
+    }
+}
+
 impl<'s> From<&'s StyledString> for StyledStr<'s>
 {
     fn from(s: &'s StyledString) -> Self
