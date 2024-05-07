@@ -2,7 +2,7 @@ use crate::layout::{Proportional, Proportions};
 use crate::style::WithStyle;
 use crate::util::offset;
 use crate::{Dim, Draw, Area, Pos};
-use crate::buffer::Buffer;
+use crate::alloc::buffer::Buffer;
 use crate::widget::Paint;
 
 

@@ -3,7 +3,8 @@ use termion::event::Event;
 use crate::Pos;
 use crate::layout::{Area, Proportional, Proportions};
 use crate::widget::Paint;
-use crate::style::{Style, StyledChar, StyledStr, StyledString, WithStyle};
+use crate::style::{Style, StyledChar, StyledStr, WithStyle};
+use crate::alloc::style::StyledString;
 
 use super::{
     Draw,

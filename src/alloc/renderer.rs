@@ -3,7 +3,7 @@ use termion::raw::{RawTerminal, IntoRawMode};
 use termion::input::MouseTerminal;
 
 use crate::{Area, Dim};
-use crate::buffer::Buffer;
+use crate::alloc::buffer::Buffer;
 use crate::widget::Paint;
 use crate::style::{Color, TextStyle};
 use crate::util::offset;

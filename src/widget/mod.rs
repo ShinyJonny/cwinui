@@ -6,11 +6,7 @@ use crate::layout::Justify;
 
 
 pub mod bar;
-pub mod inputline;
-pub mod menu;
-pub mod prompt;
 pub mod border;
-mod canvas;
 pub mod layout;
 pub mod flex;
 pub mod split;
@@ -21,11 +17,7 @@ mod debug;
 pub use split::{Row, Col};
 pub use flex::{FlexCol, FlexRow};
 pub use bar::{HorizBar, VertBar};
-pub use inputline::InputLine;
-pub use menu::Menu;
-pub use prompt::Prompt;
 pub use border::Border;
-pub use canvas::Canvas;
 pub use filler::Filler;
 pub use backdrop::Backdrop;
 pub use debug::Wireframe;

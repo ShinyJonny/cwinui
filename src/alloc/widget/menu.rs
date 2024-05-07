@@ -1,7 +1,8 @@
 use std::cell::Cell;
 
 use crate::layout::{Proportional, Proportions};
-use crate::{style::StyledString, Pos};
+use crate::Pos;
+use crate::alloc::style::StyledString;
 use crate::Dim;
 use crate::widget::Paint;
 use super::{

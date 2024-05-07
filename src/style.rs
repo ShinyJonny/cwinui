@@ -127,9 +127,9 @@ pub enum Color {
     Rgb(u8, u8, u8),
 }
 
-/// String slice with attached `Style`.
+/// `&str` with attached `Style`.
 ///
-/// For owned version, see [`StyledString`].
+/// For owned version, see [`StyledString`](crate::alloc::style::StyledString).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct StyledStr<'s> {
     pub content: &'s str,
@@ -137,14 +137,6 @@ pub struct StyledStr<'s> {
 }
 
 impl<'s> StyledStr<'s> {
-    // FIXME: properly implement `Borrow` and `ToOwned`.
-    /// Converts to `StyledString`.
-    #[inline]
-    pub fn to_owned(&self) -> StyledString
-    {
-        StyledString::from(*self)
-    }
-
     /// Slices the contained `str`, clones the [`Style`] and constructs a new
     /// `StyledStr`.
     #[inline]
@@ -186,42 +178,10 @@ where
     }
 }
 
-impl<'s> From<&'s StyledString> for StyledStr<'s>
-{
-    fn from(s: &'s StyledString) -> Self
-    {
-        Self {
-            content: s.content.as_str(),
-            style: s.style,
-        }
-    }
-}
-
-/// Owned version of [`StyledStr`].
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct StyledString {
-    pub content: String,
-    pub style: Style,
-}
-
-impl <'s, T> From<T> for StyledString
-where
-    T: Into<StyledStr<'s>>
-{
-    fn from(t: T) -> Self
-    {
-        let t: StyledStr = t.into();
-
-        Self {
-            content: String::from(t.content),
-            style: t.style,
-        }
-    }
-}
-
 /// Char with attached style.
 ///
-/// See also [`StyledStr`] and [`StyledString`].
+/// See also [`StyledStr`] and
+/// [`StyledString`](crate::alloc::style::StyledString).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct StyledChar {
     pub content: char,
