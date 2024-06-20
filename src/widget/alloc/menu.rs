@@ -2,13 +2,10 @@ use std::cell::Cell;
 
 use crate::layout::{Proportional, Proportions};
 use crate::Pos;
-use crate::alloc::style::StyledString;
+use crate::alloc::string::StyledString;
 use crate::Dim;
-use crate::widget::Paint;
-use super::{
-    Draw,
-    InteractiveWidget,
-};
+use crate::render::{Render, Draw};
+use super::InteractiveWidget;
 use termion::event::{Event, Key};
 
 use crate::Area;
@@ -127,8 +124,8 @@ impl Menu {
     }
 }
 
-impl<P: Paint> Draw<P> for Menu {
-    fn draw(&self, buf: &mut P, area: Area)
+impl<R: Render> Draw<R> for Menu {
+    fn draw(&self, buf: &mut R, area: Area)
     {
         if area.is_collapsed() {
             return;

@@ -1,4 +1,4 @@
-use crate::widget::{Draw, InteractiveWidget};
+use crate::widget::InteractiveWidget;
 
 pub mod inputline;
 pub mod menu;

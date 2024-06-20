@@ -13,44 +13,43 @@
 //! # Example
 //!
 //! ```
-//! use cwinui::screen::RenderContext;
+//! use cwinui::alloc::buffer::Buffer;
 //! use cwinui::widget::{
 //!     layout::{Container, Center},
 //!     Row,
 //!     Wireframe,
 //! };
+//! use cwinui::render::{Render, Draw};
 //! use cwinui::layout::{Dim, Proportions};
 //!
-//! let ui = |ctx: &mut RenderContext| {
-//!     let area = ctx.area();
+//! let ui = |renderer: &mut Buffer| {
+//!     let area = renderer.area();
 //!
 //!     let dim = Dim {
 //!         width: 20,
 //!         height: area.height,
 //!     };
 //!
-//!     ctx.draw_fullscreen(
-//!         &Center(
-//!             Container::new(Row(&[&Wireframe::new(), &Wireframe::new()]))
-//!                 .size(Proportions::fixed(dim))
-//!         )
-//!     );
+//!     Center(
+//!         Container::new(Row(&[&Wireframe::new(), &Wireframe::new()]))
+//!             .size(Proportions::fixed(dim))
+//!     ).draw(renderer, area);
 //! };
 //! ```
 
 
 use crate::layout::{Proportional, Proportions};
-use super::{Draw, Paint};
+use crate::render::{Draw, Render};
 
 
 /// Vertical split of widgets.
 ///
 /// The paint area is split equally among the items. For more information see
 /// the [Module-level documentation](self)
-pub struct Col<'a, P: Paint>(pub &'a [&'a dyn Draw<P>]);
+pub struct Col<'a, R: Render>(pub &'a [&'a dyn Draw<R>]);
 
-impl<P: Paint> Draw<P> for Col<'_, P> {
-    fn draw(&self, buf: &mut P, area: crate::Area)
+impl<R: Render> Draw<R> for Col<'_, R> {
+    fn draw(&self, buf: &mut R, area: crate::Area)
     {
         if area.is_collapsed() || self.0.is_empty() {
             return;
@@ -71,7 +70,7 @@ impl<P: Paint> Draw<P> for Col<'_, P> {
     }
 }
 
-impl<P: Paint> Proportional for Col<'_, P> {
+impl<R: Render> Proportional for Col<'_, R> {
     fn proportions(&self) -> Proportions
     {
         Proportions::flexible()
@@ -83,10 +82,10 @@ impl<P: Paint> Proportional for Col<'_, P> {
 ///
 /// The paint area is split equally among the items. For more information see
 /// the [Module-level documentation](self)
-pub struct Row<'a, P: Paint>(pub &'a [&'a dyn Draw<P>]);
+pub struct Row<'a, R: Render>(pub &'a [&'a dyn Draw<R>]);
 
-impl<P: Paint> Draw<P> for Row<'_, P> {
-    fn draw(&self, buf: &mut P, area: crate::Area)
+impl<R: Render> Draw<R> for Row<'_, R> {
+    fn draw(&self, buf: &mut R, area: crate::Area)
     {
         if area.is_collapsed() || self.0.is_empty() {
             return;
@@ -107,7 +106,7 @@ impl<P: Paint> Draw<P> for Row<'_, P> {
     }
 }
 
-impl<P: Paint> Proportional for Row<'_, P> {
+impl<R: Render> Proportional for Row<'_, R> {
     fn proportions(&self) -> Proportions
     {
         Proportions::flexible()

@@ -2,7 +2,7 @@ use crate::{Area, Pos};
 use crate::style::WithStyle;
 use crate::layout::{Justify, Proportional, Proportions};
 
-use super::{border, Border, Paint, Draw};
+use super::{border, Border, Render, Draw};
 
 
 /// Option flags for [`Wireframe`].
@@ -114,8 +114,8 @@ impl Wireframe {
     }
 }
 
-impl<P: Paint> Draw<P> for Wireframe {
-    fn draw(&self, buf: &mut P, area: crate::Area)
+impl<R: Render> Draw<R> for Wireframe {
+    fn draw(&self, buf: &mut R, area: crate::Area)
     {
         if area.is_collapsed() {
             return;

@@ -1,4 +1,2 @@
-pub mod widget;
-pub mod style;
+pub mod string;
 pub mod buffer;
-pub mod renderer;

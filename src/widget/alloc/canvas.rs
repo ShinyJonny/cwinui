@@ -3,7 +3,7 @@ use crate::style::WithStyle;
 use crate::util::offset;
 use crate::{Dim, Draw, Area, Pos};
 use crate::alloc::buffer::Buffer;
-use crate::widget::Paint;
+use crate::render::Render;
 
 
 /// A buffered canvas that allows widgets to draw onto it.
@@ -21,9 +21,9 @@ impl Canvas {
         }
     }
 
-    /// Exposes the `Paint` interface.
+    /// Exposes the `Render` interface.
     #[inline]
-    pub fn painter(&mut self) -> &mut impl Paint
+    pub fn renderer(&mut self) -> &mut impl Render
     {
         &mut self.buffer
     }
@@ -39,14 +39,14 @@ impl std::fmt::Debug for Canvas {
     }
 }
 
-impl<P: Paint> Draw<P> for Canvas {
-    fn draw(&self, buf: &mut P, area: Area)
+impl<R: Render> Draw<R> for Canvas {
+    fn draw(&self, buf: &mut R, area: Area)
     {
         let width = std::cmp::min(area.width, self.buffer.width);
         let height = std::cmp::min(area.height, self.buffer.height);
 
         // FIXME: very inefficient due to bounds checking, needs to be done via
-        // diffing or some other method on `Paint` instead.
+        // diffing or some other method on `Render` instead.
         // Also, having separate style and char bufs seems inefficient here.
         for y in 0..height {
             for x in 0..width {

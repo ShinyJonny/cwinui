@@ -1,6 +1,6 @@
 use crate::layout::{Proportional, Proportions};
 
-use super::{Paint, Draw};
+use super::{Render, Draw};
 
 
 /// Allows two widgets to be drawn in the same area, on top of each other.
@@ -12,8 +12,8 @@ pub struct Backdrop<F, B> {
     pub bg: B,
 }
 
-impl<F: Draw<P>, B: Draw<P>, P: Paint> Draw<P> for Backdrop<F, B> {
-    fn draw(&self, buf: &mut P, area: crate::Area)
+impl<F: Draw<R>, B: Draw<R>, R: Render> Draw<R> for Backdrop<F, B> {
+    fn draw(&self, buf: &mut R, area: crate::Area)
     {
         self.bg.draw(buf, area);
         self.fg.draw(buf, area);

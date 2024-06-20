@@ -12,17 +12,17 @@
 
 
 use super::Draw;
-use crate::widget::Paint;
+use crate::widget::Render;
 use crate::layout::{Proportional, Proportions, Range};
 use crate::Area;
 
 
 /// Items that can be drawn in a *flex container*.
-pub trait FlexItem<P: Paint>: Draw<P> + Proportional {}
+pub trait FlexItem<R: Render>: Draw<R> + Proportional {}
 
-impl<P: Paint, T> FlexItem<P> for T
+impl<R: Render, T> FlexItem<R> for T
 where
-    T: Draw<P> + Proportional {}
+    T: Draw<R> + Proportional {}
 
 
 /// Vertical flex container.
@@ -30,9 +30,9 @@ where
 /// For more information on how the items are drawn, see the [Module-level
 /// documentation](self).
 #[derive(Clone)]
-pub struct FlexCol<'a, P: Paint>(pub &'a [&'a dyn FlexItem<P>]);
+pub struct FlexCol<'a, R: Render>(pub &'a [&'a dyn FlexItem<R>]);
 
-impl<'a, P: Paint> std::fmt::Debug for FlexCol<'a, P> {
+impl<'a, R: Render> std::fmt::Debug for FlexCol<'a, R> {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result
     {
         f.write_str("FlexCol ")?;
@@ -42,8 +42,8 @@ impl<'a, P: Paint> std::fmt::Debug for FlexCol<'a, P> {
     }
 }
 
-impl<P: Paint> Draw<P> for FlexCol<'_, P> {
-    fn draw(&self, buf: &mut P, area: Area)
+impl<R: Render> Draw<R> for FlexCol<'_, R> {
+    fn draw(&self, buf: &mut R, area: Area)
     {
         if area.is_collapsed() || self.0.is_empty() {
             return;
@@ -99,7 +99,7 @@ impl<P: Paint> Draw<P> for FlexCol<'_, P> {
     }
 }
 
-impl<P: Paint> Proportional for FlexCol<'_, P> {
+impl<R: Render> Proportional for FlexCol<'_, R> {
     fn proportions(&self) -> Proportions
     {
         self.0.iter()
@@ -121,9 +121,9 @@ impl<P: Paint> Proportional for FlexCol<'_, P> {
 /// For more information on how the items are drawn, see the [Module-level
 /// documentation](self).
 #[derive(Clone)]
-pub struct FlexRow<'a, P: Paint>(pub &'a [&'a dyn FlexItem<P>]);
+pub struct FlexRow<'a, R: Render>(pub &'a [&'a dyn FlexItem<R>]);
 
-impl<'a, P: Paint> std::fmt::Debug for FlexRow<'a, P> {
+impl<'a, R: Render> std::fmt::Debug for FlexRow<'a, R> {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result
     {
         f.write_str("FlexRow ")?;
@@ -133,8 +133,8 @@ impl<'a, P: Paint> std::fmt::Debug for FlexRow<'a, P> {
     }
 }
 
-impl<P: Paint> Draw<P> for FlexRow<'_, P> {
-    fn draw(&self, buf: &mut P, area: Area)
+impl<R: Render> Draw<R> for FlexRow<'_, R> {
+    fn draw(&self, buf: &mut R, area: Area)
     {
         if area.is_collapsed() || self.0.is_empty() {
             return;
@@ -190,7 +190,7 @@ impl<P: Paint> Draw<P> for FlexRow<'_, P> {
     }
 }
 
-impl<P: Paint> Proportional for FlexRow<'_, P> {
+impl<R: Render> Proportional for FlexRow<'_, R> {
     fn proportions(&self) -> Proportions
     {
         self.0.iter()

@@ -1,16 +1,16 @@
 use super::Draw;
 use crate::{Area, Pos};
 use crate::layout::{Alignment, Proportional, Proportions, Range};
-use crate::widget::Paint;
+use crate::widget::Render;
 
 
 /// Draws the wrapped widget in the smallest area possible.
 #[derive(Debug, Clone)]
 pub struct Min<T: Proportional>(pub T);
 
-impl<T: Draw<P> + Proportional, P: Paint> Draw<P> for Min<T> {
+impl<T: Draw<R> + Proportional, R: Render> Draw<R> for Min<T> {
     #[inline]
-    fn draw(&self, buf: &mut P, area: Area)
+    fn draw(&self, buf: &mut R, area: Area)
     {
         let dim = area.dimensions()
             .fit_into(self.proportions())
@@ -63,9 +63,9 @@ impl<T: Proportional> Align<T> {
     align_method!(bottom_right,  BottomRight);
 }
 
-impl<T: Draw<P> + Proportional, P: Paint> Draw<P> for Align<T> {
+impl<T: Draw<R> + Proportional, R: Render> Draw<R> for Align<T> {
     #[inline]
-    fn draw(&self, buf: &mut P, area: Area)
+    fn draw(&self, buf: &mut R, area: Area)
     {
         let dim = area.dimensions()
             .fit_into(self.inner.proportions())
@@ -95,8 +95,8 @@ macro_rules! def_static_align {
         #[derive(Debug, Clone)]
         pub struct $al<T: Proportional>(pub T);
 
-        impl<T: Draw<P> + Proportional, P: Paint> Draw<P> for $al<T> {
-            fn draw(&self, buf: &mut P, area: Area)
+        impl<T: Draw<R> + Proportional, R: Render> Draw<R> for $al<T> {
+            fn draw(&self, buf: &mut R, area: Area)
             {
                 let dim = area.dimensions()
                     .fit_into(self.0.proportions())
@@ -164,9 +164,9 @@ impl<T> Pad<T> {
     pub const fn left(mut self,   val: u16) -> Self { self.left   = val; self }
 }
 
-impl<T: Draw<P>, P: Paint> Draw<P> for Pad<T> {
+impl<T: Draw<R>, R: Render> Draw<R> for Pad<T> {
     #[inline]
-    fn draw(&self, buf: &mut P, area: Area)
+    fn draw(&self, buf: &mut R, area: Area)
     {
         let horiz_pad = self.left + self.right;
         let vert_pad  = self.top  + self.bottom;
@@ -245,9 +245,9 @@ impl<T> Container<T> {
     }
 }
 
-impl<T: Draw<P>, P: Paint> Draw<P> for Container<T> {
+impl<T: Draw<R>, R: Render> Draw<R> for Container<T> {
     #[inline]
-    fn draw(&self, buf: &mut P, area: Area)
+    fn draw(&self, buf: &mut R, area: Area)
     {
         let dim = area.dimensions().fit_into(self.proportions)
             .unwrap_or_else(|dim| dim);
@@ -272,12 +272,12 @@ pub struct Fallback<T: Proportional, F> {
     pub fallback: F,
 }
 
-impl<T: Proportional, F, P: Paint> Draw<P> for Fallback<T, F>
+impl<T: Proportional, F, R: Render> Draw<R> for Fallback<T, F>
 where
-    T: Draw<P>,
-    F: Draw<P>,
+    T: Draw<R>,
+    F: Draw<R>,
 {
-    fn draw(&self, buf: &mut P, area: Area)
+    fn draw(&self, buf: &mut R, area: Area)
     {
         if area.dimensions().satisfies(self.inner.proportions()) {
             self.inner.draw(buf, area);

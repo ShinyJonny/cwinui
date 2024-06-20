@@ -2,7 +2,7 @@ use crate::layout::{Proportional, Proportions};
 use crate::style::{Style, StyledChar};
 use crate::{Area, Dim, Pos};
 
-use super::{Draw, Paint};
+use super::{Draw, Render};
 
 /// Configuration options for theming [`Border`].
 #[derive(Debug, Clone, Copy)]
@@ -69,8 +69,8 @@ impl<T> Border<T> {
     }
 }
 
-impl<T: Draw<P>, P: Paint> Draw<P> for Border<T> {
-    fn draw(&self, buf: &mut P, area: Area)
+impl<T: Draw<R>, R: Render> Draw<R> for Border<T> {
+    fn draw(&self, buf: &mut R, area: Area)
     {
         if area.is_collapsed() {
             return;

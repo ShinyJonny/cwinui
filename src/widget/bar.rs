@@ -1,4 +1,4 @@
-use crate::widget::Paint;
+use crate::widget::Render;
 use crate::style::Style;
 use super::Draw;
 use crate::layout::{Area, Proportional, Proportions};
@@ -60,8 +60,8 @@ impl HorizBar {
     }
 }
 
-impl<P: Paint> Draw<P> for HorizBar {
-    fn draw(&self, buf: &mut P, area: Area)
+impl<R: Render> Draw<R> for HorizBar {
+    fn draw(&self, buf: &mut R, area: Area)
     {
         if area.is_collapsed() {
             return;
@@ -112,8 +112,8 @@ impl VertBar {
     }
 }
 
-impl<P: Paint> Draw<P> for VertBar {
-    fn draw(&self, buf: &mut P, area: Area)
+impl<R: Render> Draw<R> for VertBar {
+    fn draw(&self, buf: &mut R, area: Area)
     {
         if area.is_collapsed() {
             return;

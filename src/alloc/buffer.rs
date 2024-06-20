@@ -1,4 +1,4 @@
-use crate::widget::Paint;
+use crate::render::Render;
 use crate::{Pos, Area};
 use crate::style::{StyledStr, StyledChar, Style};
 use crate::util::offset;
@@ -41,7 +41,7 @@ impl Buffer {
     }
 }
 
-impl Paint for Buffer {
+impl Render for Buffer {
     #[inline]
     fn area(&self) -> Area
     {

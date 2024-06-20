@@ -1,12 +1,9 @@
 use termion::event::{Event, Key};
 
-use super::{
-    Draw,
-    InteractiveWidget,
-};
+use super::InteractiveWidget;
 use crate::Pos;
 use crate::layout::{Area, Proportional, Proportions};
-use crate::widget::Paint;
+use crate::render::{Render, Draw};
 use crate::style::{StyledChar, Style, WithStyle};
 
 
@@ -84,8 +81,8 @@ impl InputLine {
     }
 }
 
-impl<P: Paint> Draw<P> for InputLine {
-    fn draw(&self, buf: &mut P, area: Area)
+impl<R: Render> Draw<R> for InputLine {
+    fn draw(&self, buf: &mut R, area: Area)
     {
         if area.is_collapsed() {
             return;

@@ -2,12 +2,11 @@ use termion::event::Event;
 
 use crate::Pos;
 use crate::layout::{Area, Proportional, Proportions};
-use crate::widget::Paint;
+use crate::render::{Render, Draw};
 use crate::style::{Style, StyledChar, StyledStr, WithStyle};
-use crate::alloc::style::StyledString;
+use crate::alloc::string::StyledString;
 
 use super::{
-    Draw,
     InteractiveWidget,
     InputLine,
 };
@@ -110,8 +109,8 @@ impl Prompt {
     }
 }
 
-impl<P: Paint> Draw<P> for Prompt {
-    fn draw(&self, buf: &mut P, area: Area)
+impl<R: Render> Draw<R> for Prompt {
+    fn draw(&self, buf: &mut R, area: Area)
     {
         if area.is_collapsed() {
             return;

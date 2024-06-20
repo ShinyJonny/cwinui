@@ -1,225 +1,188 @@
-use std::io::{Stdout, Write};
-use termion::raw::{RawTerminal, IntoRawMode};
-use termion::input::MouseTerminal;
+use super::Backend;
 
-use crate::{Area, Dim};
-use crate::alloc::buffer::Buffer;
-use crate::widget::Paint;
-use crate::style::{Color, TextStyle};
-use crate::util::offset;
-use crate::widget::Draw;
+pub mod alloc {
+    use std::io::{Stdout, Write};
+    use termion::raw::{RawTerminal, IntoRawMode};
+    use termion::input::MouseTerminal;
 
-/// Context for rendering widgets.
-#[derive(Debug)]
-pub struct RenderContext<'b> {
-    buffer: &'b mut Buffer,
-}
+    use crate::alloc::buffer::Buffer;
+    use crate::style::{Color, TextStyle};
+    use crate::util::offset;
+    use crate::render::Render;
 
-impl<'b> RenderContext<'b> {
-    /// The full area of the screen.
-    #[inline]
-    pub fn area(&self) -> Area
-    {
-        self.buffer.area()
+    use super::{Backend, console};
+
+    /// The screen that renders widgets and displays them to the terminal.
+    pub struct TermionFixed {
+        pub width: u16,
+        pub height: u16,
+        buffer: Buffer,
+        stdout: RawTerminal<MouseTerminal<Stdout>>,
     }
 
-    /// The full dimensions of the screen.
-    #[inline]
-    pub fn dimensions(&self) -> Dim
-    {
-        self.buffer.dimensions()
-    }
-
-    /// Accesses the [`Paint`] interface.
-    #[inline]
-    pub fn painter(&mut self) -> &mut impl Paint
-    {
-        self.buffer
-    }
-
-    /// Draws `d`, passing the full area of the [`Screen`].
-    #[inline]
-    pub fn draw_fullscreen<D: Draw<Buffer>>(&mut self, d: &D)
-    {
-        let area = self.area();
-        
-        d.draw(self.buffer, area);
-    }
-}
-
-/// The screen that renders widgets and displays them to the terminal.
-pub struct Screen {
-    pub width: u16,
-    pub height: u16,
-    buffer: Buffer,
-    stdout: RawTerminal<MouseTerminal<Stdout>>,
-}
-
-impl std::fmt::Debug for Screen {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result
-    {
-        f.debug_struct("Screen")
-            .field("width", &self.width)
-            .field("height", &self.height)
-            .field("buffer", &self.buffer)
-            .finish()
-    }
-}
-
-impl Screen {
-    /// Initialises and creates the `Screen`.
-    ///
-    /// Should be called only once, as it modifies the state of the terminal.
-    pub fn init(cols: u16, rows: u16) -> Self
-    {
-        let (x, y) = termion::terminal_size()
-            .expect("Failed to detect terminal size.");
-
-        if cols > x || rows > y {
-            panic!("terminal too small, needs to be at least: {cols}x{rows}");
-        }
-
-        let mut stdout = MouseTerminal::from(std::io::stdout())
-            .into_raw_mode()
-            .unwrap();
-
-        console::hide_cursor(&mut stdout).unwrap();
-
-        Self {
-            width: cols,
-            height: rows,
-            buffer: Buffer::new(cols, rows),
-            stdout,
+    impl std::fmt::Debug for TermionFixed {
+        fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result
+        {
+            f.debug_struct("TermionFixed")
+                .field("width", &self.width)
+                .field("height", &self.height)
+                .finish()
         }
     }
 
-    /// Renders the UI into the `Screen`'s internal buffer.
-    ///
-    /// `ui` is passed the [`RenderContext`], which it can use to
-    /// draw widgets.
-    pub fn render<F>(&mut self, ui: F)
-    where
-        F: FnOnce(&mut RenderContext)
-    {
-        let mut ctx = RenderContext {
-            buffer: &mut self.buffer,
-        };
+    impl TermionFixed {
+        /// Initialises and creates the backend.
+        ///
+        /// Should be called only once, as it modifies the state of the terminal.
+        pub fn init(cols: u16, rows: u16) -> Self
+        {
+            let (x, y) = termion::terminal_size()
+                .expect("Failed to detect terminal size.");
 
-        ctx.buffer.clear();
-
-        ui(&mut ctx);
-    }
-
-    /// Flushes the internal buffer to the terminal.
-    pub fn refresh(&mut self)
-    {
-        for y in 0..self.height - 1 {
-            self.write_line(y);
-            console::write_str(&mut self.stdout, "\r\n").unwrap();
-        }
-
-        self.write_line(self.height - 1);
-        console::write_char(&mut self.stdout, '\r').unwrap();
-        console::move_cursor(&mut self.stdout, -(self.height as isize - 1), 0).unwrap();
-
-        // TODO: implement cursor with a real cursor.
-        if !self.buffer.cursor.hidden {
-            // Move the cursor to the its position.
-            console::move_cursor(
-                &mut self.stdout,
-                self.buffer.cursor.y as isize,
-                self.buffer.cursor.x as isize
-            ).unwrap();
-            // char printing
-            console::add_text_style(&mut self.stdout, TextStyle::INVERT).unwrap();
-            console::write_char(
-                &mut self.stdout,
-                self.buffer.chars[offset!(
-                    self.buffer.cursor.x as usize,
-                    self.buffer.cursor.y as usize,
-                    self.width as usize
-                )]
-            ).unwrap();
-            console::subtract_text_style(&mut self.stdout, TextStyle::INVERT).unwrap();
-            console::move_cursor(&mut self.stdout, 0, -1).unwrap();
-            // Move the cursor back to the top left of the screen.
-            console::move_cursor(
-                &mut self.stdout,
-                -(self.buffer.cursor.y as isize),
-                -(self.buffer.cursor.x as isize)
-            ).unwrap();
-        }
-
-        self.stdout.flush()
-            .expect("failed to flush stdout");
-    }
-
-    fn write_line(&mut self, y: u16)
-    {
-        let width = self.width as usize;
-        let line_offset = offset!(0, y as usize, width);
-        let chars = &self.buffer.chars[line_offset..line_offset + width];
-        let styles = &self.buffer.styles[line_offset..line_offset + width];
-
-        let mut saved_ts = styles[0].text_style.unwrap_or_default();
-        let mut saved_fg = styles[0].fg_color.unwrap_or_default();
-        let mut saved_bg = styles[0].bg_color.unwrap_or_default();
-        // The first char of every line is always set with colors and style.
-        console::reset(&mut self.stdout)
-            .expect("failed to reset style");
-        console::set_text_style(&mut self.stdout, saved_ts)
-            .expect("failed to set text style");
-        console::set_fg_color(&mut self.stdout, saved_fg)
-            .expect("failed to set fg color");
-        console::set_bg_color(&mut self.stdout, saved_bg)
-            .expect("failed to set bg color");
-        console::write_char(&mut self.stdout, chars[0])
-            .expect("failed to write a char to the screen");
-
-        for x in 1..width {
-            let cur_style = &styles[x];
-            let cur_char = &chars[x];
-
-            let text_style = cur_style.text_style.unwrap_or_default();
-            let fg_color = cur_style.fg_color.unwrap_or_default();
-            let bg_color = cur_style.bg_color.unwrap_or_default();
-
-            let ts_changed = saved_ts != text_style;
-            if ts_changed {
-                console::reset(&mut self.stdout)
-                    .expect("failed to reset style");
-                console::add_text_style(&mut self.stdout, text_style)
-                    .expect("failed to set text style");
-                saved_ts = text_style;
+            if cols > x || rows > y {
+                panic!("terminal too small, needs to be at least: {cols}x{rows}");
             }
 
-            if saved_fg != fg_color || ts_changed {
-                console::set_fg_color(&mut self.stdout, fg_color)
-                    .expect("failed to set fg color");
-                saved_fg = fg_color;
-            }
-            if saved_bg != bg_color || ts_changed {
-                console::set_bg_color(&mut self.stdout, bg_color)
-                    .expect("failed to set bg color");
-                saved_bg = bg_color;
-            }
+            let mut stdout = MouseTerminal::from(std::io::stdout())
+                .into_raw_mode()
+                .unwrap();
 
-            console::write_char(&mut self.stdout, *cur_char)
+            console::hide_cursor(&mut stdout).unwrap();
+
+            Self {
+                width: cols,
+                height: rows,
+                buffer: Buffer::new(cols, rows),
+                stdout,
+            }
+        }
+
+        fn write_line(&mut self, y: u16)
+        {
+            let width = self.width as usize;
+            let line_offset = offset!(0, y as usize, width);
+            let chars = &self.buffer.chars[line_offset..line_offset + width];
+            let styles = &self.buffer.styles[line_offset..line_offset + width];
+
+            let mut saved_ts = styles[0].text_style.unwrap_or_default();
+            let mut saved_fg = styles[0].fg_color.unwrap_or_default();
+            let mut saved_bg = styles[0].bg_color.unwrap_or_default();
+            // The first char of every line is always set with colors and style.
+            console::reset(&mut self.stdout)
+                .expect("failed to reset style");
+            console::set_text_style(&mut self.stdout, saved_ts)
+                .expect("failed to set text style");
+            console::set_fg_color(&mut self.stdout, saved_fg)
+                .expect("failed to set fg color");
+            console::set_bg_color(&mut self.stdout, saved_bg)
+                .expect("failed to set bg color");
+            console::write_char(&mut self.stdout, chars[0])
                 .expect("failed to write a char to the screen");
+
+            for x in 1..width {
+                let cur_style = &styles[x];
+                let cur_char = &chars[x];
+
+                let text_style = cur_style.text_style.unwrap_or_default();
+                let fg_color = cur_style.fg_color.unwrap_or_default();
+                let bg_color = cur_style.bg_color.unwrap_or_default();
+
+                let ts_changed = saved_ts != text_style;
+                if ts_changed {
+                    console::reset(&mut self.stdout)
+                        .expect("failed to reset style");
+                    console::add_text_style(&mut self.stdout, text_style)
+                        .expect("failed to set text style");
+                    saved_ts = text_style;
+                }
+
+                if saved_fg != fg_color || ts_changed {
+                    console::set_fg_color(&mut self.stdout, fg_color)
+                        .expect("failed to set fg color");
+                    saved_fg = fg_color;
+                }
+                if saved_bg != bg_color || ts_changed {
+                    console::set_bg_color(&mut self.stdout, bg_color)
+                        .expect("failed to set bg color");
+                    saved_bg = bg_color;
+                }
+
+                console::write_char(&mut self.stdout, *cur_char)
+                    .expect("failed to write a char to the screen");
+            }
         }
     }
-}
 
-impl Drop for Screen {
-    fn drop(&mut self)
-    {
-        console::set_fg_color(&mut self.stdout, Color::Normal).unwrap();
-        console::set_bg_color(&mut self.stdout, Color::Normal).unwrap();
-        console::set_text_style(&mut self.stdout, TextStyle::NORMAL).unwrap();
-        for _row in 0..self.height {
-            console::write_char(&mut self.stdout, '\n').unwrap();
+    impl Backend for TermionFixed {
+        type Renderer = Buffer;
+        type FlushError = (); // TODO
+
+        fn render<F>(&mut self, ui: F)
+        where
+            F: FnOnce(&mut Self::Renderer)
+        {
+            self.buffer.clear();
+
+            ui(&mut self.buffer);
         }
-        console::show_cursor(&mut self.stdout).unwrap();
+
+        fn flush(&mut self) -> Result<(), Self::FlushError>
+        {
+            for y in 0..self.height - 1 {
+                self.write_line(y);
+                console::write_str(&mut self.stdout, "\r\n").unwrap();
+            }
+
+            self.write_line(self.height - 1);
+            console::write_char(&mut self.stdout, '\r').unwrap();
+            console::move_cursor(&mut self.stdout, -(self.height as isize - 1), 0).unwrap();
+
+            // TODO: implement cursor with a real cursor.
+            if !self.buffer.cursor.hidden {
+                // Move the cursor to the its position.
+                console::move_cursor(
+                    &mut self.stdout,
+                    self.buffer.cursor.y as isize,
+                    self.buffer.cursor.x as isize
+                ).unwrap();
+                // char printing
+                console::add_text_style(&mut self.stdout, TextStyle::INVERT).unwrap();
+                console::write_char(
+                    &mut self.stdout,
+                    self.buffer.chars[offset!(
+                        self.buffer.cursor.x as usize,
+                        self.buffer.cursor.y as usize,
+                        self.width as usize
+                    )]
+                ).unwrap();
+                console::subtract_text_style(&mut self.stdout, TextStyle::INVERT).unwrap();
+                console::move_cursor(&mut self.stdout, 0, -1).unwrap();
+                // Move the cursor back to the top left of the screen.
+                console::move_cursor(
+                    &mut self.stdout,
+                    -(self.buffer.cursor.y as isize),
+                    -(self.buffer.cursor.x as isize)
+                ).unwrap();
+            }
+
+            self.stdout.flush()
+                .expect("failed to flush stdout");
+
+            Ok(())
+        }
+    }
+
+    impl Drop for TermionFixed {
+        fn drop(&mut self)
+        {
+            console::set_fg_color(&mut self.stdout, Color::Normal).unwrap();
+            console::set_bg_color(&mut self.stdout, Color::Normal).unwrap();
+            console::set_text_style(&mut self.stdout, TextStyle::NORMAL).unwrap();
+            for _row in 0..self.height {
+                console::write_char(&mut self.stdout, '\n').unwrap();
+            }
+            console::show_cursor(&mut self.stdout).unwrap();
+        }
     }
 }
 
