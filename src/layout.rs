@@ -309,7 +309,8 @@ impl Range {
     /// `0..=0`
     pub const ZERO: Self = Self::fixed(0);
 
-    /// Creates a new range: `min..=max`.
+    // NOTE: should we panic when max < min?
+    /// Creates a new range `min..=max`.
     ///
     /// If `max` is less than `min`, it is ignored and `min` becomes the max
     /// value (`min..=min`).
@@ -341,7 +342,7 @@ impl Range {
         Self { min, max }
     }
 
-    /// Creates a fixed range: `size..=size`.
+    /// Creates a fixed range (`size..=size`).
     ///
     /// ```
     /// use cwinui::layout::Range;
@@ -359,7 +360,7 @@ impl Range {
         }
     }
 
-    /// Creates a starting at `size`: `size..` .
+    /// Creates a flexible range starting at `size` (`size..`).
     ///
     /// ```
     /// use cwinui::layout::Range;
@@ -377,7 +378,7 @@ impl Range {
         }
     }
 
-    /// Creates a ending at `size`: `0..=size` .
+    /// Creates a range ending at `size` (`0..=size`).
     ///
     /// ```
     /// use cwinui::layout::Range;
@@ -395,7 +396,7 @@ impl Range {
         }
     }
 
-    /// Creates a fully flexible range: `0..` .
+    /// Creates a fully flexible range (`0..`).
     ///
     /// ```
     /// use cwinui::layout::Range;
@@ -475,7 +476,7 @@ impl Range {
 
     /// Joins the ranges.
     ///
-    /// The resulting minimum and maximum is the higher one.
+    /// The resulting minimum and maximum are the higher ones.
     ///
     /// ```
     /// use cwinui::layout::Range;
