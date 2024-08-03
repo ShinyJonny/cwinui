@@ -4,44 +4,51 @@ use crate::style::{StyledStr, StyledChar, Style};
 use crate::util::offset;
 
 /// Internals determining the state of the cursor.
-#[derive(Debug, Clone)]
-pub struct Cursor {
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct Cursor {
     pub x: u16,
     pub y: u16,
     pub hidden: bool,
 }
 
-// TODO: resizing.
-
-// FIXME: most of the fields cannot remain public.
-
-/// Versatile buffer that can be used for painting widgets.
-#[derive(Debug, Clone)]
-pub struct Buffer {
-    pub cursor: Cursor,
-    pub width: u16,
-    pub height: u16,
-    pub chars: Vec<char>,
-    pub styles: Vec<Style>,
+/// Versatile container-agnostic buffer that can be used for painting widgets.
+#[derive(Debug)]
+pub struct Buffer<'a> {
+    pub(crate) width: u16,
+    pub(crate) height: u16,
+    pub(crate) chars: &'a mut [char],
+    pub(crate) styles: &'a mut [Style],
+    pub(crate) cursor: &'a mut Cursor,
 }
 
-impl Buffer {
+impl<'a> Buffer<'a> {
     /// Creates a new `Buffer`.
-    pub fn new(width: u16, height: u16) -> Self
+    ///
+    /// # Panics
+    ///
+    /// If the length of `chars` or `styles` is less than `width * height`.
+    pub(crate) fn new(
+        width: u16,
+        height: u16,
+        chars: &'a mut [char],
+        styles: &'a mut [Style],
+        cursor: &'a mut Cursor
+    ) -> Self
     {
-        let buf_size = width as usize * height as usize;
+        assert!(chars.len() >= width as usize * height as usize);
+        assert!(styles.len() >= width as usize * height as usize);
 
         Self {
             width,
             height,
-            chars: vec![' '; buf_size],
-            styles: vec![Style::default().clean(); buf_size],
-            cursor: Cursor { y: 0, x: 0, hidden: true },
+            chars,
+            styles,
+            cursor,
         }
     }
 }
 
-impl Render for Buffer {
+impl Render for Buffer<'_> {
     #[inline]
     fn area(&self) -> Area
     {
@@ -100,7 +107,7 @@ impl Render for Buffer {
     {
         self.chars.fill(' ');
         self.styles.fill(Style::default());
-        self.cursor = Cursor { x: 0, y: 0, hidden: true };
+        *self.cursor = Cursor { x: 0, y: 0, hidden: true };
     }
 
     #[inline]

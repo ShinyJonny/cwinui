@@ -1,31 +1,41 @@
 use crate::layout::{Proportional, Proportions};
-use crate::style::WithStyle;
+use crate::style::{Style, WithStyle};
 use crate::util::offset;
 use crate::{Dim, Draw, Area, Pos};
-use crate::alloc::buffer::Buffer;
+use crate::buffer::{Buffer, Cursor};
 use crate::render::Render;
 
 
 /// A buffered canvas that allows widgets to draw onto it.
 #[derive(Clone)]
 pub struct Canvas {
-    buffer: Buffer,
+    width: u16,
+    height: u16,
+    chars: Vec<char>,
+    styles: Vec<Style>,
+    cursor: Cursor,
 }
 
 impl Canvas {
     /// Allocates a new `Canvas` with the size of `dimensions`.
     pub fn new(dimensions: Dim) -> Self
     {
+        let size = dimensions.width as usize * dimensions.height as usize;
+
         Self {
-            buffer: Buffer::new(dimensions.width, dimensions.height),
+            width: dimensions.width,
+            height: dimensions.height,
+            chars: vec![' '; size],
+            styles: vec![Style::default().clean(); size],
+            cursor: Cursor { x: 0, y: 0, hidden: true },
         }
     }
 
     /// Exposes the `Render` interface.
     #[inline]
-    pub fn renderer(&mut self) -> &mut impl Render
+    pub fn renderer(&mut self) -> impl Render + '_
     {
-        &mut self.buffer
+        Buffer::new(self.width, self.height, &mut self.chars, &mut self.styles, &mut self.cursor)
     }
 }
 
@@ -33,8 +43,8 @@ impl std::fmt::Debug for Canvas {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result
     {
         f.debug_struct("Canvas")
-            .field("width", &self.buffer.width)
-            .field("height", &self.buffer.height)
+            .field("width", &self.width)
+            .field("height", &self.height)
             .finish()
     }
 }
@@ -42,8 +52,8 @@ impl std::fmt::Debug for Canvas {
 impl<R: Render> Draw<R> for Canvas {
     fn draw(&self, buf: &mut R, area: Area)
     {
-        let width = std::cmp::min(area.width, self.buffer.width);
-        let height = std::cmp::min(area.height, self.buffer.height);
+        let width = std::cmp::min(area.width, self.width);
+        let height = std::cmp::min(area.height, self.height);
 
         // FIXME: very inefficient due to bounds checking, needs to be done via
         // diffing or some other method on `Render` instead.
@@ -51,9 +61,9 @@ impl<R: Render> Draw<R> for Canvas {
         for y in 0..height {
             for x in 0..width {
                 let offset = offset!(x as usize, y as usize,
-                    self.buffer.width as usize);
-                let c = self.buffer.chars[offset]
-                    .with_style(|_| self.buffer.styles[offset]);
+                    self.width as usize);
+                let c = self.chars[offset]
+                    .with_style(|_| self.styles[offset]);
                 buf.paint_char(Pos { x: x + area.x, y: y + area.y }, c);
             }
         }
@@ -67,8 +77,8 @@ impl Proportional for Canvas {
     fn proportions(&self) -> Proportions
     {
         Proportions::fixed(Dim {
-            width: self.buffer.width,
-            height: self.buffer.height,
+            width: self.width,
+            height: self.height,
         })
     }
 }
