@@ -196,8 +196,8 @@ where
         let inner_prop = self.inner.proportions();
 
         Proportions {
-            height: inner_prop.height.add(Range::fixed(self.left + self.right)),
-            width:  inner_prop.width.add(Range::fixed(self.top + self.bottom)),
+            width:  inner_prop.width.add(Range::fixed(self.left + self.right)),
+            height: inner_prop.height.add(Range::fixed(self.top + self.bottom)),
         }
     }
 }
