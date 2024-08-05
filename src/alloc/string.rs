@@ -1,4 +1,4 @@
-use crate::style::{Style, StyledStr};
+use crate::style::{AsStyledStr, Style, StyledStr};
 
 
 /// Owned version of [`StyledStr`].
@@ -6,6 +6,16 @@ use crate::style::{Style, StyledStr};
 pub struct StyledString {
     pub content: String,
     pub style: Style,
+}
+
+impl AsStyledStr for &StyledString {
+    fn as_styled_str(&self) -> StyledStr
+    {
+        StyledStr {
+            content: self.content.as_str(),
+            style: self.style,
+        }
+    }
 }
 
 impl <'s, T> From<T> for StyledString

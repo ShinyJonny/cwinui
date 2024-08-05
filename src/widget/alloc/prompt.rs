@@ -3,7 +3,7 @@ use termion::event::Event;
 use crate::Pos;
 use crate::layout::{Area, Proportional, Proportions};
 use crate::render::{Render, Draw};
-use crate::style::{Style, StyledChar, StyledStr, WithStyle};
+use crate::style::{Style, StyledChar, WithStyle};
 use crate::alloc::string::StyledString;
 
 use super::{
@@ -46,12 +46,10 @@ pub struct Prompt {
 
 impl Prompt {
     /// Creates a new `Prompt`.
-    pub fn new<'s, T>(label: T) -> Self
-    where
-        T: Into<StyledStr<'s>>
+    pub fn new<T: Into<StyledString>>(label: T) -> Self
     {
         Self {
-            label: label.into().to_owned(),
+            label: label.into(),
             inputline: InputLine::new(),
             theme: ThemeInternal {
                 sep: StyledString::from(": "),

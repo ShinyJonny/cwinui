@@ -123,13 +123,12 @@ pub enum Color {
     LightCyan,
     LightWhite,
     Ansi(u8),
-    // FIXME: flatten the tuple.
     Rgb(u8, u8, u8),
 }
 
 /// `&str` with attached `Style`.
 ///
-/// For owned version, see [`StyledString`](crate::alloc::style::StyledString).
+/// For owned version, see [`StyledString`](crate::alloc::string::StyledString).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct StyledStr<'s> {
     pub content: &'s str,
@@ -149,6 +148,31 @@ impl<'s> StyledStr<'s> {
             content: self.content[index].as_ref(),
             style: self.style,
         }
+    }
+}
+
+/// Style-enhanced `AsRef<str>`.
+pub trait AsStyledStr {
+    fn as_styled_str(&self) -> StyledStr;
+}
+
+impl<T> AsStyledStr for T
+where
+    T: AsRef<str>
+{
+    fn as_styled_str(&self) -> StyledStr
+    {
+        StyledStr {
+            content: self.as_ref(),
+            style: Style::default(),
+        }
+    }
+}
+
+impl<'a> AsStyledStr for StyledStr<'a> {
+    fn as_styled_str(&self) -> StyledStr
+    {
+        *self
     }
 }
 
@@ -181,7 +205,7 @@ where
 /// Char with attached style.
 ///
 /// See also [`StyledStr`] and
-/// [`StyledString`](crate::alloc::style::StyledString).
+/// [`StyledString`](crate::alloc::string::StyledString).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct StyledChar {
     pub content: char,

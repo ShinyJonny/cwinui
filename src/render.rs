@@ -1,5 +1,5 @@
 use crate::layout::{Area, Pos, Dim, Justify};
-use crate::style::{StyledChar, StyledStr};
+use crate::style::{AsStyledStr, StyledChar};
 
 /// Render - the basic mechanism for drawing widgets.
 ///
@@ -13,9 +13,7 @@ pub trait Render {
     /// # Panics
     ///
     /// When out of bounds.
-    fn paint_str<'s, S>(&mut self, pos: Pos, text: S)
-    where
-        S: Into<StyledStr<'s>>;
+    fn paint_str<S: AsStyledStr>(&mut self, pos: Pos, text: S);
 
     /// Paint a `StyledChar`.
     ///
@@ -114,9 +112,7 @@ pub trait Render {
 
     /// Bounds-checked absolute printing.
     #[inline]
-    fn print_abs<'s, S>(&mut self, pos: Pos, text: S)
-    where
-        S: Into<StyledStr<'s>>
+    fn print_abs<S: AsStyledStr>(&mut self, pos: Pos, text: S)
     {
         let area = self.area();
 
@@ -124,7 +120,7 @@ pub trait Render {
             return;
         }
 
-        let text: StyledStr<'_> = text.into();
+        let text = text.as_styled_str();
 
         // TODO: utf8 support.
         let print_width = std::cmp::min(
@@ -152,9 +148,7 @@ pub trait Render {
 
     /// Bounds-checked print, relative to `area`.
     #[inline]
-    fn print<'s, S>(&mut self, pos: Pos, text: S, area: Area)
-    where
-        S: Into<StyledStr<'s>>
+    fn print<S: AsStyledStr>(&mut self, pos: Pos, text: S, area: Area)
     {
         if !self.area().overlaps(area) {
             return;
@@ -168,7 +162,7 @@ pub trait Render {
             return;
         }
 
-        let text: StyledStr<'_> = text.into();
+        let text = text.as_styled_str();
         let right_max  = area.x as usize + area.width as usize;
 
         // TODO: utf8 support.
@@ -200,9 +194,7 @@ pub trait Render {
 
     /// Print justified in an area.
     #[inline]
-    fn jprint<'s, S>(&mut self, text: S, j: Justify, area: Area)
-    where
-        S: Into<StyledStr<'s>>
+    fn jprint<S: AsStyledStr>(&mut self, text: S, j: Justify, area: Area)
     {
         if !self.area().overlaps(area) {
             return;
@@ -213,7 +205,7 @@ pub trait Render {
             return;
         }
 
-        let text: StyledStr = text.into();
+        let text = text.as_styled_str();
         // TODO: utf8 support.
         let text_width = std::cmp::min(text.content.len(), area.width as usize);
 
@@ -362,7 +354,7 @@ pub trait Render {
 }
 
 
-/// The type can be drawn with [`Screen`](crate::screen::Screen).
+/// The type can be drawn with a [`Render`]er.
 pub trait Draw<R: Render> {
     /// Draws the widget onto `buf`.
     fn draw(&self, buf: &mut R, area: Area);

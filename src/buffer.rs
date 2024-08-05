@@ -1,6 +1,6 @@
 use crate::render::Render;
 use crate::{Pos, Area};
-use crate::style::{StyledStr, StyledChar, Style};
+use crate::style::{AsStyledStr, Style, StyledChar};
 use crate::util::offset;
 
 /// Internals determining the state of the cursor.
@@ -61,15 +61,13 @@ impl Render for Buffer<'_> {
     }
 
     #[inline]
-    fn paint_str<'s, S>(&mut self, pos: Pos, text: S)
-    where
-        S: Into<StyledStr<'s>>
+    fn paint_str<S: AsStyledStr>(&mut self, pos: Pos, text: S)
     {
         let x = pos.x as usize;
         let y = pos.y as usize;
         let w = self.width as usize;
 
-        let text: StyledStr<'_> = text.into();
+        let text = text.as_styled_str();
 
         // TODO: support printing with newlines (and other non-standard
         // whitespace).
