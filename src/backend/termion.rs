@@ -1,5 +1,6 @@
 use super::Backend;
 
+
 pub mod alloc {
     use std::io::{Stdout, Write};
     use termion::raw::{RawTerminal, IntoRawMode};
@@ -34,7 +35,8 @@ pub mod alloc {
     impl<const W: u16, const H: u16> TermionFixed<W, H> {
         /// Initialises and creates the backend.
         ///
-        /// Should be called only once, as it modifies the state of the terminal.
+        /// Should be called only once, as it modifies the state of the
+        /// terminal.
         pub fn init() -> std::io::Result<Self>
         {
             let mut stdout = MouseTerminal::from(std::io::stdout())
@@ -108,6 +110,13 @@ pub mod alloc {
         stdout: RawTerminal<MouseTerminal<Stdout>>,
     }
 
+    impl std::fmt::Debug for TermionDyn {
+        fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result
+        {
+            f.write_str("TermionDyn")
+        }
+    }
+
     impl TermionDyn {
         pub fn init() -> std::io::Result<Self>
         {
@@ -146,6 +155,7 @@ pub mod alloc {
                 .unwrap_or((self.last_width, self.last_height));
 
             let new_buf_size = width as usize * height as usize;
+            // FIXME: sort of a memory leak.
             if new_buf_size > self.chars.len() {
                 self.chars.resize(new_buf_size, ' ');
                 self.styles.resize(new_buf_size, Style::default().clean());
@@ -386,16 +396,13 @@ mod console {
             Color::LightBlue    => write!(writer, "{}", Fg(LightBlue))?,
             Color::LightMagenta => write!(writer, "{}", Fg(LightMagenta))?,
             Color::LightCyan    => write!(writer, "{}", Fg(LightCyan))?,
-            Color::LightWhite   => write!(writer, "{}", Fg(LightCyan))?,
+            Color::LightWhite   => write!(writer, "{}", Fg(LightWhite))?,
             Color::Ansi(c)      => write!(writer, "{}", Fg(AnsiValue(c)))?,
             Color::Rgb(r, g, b) => write!(writer, "{}", Fg(Rgb(r, g, b)))?,
         }
 
         Ok(())
     }
-
-    // FIXME: couldn't find a way to avoid duplication without `Box`ing the
-    // color code. Macros?
 
     #[inline]
     pub fn set_bg_color<W: Write>(writer: &mut W, color: Color)
@@ -421,7 +428,7 @@ mod console {
             Color::LightBlue    => write!(writer, "{}", Bg(LightBlue))?,
             Color::LightMagenta => write!(writer, "{}", Bg(LightMagenta))?,
             Color::LightCyan    => write!(writer, "{}", Bg(LightCyan))?,
-            Color::LightWhite   => write!(writer, "{}", Bg(LightCyan))?,
+            Color::LightWhite   => write!(writer, "{}", Bg(LightWhite))?,
             Color::Ansi(c)      => write!(writer, "{}", Bg(AnsiValue(c)))?,
             Color::Rgb(r, g, b) => write!(writer, "{}", Bg(Rgb(r, g, b)))?,
         }
