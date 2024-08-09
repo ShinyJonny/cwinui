@@ -3,24 +3,24 @@ use crate::style::{AsStyledStr, StyledChar};
 
 /// Render - the basic mechanism for drawing widgets.
 ///
-/// Types can implement this trait to allow widgets to be painted onto them.
+/// Types can implement this trait in order to render [`Draw`]ables.
 pub trait Render {
     /// Get the paint area.
     fn area(&self) -> Area;
 
-    /// Paint a `StyledStr`.
+    /// Set a `StyledStr`.
     ///
     /// # Panics
     ///
     /// When out of bounds.
-    fn paint_str<S: AsStyledStr>(&mut self, pos: Pos, text: S);
+    fn set_str<S: AsStyledStr>(&mut self, pos: Pos, text: S);
 
-    /// Paint a `StyledChar`.
+    /// Set a `StyledChar`.
     ///
     /// # Panics
     ///
     /// When out of bounds.
-    fn paint_char<C>(&mut self, pos: Pos, c: C)
+    fn set_char<C>(&mut self, pos: Pos, c: C)
     where
         C: Into<StyledChar>;
 
@@ -65,7 +65,7 @@ pub trait Render {
             for x in 0..area.width {
                 let x = area.x + x;
                 let y = area.y + y;
-                self.paint_char(Pos { x, y }, c);
+                self.set_char(Pos { x, y }, c);
             }
         }
     }
@@ -86,7 +86,7 @@ pub trait Render {
         let c = c.into();
 
         for i in 0..fill_len {
-            self.paint_char(pos.add_x(i as u16), c);
+            self.set_char(pos.add_x(i as u16), c);
         }
     }
 
@@ -106,7 +106,7 @@ pub trait Render {
         let c = c.into();
 
         for i in 0..fill_len {
-            self.paint_char(pos.add_y(i as u16), c);
+            self.set_char(pos.add_y(i as u16), c);
         }
     }
 
@@ -128,7 +128,7 @@ pub trait Render {
             area.width as usize - pos.x as usize
         );
 
-        self.paint_str(pos, text.slice(..print_width));
+        self.set_str(pos, text.slice(..print_width));
     }
 
     /// Bounds-checked absolute printing of a styled character.
@@ -143,7 +143,7 @@ pub trait Render {
             return;
         }
 
-        self.paint_char(pos, c);
+        self.set_char(pos, c);
     }
 
     /// Bounds-checked print, relative to `area`.
@@ -171,7 +171,7 @@ pub trait Render {
             right_max - abs_x as usize
         );
 
-        self.paint_str(Pos{x:abs_x,y:abs_y}, text.slice(..print_width));
+        self.set_str(Pos{x:abs_x,y:abs_y}, text.slice(..print_width));
     }
 
     /// Bounds-checked print of a styled character, relative to `area`.
@@ -189,7 +189,7 @@ pub trait Render {
             return;
         }
 
-        self.paint_char(pos + area.top_left(), c);
+        self.set_char(pos + area.top_left(), c);
     }
 
     /// Print justified in an area.

@@ -61,7 +61,7 @@ impl Render for Buffer<'_> {
     }
 
     #[inline]
-    fn paint_str<S: AsStyledStr>(&mut self, pos: Pos, text: S)
+    fn set_str<S: AsStyledStr>(&mut self, pos: Pos, text: S)
     {
         let x = pos.x as usize;
         let y = pos.y as usize;
@@ -88,7 +88,7 @@ impl Render for Buffer<'_> {
     }
 
     #[inline]
-    fn paint_char<T>(&mut self, pos: Pos, c: T)
+    fn set_char<T>(&mut self, pos: Pos, c: T)
     where
         T: Into<StyledChar>
     {

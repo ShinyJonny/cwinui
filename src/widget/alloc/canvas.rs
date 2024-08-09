@@ -64,7 +64,7 @@ impl<R: Render> Draw<R> for Canvas {
                     self.width as usize);
                 let c = self.chars[offset]
                     .with_style(|_| self.styles[offset]);
-                buf.paint_char(Pos { x: x + area.x, y: y + area.y }, c);
+                buf.set_char(Pos { x: x + area.x, y: y + area.y }, c);
             }
         }
 
