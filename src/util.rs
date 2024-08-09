@@ -1,6 +1,10 @@
+/// Computes the offset of coordinates [`x`, `y`] in a flat buffer where rows of
+/// size `width` are stored sequentially.
+///
+/// Automatically casts all values to `usize`.
 macro_rules! offset {
-    ( $x:expr, $y:expr, $width:expr ) => {
-        $y * $width + $x
+    ($x:expr, $y:expr, $width:expr) => {
+        $y as usize * $width as usize + $x as usize
     }
 }
 

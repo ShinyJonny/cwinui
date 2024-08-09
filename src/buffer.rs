@@ -130,4 +130,85 @@ impl Render for Buffer<'_> {
         self.cursor.x = pos.x;
         self.cursor.y = pos.y;
     }
+
+    fn hfill<C: Into<StyledChar>>(&mut self, pos: Pos, c: C, len: usize)
+    {
+        let dim = self.dimensions();
+
+        if pos.x >= dim.width || pos.y >= dim.height {
+            return;
+        }
+
+        let fill_len = std::cmp::min((dim.width - pos.x) as usize, len) as u16;
+        let c = c.into();
+
+        for x in 0..fill_len {
+            let idx = offset!(pos.x + x, pos.y, self.width);
+
+            #[cfg(debug_assertions)]
+            { self.chars[idx] = c.content; }
+            // SAFETY: we know that the buffer is large enough due to the
+            // assertions in `new`.
+            #[cfg(not(debug_assertions))]
+            unsafe { *self.chars.get_unchecked_mut(idx) = c.content; }
+        }
+
+        for x in 0..fill_len {
+            let idx = offset!(pos.x + x, pos.y, self.width);
+
+            #[cfg(debug_assertions)]
+            {
+                let style = &mut self.styles[idx];
+                *style = style.merge(c.style);
+            }
+            // SAFETY: we know that the buffer is large enough due to the
+            // assertions in `new`.
+            #[cfg(not(debug_assertions))]
+            unsafe {
+                let style = self.styles.get_unchecked_mut(idx);
+                *style = style.merge(c.style);
+            }
+        }
+    }
+
+    #[inline]
+    fn vfill<C: Into<StyledChar>>(&mut self, pos: Pos, c: C, len: usize)
+    {
+        let dim = self.dimensions();
+
+        if pos.x >= dim.width || pos.y >= dim.height {
+            return;
+        }
+
+        let fill_len = std::cmp::min((dim.height - pos.y) as usize, len) as u16;
+        let c = c.into();
+
+        for y in 0..fill_len {
+            let idx = offset!(pos.x, pos.y + y, self.width);
+
+            #[cfg(debug_assertions)]
+            { self.chars[idx] = c.content; }
+            // SAFETY: we know that the buffer is large enough due to the
+            // assertions in `new`.
+            #[cfg(not(debug_assertions))]
+            unsafe { *self.chars.get_unchecked_mut(idx) = c.content; }
+        }
+
+        for y in 0..fill_len {
+            let idx = offset!(pos.x, pos.y + y, self.width);
+
+            #[cfg(debug_assertions)]
+            {
+                let style = &mut self.styles[idx];
+                *style = style.merge(c.style);
+            }
+            // SAFETY: we know that the buffer is large enough due to the
+            // assertions in `new`.
+            #[cfg(not(debug_assertions))]
+            unsafe {
+                let style = self.styles.get_unchecked_mut(idx);
+                *style = style.merge(c.style);
+            }
+        }
+    }
 }
