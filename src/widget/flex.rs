@@ -108,8 +108,8 @@ impl<R: Render> Proportional for FlexCol<'_, R> {
             let p = it.proportions();
 
             Proportions {
-                width:  width.add(p.width),
-                height: height.join(p.height),
+                width:  width.join(p.width),
+                height: height.add(p.height),
             }
         })
     }
@@ -199,8 +199,8 @@ impl<R: Render> Proportional for FlexRow<'_, R> {
             let p = it.proportions();
 
             Proportions {
-                width:  width.join(p.width),
-                height: height.add(p.height),
+                width:  width.add(p.width),
+                height: height.join(p.height),
             }
         })
     }
