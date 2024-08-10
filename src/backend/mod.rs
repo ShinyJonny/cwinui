@@ -13,11 +13,17 @@ pub trait Backend {
     // stabilised.
     type FlushError: core::fmt::Debug;
 
+    /// State of `Self::Renderer` is not preserved across calls to `render`
+    /// (includes `render_fullscreen`). All drawing has to be done within one
+    /// call to `render`.
     fn render<'a, 'r, F>(&'a mut self, ui: F)
     where
         F: FnOnce(&mut Self::Renderer<'r>),
         'a: 'r;
     fn flush(&mut self) -> Result<(), Self::FlushError>;
+    /// State of `Self::Renderer` is not preserved across calls to `render`
+    /// (includes `render_fullscreen`). All drawing has to be done within one
+    /// call to `render`.
     fn render_fullscreen<'a, 'r, D: Draw<Self::Renderer<'r>>>(
         &'a mut self,
         drawable: &D

@@ -9,6 +9,7 @@ pub mod buffer;
 mod util;
 
 pub use render::{Draw, Render};
+pub use backend::Backend;
 pub use widget::InteractiveWidget;
 pub use layout::{
     Pos,

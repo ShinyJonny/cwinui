@@ -207,6 +207,16 @@ pub struct Proportions {
     pub height: Range,
 }
 
+impl From<Dim> for Proportions {
+    fn from(dim: Dim) -> Self
+    {
+        Self {
+            width: Range::fixed(dim.width),
+            height: Range::fixed(dim.height),
+        }
+    }
+}
+
 impl Proportions {
     /// Both `horiz` and `vert` have the range of `0..=0` .
     pub const ZERO: Self = Self {

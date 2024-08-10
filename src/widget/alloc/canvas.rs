@@ -60,8 +60,7 @@ impl<R: Render> Draw<R> for Canvas {
         // Also, having separate style and char bufs seems inefficient here.
         for y in 0..height {
             for x in 0..width {
-                let offset = offset!(x as usize, y as usize,
-                    self.width as usize);
+                let offset = offset!(x, y, self.width);
                 let c = self.chars[offset]
                     .with_style(|_| self.styles[offset]);
                 buf.set_char(Pos { x: x + area.x, y: y + area.y }, c);

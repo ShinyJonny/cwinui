@@ -226,9 +226,9 @@ pub mod alloc {
             console::write_char(
                 writer,
                 buffer.chars[offset!(
-                    buffer.cursor.x as usize,
-                    buffer.cursor.y as usize,
-                    buffer.width as usize
+                    buffer.cursor.x,
+                    buffer.cursor.y,
+                    buffer.width
                 )]
             )?;
             console::subtract_text_style(writer, TextStyle::INVERT)?;
@@ -250,7 +250,7 @@ pub mod alloc {
         -> Result<(), std::io::Error>
     {
         let width = buffer.width as usize;
-        let line_offset = offset!(0, y as usize, width);
+        let line_offset = offset!(0, y, width);
         let chars = &buffer.chars[line_offset..line_offset + width];
         let styles = &buffer.styles[line_offset..line_offset + width];
 

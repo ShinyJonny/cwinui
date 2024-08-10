@@ -94,7 +94,7 @@ impl Render for Buffer<'_> {
     {
         let c = c.into();
 
-        let idx = offset!(pos.x as usize, pos.y as usize, self.width as usize);
+        let idx = offset!(pos.x, pos.y, self.width);
         self.chars[idx] = c.content;
         let style = &mut self.styles[idx];
         *style = style.merge(c.style);

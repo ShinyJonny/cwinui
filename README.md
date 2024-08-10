@@ -12,5 +12,9 @@ Add this to your project's `Cargo.toml`:
 
 ```toml
 [dependencies]
-cwinui = { git = "https://github.com/ShinyJonny/cwinui" tag = "v0.1.2 "}
+cwinui = { git = "https://github.com/ShinyJonny/cwinui" }
 ```
+
+## Known Issues
+
+<!-- TODO -->
