@@ -8,6 +8,7 @@ pub mod border;
 pub mod layout;
 pub mod flex;
 pub mod split;
+pub mod text;
 mod filler;
 mod backdrop;
 mod debug;
